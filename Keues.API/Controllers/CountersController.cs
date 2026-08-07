@@ -12,6 +12,7 @@ using Keues.Application.Features.Counters.DeleteCounter;
 using Keues.Application.Features.Counters.GetAllCounters;
 using Keues.Application.Features.Counters.GetCounter;
 using Keues.Application.Features.Counters.UpdateCounter;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -44,6 +45,7 @@ namespace Keues.API.Controllers
     /// <response code="200">Counter created.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(CounterBaseResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(CreateCounterCommand command)
@@ -68,6 +70,7 @@ namespace Keues.API.Controllers
     /// <response code="200">Counter updated.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPut("{id:guid}")]
+    [Authorize]
     [ProducesResponseType(typeof(CounterBaseResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Update(Guid id, UpdateCounterCommand command)
@@ -91,6 +94,7 @@ namespace Keues.API.Controllers
     /// <response code="200">Counter deleted.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpDelete("{id:guid}")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Delete(Guid id)
@@ -175,7 +179,7 @@ namespace Keues.API.Controllers
         var ticket = await _counterUseCases.CallNextTicket.Handle(new CallNextTicketCommand(id));
         if(ticket==null)
         {
-          return Ok(null);
+          return new JsonResult(null);
         }
         var counter = await _counterUseCases.Get.Handle(new GetCounterCommand(id));
         var ticketCalled = new TicketCalled(ticket?.TicketId, ticket?.Code, counter.Code);

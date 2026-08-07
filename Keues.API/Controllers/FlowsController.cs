@@ -7,6 +7,7 @@ using Keues.Application.Features.Flows.GetAllFlows;
 using Keues.Application.Features.Flows.GetFlow;
 using Keues.Application.Features.Flows.UpdateFlow;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -82,6 +83,7 @@ namespace Keues.API.Controllers
     /// <response code="200">Flow created.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(FlowBaseResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(CreateFlowCommand command)
@@ -106,6 +108,7 @@ namespace Keues.API.Controllers
     /// <response code="200">Flow updated.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPut("{id:guid}")]
+    [Authorize]
     [ProducesResponseType(typeof(UpdateFlowResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Update(Guid id,UpdateFlowCommand command)
@@ -129,6 +132,7 @@ namespace Keues.API.Controllers
     /// <response code="200">Flow deleted.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpDelete("{id:guid}")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Delete(Guid id)

@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-0.9%20beta-blue" alt="Version">
-  <img src="https://img.shields.io/badge/Status-MVP-yellow" alt="Status">
+  <img src="https://img.shields.io/badge/Version-1.0-green" alt="Version">
+  <img src="https://img.shields.io/badge/Status-Stable-green" alt="Status">
   <img src="https://img.shields.io/badge/Web-www.keues.dev-1da1f2" alt="Website">
   <br>
   <img src="https://img.shields.io/badge/.NET-10-512BD4" alt=".NET">
@@ -25,7 +25,7 @@
   Web oficial y documentación: <b><a href="https://www.keues.dev">https://www.keues.dev</a></b>
 </p>
 
-> ⚠️ **Proyecto en desarrollo (MVP).** La API y el dashboard están funcionales; algunas funcionalidades de los clientes (impresión física de tickets, etc.) están en camino.
+> ✅ **Versión 1.0.** API, dashboard y flujos de cola/tickets funcionales, con suite de tests automatizada (xUnit) y endpoints de administración protegidos por JWT. La impresión física de tickets en TicketMachine sigue en desarrollo.
 
 ---
 
@@ -145,6 +145,7 @@ El backend sigue una arquitectura **Clean Architecture** separada en capas con d
 - SignalR (tiempo real)
 - Autenticación JWT (cookie HttpOnly)
 - OpenAPI / Swagger
+- Pruebas: xUnit (use cases + integración HTTP con SQLite en memoria)
 
 ### Frontend
 
@@ -167,6 +168,7 @@ Keues.sln
 ├── Keues.Application/      # Casos de uso
 ├── Keues.Domain/           # Entidades y reglas de negocio
 ├── Keues.Infrastructure/   # EF Core, SQLite, JWT, email SMTP
+├── Keues.Tests/            # Suite de tests (xUnit): use cases + API
 ├── Keues.Dashboard/        # SPA React (dashboard de administración)
 ├── scripts/                # utilidades (export-openapi.sh, etc.)
 └── docs/                   # documentación generada (openapi.json)
@@ -236,6 +238,16 @@ La base de datos se crea y migra automáticamente en el arranque (`db.Database.M
 
 ---
 
+## Pruebas
+
+La suite cubre los **use cases** (reglas de negocio: numeración de tickets, prioridad/aging/peso en la llamada, auth, etc.) y la **API** (integración HTTP real con `WebApplicationFactory`, incluyendo seguridad y entradas malformadas). Usa una base de datos **SQLite en memoria** con `dotnet test`:
+
+```bash
+dotnet test Keues.Tests
+```
+
+---
+
 ## Estado del proyecto
 
 ### Backend (API)
@@ -248,7 +260,9 @@ La base de datos se crea y migra automáticamente en el arranque (`db.Database.M
 - [x] Atender / cancelar / llamada manual / puesto libre
 - [x] Notificaciones en tiempo real (SignalR)
 - [x] Autenticación JWT + recuperación de contraseña por SMTP
+- [x] Endpoints de administración protegidos (`[Authorize]`)
 - [x] OpenAPI / Swagger
+- [x] Suite de tests automatizada (xUnit): 130+ tests de use cases y API
 
 ### Dashboard
 

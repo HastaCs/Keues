@@ -4,6 +4,7 @@ using Keues.Application.DeviceRegistry;
 using Keues.Application.Features.Devices;
 using Keues.Application.Features.Devices.DeleteDevice;
 using Keues.Application.Features.Devices.GetDevices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -60,6 +61,7 @@ namespace Keues.API.Controllers
         /// <response code="200">Device deleted.</response>
         /// <response code="400">Validation or business rule error (does not exist or is still connected).</response>
         [HttpDelete("{id:guid}")]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Delete(Guid id)

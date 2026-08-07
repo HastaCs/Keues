@@ -28,6 +28,7 @@ namespace Keues.API.Controllers
     /// <response code="200">Queue created.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(QueueBaseResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(CreateQueueCommand command)
@@ -52,6 +53,7 @@ namespace Keues.API.Controllers
     /// <response code="200">Queue updated.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPut("{id:guid}")]
+    [Authorize]
     [ProducesResponseType(typeof(QueueBaseResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Update(Guid id, UpdateQueueCommand command)
@@ -76,6 +78,7 @@ namespace Keues.API.Controllers
     /// <response code="400">Validation or business rule error.</response>
     // TODO Hacer que los handle devuelvan httpStatuses, mirar libreria de Result<T> de netmentor
     [HttpDelete("{id:guid}")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Delete(Guid id)
