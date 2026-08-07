@@ -41,7 +41,6 @@
 - [Installation](#installation)
 - [API documentation](#api-documentation)
 - [Project status](#project-status)
-- [Roadmap](#roadmap)
 - [License](#license)
 
 ---
@@ -266,28 +265,6 @@ The database is created and migrated automatically on startup (`db.Database.Migr
 - [x] Keues-Monitors: current ticket, free desk, manual calls
 - [x] Keues-TicketMachine: service menu and ticket issuing
 - [ ] Physical ticket printing (POS printer) in TicketMachine
-
----
-
-## Roadmap
-
-### MVP
-
-- [x] Location, queue and counter management
-- [x] Ticket issuing and calling
-- [x] Public display (monitors)
-- [x] Ticket machine
-- [x] Basic dashboard
-- [ ] POS ticket printing
-
-### V2
-
-- Users and advanced authentication (roles and permissions)
-- Statistics and reports
-- API Keys
-- Customizable themes
-- Notifications
-- Multi-tenant
 
 ---
 

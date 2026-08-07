@@ -41,7 +41,6 @@
 - [Instalación](#instalación)
 - [Documentación de la API](#documentación-de-la-api)
 - [Estado del proyecto](#estado-del-proyecto)
-- [Roadmap](#roadmap)
 - [Licencia](#licencia)
 
 ---
@@ -265,28 +264,6 @@ La base de datos se crea y migra automáticamente en el arranque (`db.Database.M
 - [x] Keues-Monitors: turno actual, puesto libre, llamadas manuales
 - [x] Keues-TicketMachine: menú de servicios y emisión de tickets
 - [ ] Impresión física de tickets (impresora POS) en TicketMachine
-
----
-
-## Roadmap
-
-### MVP
-
-- [x] Gestión de localizaciones, colas y mostradores
-- [x] Emisión y llamada de tickets
-- [x] Pantalla pública (monitores)
-- [x] Máquina de tickets
-- [x] Dashboard básico
-- [ ] Impresión de tickets en impresora POS
-
-### V2
-
-- Usuarios y autenticación avanzada (roles y permisos)
-- Estadísticas y reportes
-- API Keys
-- Temas personalizables
-- Notificaciones
-- Multiempresa
 
 ---
 
