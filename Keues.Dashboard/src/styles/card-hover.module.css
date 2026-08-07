@@ -1,0 +1,8 @@
+.interactiveCard {
+  transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+}
+
+.interactiveCard:hover {
+  filter: brightness(0.90);
+  box-shadow: var(--mantine-shadow-sm);
+}

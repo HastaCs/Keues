@@ -1,0 +1,3 @@
+namespace Keues.Application.Features.Locations.CreateLocation;
+
+public record CreateLocationCommand:LocationBaseCommand;

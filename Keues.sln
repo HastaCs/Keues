@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keues.Domain", "Keues.Domain\Keues.Domain.csproj", "{974AFC14-E5BB-498B-BDDC-9555FD48A0D9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keues.Application", "Keues.Application\Keues.Application.csproj", "{CF0CF46B-EB39-448F-9233-B2E73D5A42A7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keues.Infrastructure", "Keues.Infrastructure\Keues.Infrastructure.csproj", "{55B35587-DEC2-4965-8F14-E867FC35561D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keues.API", "Keues.API\Keues.API.csproj", "{21C204B0-746E-4688-A9DC-D6542B7A159D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{974AFC14-E5BB-498B-BDDC-9555FD48A0D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{974AFC14-E5BB-498B-BDDC-9555FD48A0D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{974AFC14-E5BB-498B-BDDC-9555FD48A0D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{974AFC14-E5BB-498B-BDDC-9555FD48A0D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF0CF46B-EB39-448F-9233-B2E73D5A42A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF0CF46B-EB39-448F-9233-B2E73D5A42A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF0CF46B-EB39-448F-9233-B2E73D5A42A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF0CF46B-EB39-448F-9233-B2E73D5A42A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55B35587-DEC2-4965-8F14-E867FC35561D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55B35587-DEC2-4965-8F14-E867FC35561D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55B35587-DEC2-4965-8F14-E867FC35561D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55B35587-DEC2-4965-8F14-E867FC35561D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21C204B0-746E-4688-A9DC-D6542B7A159D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21C204B0-746E-4688-A9DC-D6542B7A159D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21C204B0-746E-4688-A9DC-D6542B7A159D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21C204B0-746E-4688-A9DC-D6542B7A159D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,15 @@
+**/bin
+**/obj
+**/node_modules
+**/dist
+Keues.API/data
+.git
+.gitignore
+**/*.log
+**/*.tsbuildinfo
+**/.vite
+**/.stylelintcache
+**/.storybook
+README.md
+docs
+scripts

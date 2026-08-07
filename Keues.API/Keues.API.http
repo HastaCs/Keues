@@ -1,0 +1,6 @@
+@Keues.API_HostAddress = http://localhost:5125
+
+GET {{Keues.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,23 @@
+services:
+  keues:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gorerecord/keues:latest
+    container_name: keues
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+    environment:
+      # URL pública del Dashboard. Vacío -> usa la de config.json.
+      KEUES_DASHBOARD_URL: "http://localhost:8080"
+      # SMTP. Si una variable está vacía, se usa el valor de config.json.
+      KEUES_EMAIL_PROVIDER: "smtp"
+      KEUES_SMTP_HOST: ""
+      KEUES_SMTP_PORT: ""
+      KEUES_SMTP_USER: ""
+      KEUES_SMTP_PASSWORD: ""
+      KEUES_SMTP_FROM: ""
+      KEUES_SMTP_USE_TLS: ""
+    restart: unless-stopped
