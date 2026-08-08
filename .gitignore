@@ -40,4 +40,6 @@ Thumbs.db
 *.db
 *.db-*
 data/
+!Keues.Dashboard/src/data/
+!Keues.Dashboard/src/data/**
 obj/

@@ -46,7 +46,10 @@ runtimeConfig.BindToConfiguration(builder.Configuration);
 
 builder.Services.Configure<PasswordResetOptions>(
   options => options.FrontendUrl = runtimeConfig.DashboardUrl);
-
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+  options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
+});
 // Add services to the container.
 
 builder.Services.AddControllers();
