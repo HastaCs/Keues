@@ -196,7 +196,7 @@ export function TicketsPanel() {
   }
 
   const hasActiveFilters =
-    statusFilter !== TICKET_STATUS.Waiting || queueFilter !== 'all' || dateFrom !== '' || dateTo !== '';
+    statusFilter !== 'all' || queueFilter !== 'all' || dateFrom !== '' || dateTo !== '';
 
   return (
     <Stack gap="lg">
