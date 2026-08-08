@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.0-green" alt="Version">
+  <img src="https://img.shields.io/github/package-json/v/HastaCs/Keues?filename=Keues.Dashboard/package.json" alt="Version">
   <img src="https://img.shields.io/badge/Status-Stable-green" alt="Status">
   <img src="https://img.shields.io/badge/Web-www.keues.dev-1da1f2" alt="Website">
   <br>
@@ -25,7 +25,7 @@
   Web oficial y documentación: <b><a href="https://www.keues.dev">https://www.keues.dev</a></b>
 </p>
 
-> ✅ **Versión 1.0.** API, dashboard y flujos de cola/tickets funcionales, con suite de tests automatizada (xUnit) y endpoints de administración protegidos por JWT. La impresión física de tickets en TicketMachine sigue en desarrollo.
+> ✅ **API, dashboard y flujos de cola/tickets funcionales**, con suite de tests automatizada (xUnit) y endpoints de administración protegidos por JWT. La impresión física de tickets en TicketMachine sigue en desarrollo.
 
 ---
 
