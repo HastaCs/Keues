@@ -108,7 +108,7 @@ export function TicketsPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>(TICKET_STATUS.Waiting);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [queueFilter, setQueueFilter] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -185,7 +185,7 @@ export function TicketsPanel() {
 
   function handleClearFilters() {
     setSearch('');
-    setStatusFilter(TICKET_STATUS.Waiting);
+    setStatusFilter('all');
     setQueueFilter('all');
     setDateFrom('');
     setDateTo('');
@@ -248,21 +248,23 @@ export function TicketsPanel() {
           style={{ minWidth: 170 }}
         />
 
-        <TextInput
-          label={t('tickets.dateFrom')}
-          type="date"
-          value={dateFrom}
-          onChange={(event) => setDateFrom(event.currentTarget.value)}
-          style={{ width: 170 }}
-        />
+        <Group align="flex-end" gap="md">
+          <TextInput
+            label={t('tickets.dateFrom')}
+            type="date"
+            value={dateFrom}
+            onChange={(event) => setDateFrom(event.currentTarget.value)}
+            style={{ width: 170 }}
+          />
 
-        <TextInput
-          label={t('tickets.dateTo')}
-          type="date"
-          value={dateTo}
-          onChange={(event) => setDateTo(event.currentTarget.value)}
-          style={{ width: 170 }}
-        />
+          <TextInput
+            label={t('tickets.dateTo')}
+            type="date"
+            value={dateTo}
+            onChange={(event) => setDateTo(event.currentTarget.value)}
+            style={{ width: 170 }}
+          />
+        </Group>
 
         <Select
           value={sortDirection}
