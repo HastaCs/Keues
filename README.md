@@ -25,8 +25,6 @@
   Web oficial y documentación: <b><a href="https://www.keues.dev">https://www.keues.dev</a></b>
 </p>
 
-> ✅ **API, dashboard y flujos de cola/tickets funcionales**, con suite de tests automatizada (xUnit) y endpoints de administración protegidos por JWT. La impresión física de tickets en TicketMachine sigue en desarrollo.
-
 ---
 
 ## Tabla de contenidos
