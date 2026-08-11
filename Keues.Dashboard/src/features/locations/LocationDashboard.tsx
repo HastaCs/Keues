@@ -149,7 +149,10 @@ function WaitingTicketsTable({ items }: { items: DashboardSummary['waitingTicket
                 <Box
                   w={10}
                   h={10}
-                  style={{ borderRadius: '50%', backgroundColor: item.queueColor }}
+                  style={{
+                    borderRadius: '50%',
+                    backgroundColor: `var(--mantine-color-${item.queueColor}-6)`,
+                  }}
                 />
                 <Text fw={600}>{item.queueName}</Text>
               </Group>

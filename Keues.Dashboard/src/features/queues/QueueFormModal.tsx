@@ -1,4 +1,4 @@
-import { Queue, QueueInput } from "@/api/interfaces/Queue/Queues";
+import { Queue, QueueInput } from '@/api/interfaces/Queue/Queues';
 import {
   Button,
   Card,
@@ -13,14 +13,15 @@ import {
   TextInput,
   Textarea,
   ThemeIcon,
-} from "@mantine/core";
-import { IconCheck, IconDeviceDesktop } from "@tabler/icons-react";
-import { colors } from "../../data/common";
+  Tooltip,
+} from '@mantine/core';
+import { IconCheck, IconDeviceDesktop, IconInfoCircle } from '@tabler/icons-react';
+import { colors } from '../../data/common';
 
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { countersApi } from "@/api/CountersApi";
+import { countersApi } from '@/api/CountersApi';
 
 interface QueueFormModalProps {
   opened: boolean;
@@ -52,26 +53,23 @@ interface CounterOption {
 
 function getInitialState(initialQueue?: Queue): QueueFormState {
   return {
-    name: initialQueue?.name ?? "",
-    description: initialQueue?.description ?? "",
-    code: initialQueue?.code ?? "",
-    maxValue: initialQueue?.maxValue?.toString() ?? "",
-    priority: initialQueue?.priority?.toString() ?? "0",
-    weight: initialQueue?.weight?.toString() ?? "0",
-    agingIntervalMinutes: initialQueue?.agingIntervalMinutes?.toString() ?? "0",
-    maxAgingBonus: initialQueue?.maxAgingBonus?.toString() ?? "0",
-    color: initialQueue?.color ?? "blue",
-    locaitonId: initialQueue?.locationId ?? "",
+    name: initialQueue?.name ?? '',
+    description: initialQueue?.description ?? '',
+    code: initialQueue?.code ?? '',
+    maxValue: initialQueue?.maxValue?.toString() ?? '999',
+    priority: initialQueue?.priority?.toString() ?? '0',
+    weight: initialQueue?.weight?.toString() ?? '0',
+    agingIntervalMinutes: initialQueue?.agingIntervalMinutes?.toString() ?? '0',
+    maxAgingBonus: initialQueue?.maxAgingBonus?.toString() ?? '0',
+    color: initialQueue?.color ?? 'blue',
+    locaitonId: initialQueue?.locationId ?? '',
   };
 }
 
 export function QueueFormModal(props: QueueFormModalProps) {
-
-
   const { t } = useTranslation();
 
   const { opened, loading, initialQueue, locationId, onClose, onSubmit } = props;
-
 
   const [formState, setFormState] = useState<QueueFormState>(getInitialState(initialQueue));
 
@@ -113,7 +111,9 @@ export function QueueFormModal(props: QueueFormModalProps) {
 
   function toggleCounter(counterId: string) {
     setSelectedCounters((current) =>
-      current.includes(counterId) ? current.filter((id) => id !== counterId) : [...current, counterId],
+      current.includes(counterId)
+        ? current.filter((id) => id !== counterId)
+        : [...current, counterId]
     );
   }
 
@@ -127,7 +127,7 @@ export function QueueFormModal(props: QueueFormModalProps) {
     const normalizedMaxValue = formState.maxValue.trim();
 
     if (!normalizedName) {
-      setNameError(t("ticketTypeForm.nameRequired"));
+      setNameError(t('ticketTypeForm.nameRequired'));
       return;
     }
 
@@ -136,12 +136,12 @@ export function QueueFormModal(props: QueueFormModalProps) {
     if (normalizedMaxValue.length > 0) {
       const value = Number.parseInt(normalizedMaxValue, 10);
 
-      if (!Number.isInteger(value) || value < 1) {
-        setMaxValueError(t("ticketTypeForm.maxValueInvalid"));
+      if (!Number.isInteger(value) || value < 0) {
+        setMaxValueError(t('ticketTypeForm.maxValueInvalid'));
         return;
       }
 
-      parsedMaxValue = value;
+      parsedMaxValue = value === 0 ? null : value;
     }
 
     await onSubmit({
@@ -156,13 +156,13 @@ export function QueueFormModal(props: QueueFormModalProps) {
       color: formState.color,
       locationId: locationId,
       counters: selectedCounters,
-    } );
+    });
   }
   return (
     <Modal
       opened={opened}
       onClose={onClose}
-      title={isEditing ? t("ticketTypeForm.editTitle") : t("ticketTypeForm.createTitle")}
+      title={isEditing ? t('ticketTypeForm.editTitle') : t('ticketTypeForm.createTitle')}
       centered
       size="lg"
     >
@@ -171,7 +171,7 @@ export function QueueFormModal(props: QueueFormModalProps) {
           <Group align="flex-start" wrap="nowrap">
             <TextInput
               style={{ flex: 1 }}
-              label={t("ticketTypeForm.name")}
+              label={t('ticketTypeForm.name')}
               required
               value={formState.name}
               onChange={(event) => {
@@ -185,23 +185,23 @@ export function QueueFormModal(props: QueueFormModalProps) {
               error={nameError}
             />
 
-           <TextInput
-  style={{ width: 80, flexShrink: 0 }}
-  maxLength={2}
-  label={t("queueForm.prefix")}
-  value={formState.code}
-  onChange={(event) => {
-    const value = event.currentTarget.value
-      .toUpperCase()
-      .replace(/[^A-Z]/g, "")
-      .slice(0, 2);
+            <TextInput
+              style={{ width: 80, flexShrink: 0 }}
+              maxLength={2}
+              label={t('queueForm.prefix')}
+              value={formState.code}
+              onChange={(event) => {
+                const value = event.currentTarget.value
+                  .toUpperCase()
+                  .replace(/[^A-Z]/g, '')
+                  .slice(0, 2);
 
-    setFormState((previous) => ({
-      ...previous,
-      code: value,
-    }));
-  }}
-/>
+                setFormState((previous) => ({
+                  ...previous,
+                  code: value,
+                }));
+              }}
+            />
           </Group>
 
           <SimpleGrid
@@ -211,20 +211,27 @@ export function QueueFormModal(props: QueueFormModalProps) {
             }}
           >
             <NumberInput
-              label={t("queueForm.maxValue")}
-              value={formState.maxValue === "" ? undefined : Number(formState.maxValue)}
+              label={
+                <Group gap={6} wrap="nowrap">
+                  <span>{t('queueForm.maxValue')}</span>
+                  <Tooltip label={t('queueForm.maxValueHelp')} withArrow>
+                    <IconInfoCircle size={14} style={{ cursor: 'pointer', flexShrink: 0 }} />
+                  </Tooltip>
+                </Group>
+              }
+              value={formState.maxValue === '' ? undefined : Number(formState.maxValue)}
               onChange={(value) =>
                 setFormState((previous) => ({
                   ...previous,
-                  maxValue: value == null ? "" : String(value),
+                  maxValue: value == null ? '' : String(value),
                 }))
               }
-              min={1}
+              min={0}
               error={maxValueError}
             />
 
             <NumberInput
-              label={t("queueForm.priority")}
+              label={t('queueForm.priority')}
               value={Number(formState.priority)}
               onChange={(value) =>
                 setFormState((previous) => ({
@@ -235,7 +242,14 @@ export function QueueFormModal(props: QueueFormModalProps) {
             />
 
             <NumberInput
-              label={t("queueForm.weight")}
+              label={
+                <Group gap={6} wrap="nowrap">
+                  <span>{t('queueForm.weight')}</span>
+                  <Tooltip label={t('queueForm.weightHelp')} withArrow>
+                    <IconInfoCircle size={14} style={{ cursor: 'pointer', flexShrink: 0 }} />
+                  </Tooltip>
+                </Group>
+              }
               value={Number(formState.weight)}
               onChange={(value) =>
                 setFormState((previous) => ({
@@ -246,30 +260,51 @@ export function QueueFormModal(props: QueueFormModalProps) {
             />
           </SimpleGrid>
 
-          <NumberInput
-            label={t("queueForm.agingIntervalMinutes")}
-            value={Number(formState.agingIntervalMinutes)}
-            onChange={(value) =>
-              setFormState((previous) => ({
-                ...previous,
-                agingIntervalMinutes: String(value ?? 0),
-              }))
-            }
-          />
+          <SimpleGrid
+            cols={{
+              base: 1,
+              sm: 2,
+            }}
+          >
+            <NumberInput
+              label={
+                <Group gap={6} wrap="nowrap">
+                  <span>{t('queueForm.agingIntervalMinutes')}</span>
+                  <Tooltip label={t('queueForm.agingIntervalHelp')} withArrow>
+                    <IconInfoCircle size={14} style={{ cursor: 'pointer', flexShrink: 0 }} />
+                  </Tooltip>
+                </Group>
+              }
+              value={Number(formState.agingIntervalMinutes)}
+              onChange={(value) =>
+                setFormState((previous) => ({
+                  ...previous,
+                  agingIntervalMinutes: String(value ?? 0),
+                }))
+              }
+            />
 
-          <NumberInput
-            label={t("queueForm.maxAgingBonus")}
-            value={Number(formState.maxAgingBonus)}
-            onChange={(value) =>
-              setFormState((previous) => ({
-                ...previous,
-                maxAgingBonus: String(value ?? 0),
-              }))
-            }
-          />
+            <NumberInput
+              label={
+                <Group gap={6} wrap="nowrap">
+                  <span>{t('queueForm.maxAgingBonus')}</span>
+                  <Tooltip label={t('queueForm.maxAgingBonusHelp')} withArrow>
+                    <IconInfoCircle size={14} style={{ cursor: 'pointer', flexShrink: 0 }} />
+                  </Tooltip>
+                </Group>
+              }
+              value={Number(formState.maxAgingBonus)}
+              onChange={(value) =>
+                setFormState((previous) => ({
+                  ...previous,
+                  maxAgingBonus: String(value ?? 0),
+                }))
+              }
+            />
+          </SimpleGrid>
 
           <Stack gap="xs">
-            <Text fw={500}>{t("queueForm.color")}</Text>
+            <Text fw={500}>{t('queueForm.color')}</Text>
 
             <Group gap="sm">
               {colors.map((color) => (
@@ -277,10 +312,12 @@ export function QueueFormModal(props: QueueFormModalProps) {
                   key={color}
                   color={`var(--mantine-color-${color}-6)`}
                   style={{
-                    cursor: "pointer",
-                    borderRadius: "50%",
+                    cursor: 'pointer',
+                    borderRadius: '50%',
                     border:
-                      formState.color === color ? "2px solid var(--mantine-color-black)" : "2px solid transparent",
+                      formState.color === color
+                        ? '2px solid var(--mantine-color-black)'
+                        : '2px solid transparent',
                   }}
                   onClick={() =>
                     setFormState((previous) => ({
@@ -294,21 +331,21 @@ export function QueueFormModal(props: QueueFormModalProps) {
               ))}
             </Group>
           </Stack>
-<Textarea
-  label={t("ticketTypeForm.description")}
-  value={formState.description}
-  onChange={(event) => {
-    const value = event.currentTarget.value;
+          <Textarea
+            label={t('ticketTypeForm.description')}
+            value={formState.description}
+            onChange={(event) => {
+              const value = event.currentTarget.value;
 
-    setFormState((previous) => ({
-      ...previous,
-      description: value,
-    }));
-  }}
-/>
+              setFormState((previous) => ({
+                ...previous,
+                description: value,
+              }));
+            }}
+          />
 
           <Stack gap="sm">
-            <Text fw={600}>{t("queueForm.allowedCounters")}</Text>
+            <Text fw={600}>{t('queueForm.allowedCounters')}</Text>
 
             <SimpleGrid
               cols={{
@@ -327,9 +364,9 @@ export function QueueFormModal(props: QueueFormModalProps) {
                     padding="sm"
                     radius="md"
                     style={{
-                      cursor: "pointer",
-                      borderColor: enabled ? "var(--mantine-color-blue-5)" : undefined,
-                      backgroundColor: enabled ? "var(--mantine-color-blue-0)" : undefined,
+                      cursor: 'pointer',
+                      borderColor: enabled ? 'var(--mantine-color-blue-5)' : undefined,
+                      backgroundColor: enabled ? 'var(--mantine-color-blue-0)' : undefined,
                     }}
                     onClick={() => toggleCounter(counter.id)}
                   >
@@ -338,8 +375,8 @@ export function QueueFormModal(props: QueueFormModalProps) {
                         <ThemeIcon
                           size={34}
                           radius="md"
-                          variant={enabled ? "light" : "default"}
-                          color={enabled ? "blue" : "gray"}
+                          variant={enabled ? 'light' : 'default'}
+                          color={enabled ? 'blue' : 'gray'}
                         >
                           <IconDeviceDesktop size={18} />
                         </ThemeIcon>
@@ -367,11 +404,11 @@ export function QueueFormModal(props: QueueFormModalProps) {
 
           <Group justify="flex-end">
             <Button variant="default" onClick={onClose} disabled={loading}>
-              {t("common.cancel")}
+              {t('common.cancel')}
             </Button>
 
             <Button type="submit" loading={loading}>
-              {isEditing ? t("ticketTypeForm.editAction") : t("ticketTypeForm.createAction")}
+              {isEditing ? t('ticketTypeForm.editAction') : t('ticketTypeForm.createAction')}
             </Button>
           </Group>
         </Stack>
