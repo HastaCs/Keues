@@ -23,9 +23,7 @@
 
 <p align="center">
   Official website and documentation: <b><a href="https://www.keues.dev">https://www.keues.dev</a></b>
-</p>
-
-> ✅ **API, dashboard and queue/ticket flows are functional**, with an automated test suite (xUnit) and JWT-protected administration endpoints. Physical ticket printing in TicketMachine is still in development.
+</>
 
 ---
 
