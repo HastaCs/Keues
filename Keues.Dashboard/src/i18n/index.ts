@@ -343,6 +343,11 @@ const resources = {
         iconMeat: 'Carne',
         iconCar: 'Coche',
         iconHouse: 'Casa',
+        save: 'Guardar',
+        ticketQueueRequired: 'Los nodos ticket necesitan una cola asociada: {{names}}.',
+        unsavedTitle: 'Salir sin guardar',
+        unsavedMessage: 'Tienes cambios sin guardar. ¿Seguro que quieres salir sin guardar?',
+        leaveAnyway: 'Salir sin guardar',
       },
       counterForm: {
         createTitle: 'Nuevo puesto',
@@ -749,6 +754,11 @@ const resources = {
         iconMeat: 'Meat',
         iconCar: 'Car',
         iconHouse: 'House',
+        save: 'Save',
+        ticketQueueRequired: 'Ticket nodes need an associated queue: {{names}}.',
+        unsavedTitle: 'Leave without saving',
+        unsavedMessage: 'You have unsaved changes. Are you sure you want to leave without saving?',
+        leaveAnyway: 'Leave without saving',
       },
       counterForm: {
         createTitle: 'New counter',

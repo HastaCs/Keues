@@ -29,7 +29,7 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import cardHoverClasses from '@/styles/card-hover.module.css';
@@ -104,6 +104,19 @@ export function FlowsPanel() {
   const [pendingSelectedNodeId, setPendingSelectedNodeId] = useState<string | null>(null);
   const [menuItems, setMenuItems] = useState<FlowMenuItem[]>([]);
   const [deletingFlow, setDeletingFlow] = useState<Flow | undefined>();
+  const [unsavedModalOpened, setUnsavedModalOpened] = useState(false);
+  const flowsRef = useRef(flows);
+  flowsRef.current = flows;
+  const [savedMenuItemsJson, setSavedMenuItemsJson] = useState('');
+
+  useEffect(() => {
+    if (!activeFlowId) {
+      return;
+    }
+
+    const flow = flowsRef.current.find((entry) => entry.id === activeFlowId);
+    setSavedMenuItemsJson(flow ? JSON.stringify(flow.menuItems) : '');
+  }, [activeFlowId]);
 
   useEffect(() => {
     const fetchFlows = async () => {
@@ -222,6 +235,9 @@ export function FlowsPanel() {
   }, [activeFlow, selectedNode]);
 
   const canCreateChild = selectedNode?.nodeType === 'menu';
+
+  const hasUnsavedChanges =
+    Boolean(activeFlow) && savedMenuItemsJson !== JSON.stringify(activeFlow?.menuItems);
 
   const parentOptions = useMemo(() => {
     if (!activeFlow || !selectedNode) {
@@ -463,6 +479,25 @@ export function FlowsPanel() {
   }
   //Mando a la api el flujo para guardarlo
   const handleSave = () => {
+    if (!activeFlow) {
+      return;
+    }
+
+    const missingQueueTickets = activeFlow.menuItems.filter(
+      (item) => item.nodeType === 'ticket' && !item.queueId
+    );
+
+    if (missingQueueTickets.length > 0) {
+      setRuleError(
+        t('flows.ticketQueueRequired', {
+          names: missingQueueTickets.map((item) => item.name).join(', '),
+        })
+      );
+      return;
+    }
+
+    setRuleError(null);
+
     const flujoJson = {
       flowId: activeFlow?.id,
       locationId: location?.id,
@@ -499,6 +534,8 @@ export function FlowsPanel() {
       })
 
       .then(() => {
+        const savedFlow = flowsRef.current.find((entry) => entry.id === activeFlowId);
+        setSavedMenuItemsJson(JSON.stringify(savedFlow?.menuItems ?? []));
         notifications.show({
           title: t('flows.savedTitle'),
           message: t('flows.savedMessage'),
@@ -569,6 +606,35 @@ export function FlowsPanel() {
 
             <Button color="red" onClick={handleConfirmDeleteFlow}>
               {t('common.delete')}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Modal
+        opened={unsavedModalOpened}
+        onClose={() => setUnsavedModalOpened(false)}
+        title={t('flows.unsavedTitle')}
+        centered
+      >
+        <Stack gap="lg">
+          <Text>{t('flows.unsavedMessage')}</Text>
+
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setUnsavedModalOpened(false)}>
+              {t('common.cancel')}
+            </Button>
+
+            <Button
+              color="red"
+              onClick={() => {
+                const savedFlow = flowsRef.current.find((entry) => entry.id === activeFlowId);
+                setSavedMenuItemsJson(JSON.stringify(savedFlow?.menuItems ?? []));
+                setUnsavedModalOpened(false);
+                setActiveFlowId(null);
+              }}
+            >
+              {t('flows.leaveAnyway')}
             </Button>
           </Group>
         </Stack>
@@ -671,7 +737,14 @@ export function FlowsPanel() {
               <Button
                 variant="light"
                 leftSection={<IconArrowLeft size={14} />}
-                onClick={() => setActiveFlowId(null)}
+                onClick={() => {
+                  if (hasUnsavedChanges) {
+                    setUnsavedModalOpened(true);
+                    return;
+                  }
+
+                  setActiveFlowId(null);
+                }}
               >
                 {t('flows.backToFlows')}
               </Button>
@@ -717,16 +790,6 @@ export function FlowsPanel() {
                               disabled={!canCreateChild}
                             >
                               <IconArrowDown size={14} />
-                            </ActionIcon>
-                          </Tooltip>
-                          <Tooltip label={t('flows.saveNode')}>
-                            <ActionIcon
-                              variant="filled"
-                              color="blue"
-                              onClick={() => handleSave()}
-                              disabled={!selectedNode}
-                            >
-                              <IconDeviceFloppy size={14} />
                             </ActionIcon>
                           </Tooltip>
                           <Tooltip label={t('common.delete')}>
@@ -788,6 +851,19 @@ export function FlowsPanel() {
                           }}
                         />
                       )}
+
+                      <Divider />
+
+                      <Group justify="flex-end">
+                        <Button
+                          variant="filled"
+                          color="blue"
+                          leftSection={<IconDeviceFloppy size={14} />}
+                          onClick={handleSave}
+                        >
+                          {t('flows.save')}
+                        </Button>
+                      </Group>
                     </Stack>
                   </Card>
 
