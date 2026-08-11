@@ -276,7 +276,7 @@ dotnet test Keues.Tests
 - [x] Keues-Counter: call next, attend, free, manual call
 - [x] Keues-Monitors: current ticket, free desk, manual calls
 - [x] Keues-TicketMachine: service menu and ticket issuing
-- [ ] Physical ticket printing (POS printer) in TicketMachine
+- [x] Physical ticket printing (POS printer) in TicketMachine
 
 ---
 
