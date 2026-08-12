@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <b>Queue and turn management system</b> for shops, clinics, public administrations and any organization that needs to organize in-person customer service.
+  <b>Queue and ticket management system</b> for businesses, clinics, public administrations and any organization that needs to organize customer service.
 </p>
 
 <p align="center">
@@ -13,6 +13,7 @@
   <img src="https://img.shields.io/badge/Status-Stable-green" alt="Status">
   <img src="https://img.shields.io/badge/Web-www.keues.dev-1da1f2" alt="Website">
   <br>
+  <img src="https://img.shields.io/badge/.NET-10-512BD4" alt=".NET">
   <img src="https://img.shields.io/badge/React-19-61DAFB" alt="React">
   <img src="https://img.shields.io/badge/TypeScript-7-3178C6" alt="TypeScript">
   <img src="https://img.shields.io/badge/Vite-8-646CFF" alt="Vite">
@@ -24,116 +25,155 @@
   Official website and documentation: <b><a href="https://www.keues.dev">https://www.keues.dev</a></b>
 </p>
 
----
-
-## Who is Keues for?
-
-Keues is designed for any business or institution with in-person service and multiple counters or desks:
-
-- **Food shops** — butchers, fishmongers, greengrocers: the customer takes a number and waits to be called.
-- **Banking, clinics and public administration** — turn management with different priorities and service types.
-- **Large stores** — desks without tickets where the monitor simply shows which checkout has just become free.
-- **Traditional markets** — the customer takes a paper number and the digital monitor shows who is currently being served.
-
-Everything runs in a single Docker container on your own infrastructure. No subscriptions, no data in third-party clouds, open API.
+> ✅ **API, dashboard and queue/ticket flows are functional**, with an automated test suite (xUnit) and JWT-protected administration endpoints. Physical ticket printing in TicketMachine is still in development.
 
 ---
 
 ## Table of contents
 
-- [The service cycle](#the-service-cycle)
-- [Application ecosystem](#application-ecosystem)
+- [How it works](#how-it-works)
+- [Repository ecosystem](#repository-ecosystem)
 - [Flow types](#flow-types)
 - [Features](#features)
+- [Architecture](#architecture)
+- [Tech stack](#tech-stack)
+- [Project structure](#project-structure)
 - [Installation](#installation)
 - [API documentation](#api-documentation)
-- [Testing](#testing)
-- [Architecture](#architecture)
+- [Project status](#project-status)
 - [License](#license)
 
 ---
 
-## The service cycle
+## How it works
 
-**1. The customer takes their turn**
-They approach the self-service terminal (TicketMachine), choose the service they need by navigating through the menu configured by the administrator, and receive their turn code (e.g. `C-004`).
+**Keues** is built around a central **.NET API** that keeps all state (locations, queues, counters, tickets and devices) and pushes changes to screens **in real time** via **SignalR**. Four applications connect to it:
 
-**2. The operator calls the next one**
-When finished with a customer, they press "Call next" at their desk (Counter). The system automatically selects the most suitable ticket based on queue priority, accumulated waiting time and the configured attention ratio.
+```
+                   ┌───────────────────────────────┐
+                   │  Dashboard · React (admin)     │
+                   └───────────────┬───────────────┘
+                                   │ REST + JWT
+                   ┌───────────────▼───────────────┐
+                   │        Keues API · .NET 10     │
+                   │    REST  +  SignalR /devices   │
+                   └──────┬──────────────────┬──────┘
+                          │                  │
+             ┌────────────▼─────┐   ┌────────▼──────────┐
+             │  TicketMachine   │   │  Monitors · TV     │
+             │  (self-service)  │   │  (read-only)       │
+             └──────────────────┘   └───────────────────┘
+             ┌──────────────┐
+             │  Counter     │
+             │  (service    │
+             │   desk)      │
+             └──────────────┘
+```
 
-**3. Monitors update instantly**
-The screens visible to customers (Monitors) show the called turn and the desk the customer should go to, without reloading the page and with no noticeable delay.
+A typical service cycle:
 
-**4. The operator closes the turn**
-When the service is complete, they mark the ticket as attended. The desk is free for the next cycle.
+1. A customer picks a service on the **ticket machine** and gets their turn number (e.g. `P-001`).
+2. An operator at their **counter** presses "Call next ticket".
+3. The API picks the next ticket based on **priority, weight and aging** across the queues and broadcasts it over SignalR.
+4. **Monitors** (TV screens) show the ticket instantly, with no page reload.
+5. When done, the operator marks the ticket as attended (or the desk as free) and the monitors update again.
 
 ---
 
-## Application ecosystem
+## Repository ecosystem
 
-Keues is made up of four applications that work together:
-
-| Application | Who uses it | What it does |
+| Repository | What it is | Role |
 |---|---|---|
-| [**Keues**](https://github.com/HastaCs/Keues) *(this repo)* | Administrator | Central API + web dashboard for configuration and real-time monitoring |
-| [**Keues-Counter**](https://github.com/HastaCs/Keues-Counter) | Desk operator | Calls the next turn, marks tickets as attended or frees the desk |
-| [**Keues-Monitors**](https://github.com/HastaCs/Keues-Monitors) | Customer-facing screens | Shows the current turn and the desk the customer should go to |
-| [**Keues-TicketMachine**](https://github.com/HastaCs/Keues-TicketMachine) | Customer (touch kiosk) | Shows the service menu and delivers the turn number |
+| [**Keues**](https://github.com/HastaCs/Keues) *(this one)* | REST API + SignalR and admin dashboard | Core of the system: stores state and coordinates everything |
+| [**Keues-Counter**](https://github.com/HastaCs/Keues-Counter) | Desktop app (Electron) for each service desk | The operator calls the next ticket, attends, marks free or makes manual calls |
+| [**Keues-Monitors**](https://github.com/HastaCs/Keues-Monitors) | TV/display screens app (Electron) | Shows the current ticket, the last free desk and manual calls in real time (read-only) |
+| [**Keues-TicketMachine**](https://github.com/HastaCs/Keues-TicketMachine) | Self-service kiosk (Electron) | Customers pick a service and get their ticket number |
 
 ---
 
 ## Flow types
 
-Each location can have several simultaneous flows depending on the type of service it offers:
+Each location defines **flows** that determine how the machines, counters and monitors behave:
 
-| Type | When to use it | How it works |
+| Type | Use case | Behavior |
 |---|---|---|
-| `TicketMachine` | Butcher, clinic, bank, pharmacy… | The customer takes a ticket at the terminal and the operator calls them from the desk |
-| `SetFree` | Supermarket checkouts, ticket offices, information points | No tickets: the operator notifies the screen when their desk is free |
-| `ManualCall` | Markets with paper dispensers, fishmongers | The operator moves the number up or down manually and the monitor shows it in real time |
+| `TicketMachine` | Butcher, fishmonger, greengrocer, banks, clinics… | Customers take a ticket at the terminal and the desk calls the next turn |
+| `SetFree` | Desks without tickets (supermarket style) | The desk marks itself as free and the monitor shows it |
+| `ManualCall` | Desks with manual numbers | The operator moves the number up/down (+1 / −1 / +10 / −10) and the monitor shows it |
 
 ---
 
 ## Features
 
-### Multiple locations
-Manage several establishments from a single system. Each location has its own queues, counters, flows and devices, completely independent from one another.
+- **Multi-location:** each establishment has its own queues, counters, flows and devices.
+- **Smart queues:** priority, **weight** (attention ratio between queues, e.g. 1 ticket of A for every 3 of B) and **aging** that automatically raises the priority of tickets that have been waiting for a long time.
+- **Counters:** each desk has a name, code and color, linked to one or more queues.
+- **Tickets:** issuing, calling the next one, attending and cancelling, with numbering control (`NextNumber` / `MaxValue`).
+- **Real time (SignalR):** devices register on the `/devices` hub and monitors update instantly (`TicketCalled`, `TicketAttended`, `CounterFree`, `ReloadFlow`).
+- **Admin dashboard:** React + Mantine SPA for full management of locations, queues, counters, flows, tickets and devices.
+- **Security:** JWT auth in an `HttpOnly` cookie, first-admin setup, login and **email (SMTP)** password recovery.
+- **Documented API:** auto-generated OpenAPI/Swagger.
+- **Easy deployment:** a single Docker image with the dashboard and the API, persistent data in `/app/data`.
 
-### Smart queues
-The next-turn selection algorithm combines three mechanisms:
+---
 
-- **Priority** — queues with higher priority are served first. Useful for separating urgent cases from scheduled appointments, or VIP customers from the general queue.
-- **Weight** — when several queues share the same priority, weight defines the service ratio between them. A 3:1 weight between queue A and queue B means 3 tickets from A are served for every 1 from B.
-- **Aging** — every X minutes a ticket has been waiting, its priority automatically rises by one point, preventing anyone from waiting indefinitely even if their queue has a lower base priority.
+## Architecture
 
-### Administration dashboard
-Web panel with real-time monitoring for each location:
+The backend follows a **Clean Architecture** with dependencies pointing inward:
 
-- Daily KPIs: tickets waiting, in service, attended and cancelled.
-- Average waiting time and average service time.
-- Real-time view of which desk is serving which turn and since when.
-- Tickets waiting per queue ordered by age.
-- Full history with filters by status, queue, date range and free-text search.
+```
+┌──────────────────────────────────────────────────────────┐
+│  Keues.Dashboard   React SPA (web administration)          │
+├──────────────────────────────────────────────────────────┤
+│  Keues.API        HTTP endpoints + SignalR hub + SPA (prod)│
+├──────────────────────────────────────────────────────────┤
+│  Keues.Application   Use cases                             │
+├──────────────────────────────────────────────────────────┤
+│  Keues.Domain       Entities and business rules            │
+├──────────────────────────────────────────────────────────┤
+│  Keues.Infrastructure  EF Core · SQLite · JWT · SMTP       │
+└──────────────────────────────────────────────────────────┘
+```
 
-### Unlimited configuration
-- **TicketMachine menu** configurable as a tree of categories and services, with icon and colour per node.
-- **Per-queue numbering** with a customisable prefix (e.g. `C`, `P`, `M`) and configurable maximum value.
-- **Specialised desks** — each counter can be authorised to serve only certain queues.
-- **Colours** for queues and counters, visible in the dashboard and on monitors.
+---
 
-### Real time with no effort
-Monitors and counters receive changes instantly. No reloading. No polling. The administrator also sees the dashboard updated in real time.
+## Tech stack
 
-### Multi-language and theme
-Interface available in **English and Spanish**. **Light/dark theme** toggle in the top bar.
+### Backend
 
-### Security and access
-- Guided first launch: the system detects there is no administrator and creates one step by step.
-- JWT authentication in an HttpOnly cookie.
-- Password recovery by email (configurable SMTP).
+- ASP.NET Core (.NET 10)
+- Entity Framework Core + SQLite
+- SignalR (real time)
+- JWT authentication (HttpOnly cookie)
+- OpenAPI / Swagger
+- Testing: xUnit (use cases + HTTP integration with in-memory SQLite)
 
-### Simple deployment
-A single Docker container. Data persists in a local volume. No external database, no additional services.
+### Frontend
+
+- React 19 + TypeScript
+- Vite 8
+- Mantine 9 + Tabler Icons
+- React Router · i18next
+
+### Deployment
+
+- Docker · Docker Compose
+
+---
+
+## Project structure
+
+```
+Keues.sln
+├── Keues.API/              # REST API + SignalR hub + SPA (production)
+├── Keues.Application/      # Use cases
+├── Keues.Domain/           # Entities and business rules
+├── Keues.Infrastructure/   # EF Core, SQLite, JWT, SMTP email
+├── Keues.Tests/            # Test suite (xUnit): use cases + API
+├── Keues.Dashboard/        # React SPA (admin dashboard)
+├── scripts/                # utilities (export-openapi.sh, etc.)
+└── docs/                   # generated documentation (openapi.json)
+```
 
 ---
 
@@ -149,7 +189,7 @@ docker run -d \
   gorerecord/keues:latest
 ```
 
-Open **http://localhost:8080**: on first launch the dashboard will guide you through creating the first administrator.
+Open **http://localhost:8080**: on first start, a `config.json` (with a random JWT key) and the SQLite database are created, and the dashboard will guide you through creating the **first administrator**.
 
 Or with Docker Compose:
 
@@ -172,23 +212,26 @@ services:
 Requirements: **.NET 10 SDK** and **Node.js + pnpm**.
 
 ```bash
-# API
+# 1) API (.NET 10)
 dotnet run --project Keues.API
-# → http://localhost:5125
+# → http://localhost:5125 · OpenAPI at http://localhost:5125/openapi/v1.json
 
-# Dashboard
+# 2) Dashboard (React)
 cd Keues.Dashboard
 pnpm install
 pnpm dev
 ```
 
-> The Vite proxy points to `http://localhost:8080`. If you run the API on a different port, adjust `Keues.Dashboard/vite.config.mjs`.
+> Note: the Vite proxy points to `http://localhost:8080` (configured in `Keues.Dashboard/vite.config.mjs`). If you run the API on another port, adjust that line.
+
+The database is created and migrated automatically on startup (`db.Database.Migrate()`), in `Keues.API/data/keues.db`.
 
 ---
 
 ## API documentation
 
-OpenAPI available at `http://localhost:5125/openapi/v1.json` during development. To regenerate `docs/openapi.json`:
+- In development, the OpenAPI document is available at `http://localhost:5125/openapi/v1.json`.
+- You can regenerate it into `docs/openapi.json` with:
 
 ```bash
 ./scripts/export-openapi.sh
@@ -198,34 +241,44 @@ OpenAPI available at `http://localhost:5125/openapi/v1.json` during development.
 
 ## Testing
 
+The suite covers the **use cases** (business rules: ticket numbering, priority/aging/weight in ticket calling, auth, etc.) and the **API** (real HTTP integration with `WebApplicationFactory`, including security and malformed input). It uses an **in-memory SQLite** database with `dotnet test`:
+
 ```bash
 dotnet test Keues.Tests
 ```
 
-The suite covers the use cases (numbering, priority, aging, weight, authentication) and the full API with real HTTP integration. Over 130 tests.
-
 ---
 
-<details>
-<summary><b>Internal architecture</b></summary>
+## Project status
 
-```
-┌──────────────────────────────────────────────────────────┐
-│  Keues.Dashboard   React SPA (web administration)        │
-├──────────────────────────────────────────────────────────┤
-│  Keues.API         HTTP endpoints + real-time hub        │
-├──────────────────────────────────────────────────────────┤
-│  Keues.Application Use cases                             │
-├──────────────────────────────────────────────────────────┤
-│  Keues.Domain      Entities and business rules           │
-├──────────────────────────────────────────────────────────┤
-│  Keues.Infrastructure  EF Core · SQLite · JWT · SMTP     │
-└──────────────────────────────────────────────────────────┘
-```
+### Backend (API)
 
-Technologies: ASP.NET Core (.NET 10), Entity Framework Core + SQLite, SignalR, JWT, React 19 + TypeScript + Vite 8 + Mantine 9, xUnit, Docker.
+- [x] Clean Architecture
+- [x] Entity Framework Core + SQLite + automatic migrations
+- [x] CRUD for locations, queues, counters, flows, tickets and devices
+- [x] Ticket issuing (`POST /api/queues/{id}/new-ticket`)
+- [x] Next-ticket calling (priority, weight and aging)
+- [x] Attend / cancel / manual call / free desk
+- [x] Real-time notifications (SignalR)
+- [x] JWT auth + SMTP password recovery
+- [x] JWT-protected administration endpoints (`[Authorize]`)
+- [x] OpenAPI / Swagger
+- [x] Automated test suite (xUnit): 130+ use case and API tests
 
-</details>
+### Dashboard
+
+- [x] First-admin setup, login and password reset
+- [x] Location management and per-location dashboard
+- [x] Queue, counter, flow and ticket management
+- [x] Device management (machines, counters, monitors)
+- [x] Multi-language (EN/ES) and light/dark theme
+
+### Clients (Electron)
+
+- [x] Keues-Counter: call next, attend, free, manual call
+- [x] Keues-Monitors: current ticket, free desk, manual calls
+- [x] Keues-TicketMachine: service menu and ticket issuing
+- [ ] Physical ticket printing (POS printer) in TicketMachine
 
 ---
 
