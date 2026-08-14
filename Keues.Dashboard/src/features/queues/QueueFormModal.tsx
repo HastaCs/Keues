@@ -87,7 +87,7 @@ export function QueueFormModal(props: QueueFormModalProps) {
     async function loadCounters() {
       try {
         const result = await countersApi.list(locationId);
-        setCounters(result.data);
+        setCounters(result.data.sort((a, b) => a.name.localeCompare(b.name)));
       } catch {
         // Ignoramos errores al cargar counters.
       }
