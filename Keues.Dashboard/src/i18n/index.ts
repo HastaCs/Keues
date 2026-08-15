@@ -352,7 +352,7 @@ const resources = {
       counterForm: {
         createTitle: 'Nuevo puesto',
         editTitle: 'Editar puesto',
-        code: 'Codigo',
+        code: 'Texto del monitor',
         codePlaceholder: 'A1',
         name: 'Nombre',
         namePlaceholder: 'Puesto principal',
@@ -416,7 +416,7 @@ const resources = {
         unexpected: 'Ha ocurrido un error inesperado',
       },
       user: {
-        name: 'Jorge Martin',
+        name: '',
         role: 'Administrador',
         roleAdmin: 'Administrador',
         roleUser: 'Usuario',
@@ -769,7 +769,7 @@ const resources = {
       counterForm: {
         createTitle: 'New counter',
         editTitle: 'Edit counter',
-        code: 'Code',
+        code: 'Monitor text',
         codePlaceholder: 'A1',
         name: 'Name',
         namePlaceholder: 'Main counter',
@@ -832,7 +832,7 @@ const resources = {
         unexpected: 'An unexpected error has occurred',
       },
       user: {
-        name: 'Jorge Martin',
+        name: '',
         role: 'Administrator',
         roleAdmin: 'Administrator',
         roleUser: 'User',

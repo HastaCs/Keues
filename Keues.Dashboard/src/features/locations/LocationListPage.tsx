@@ -7,7 +7,6 @@ import {
   Divider,
   Group,
   Loader,
-  Menu,
   Modal,
   Paper,
   Select,
@@ -16,11 +15,12 @@ import {
   Text,
   TextInput,
   ThemeIcon,
+  Tooltip,
 } from '@mantine/core';
 import {
   IconArrowRight,
   IconBuildingStore,
-  IconDotsVertical,
+  IconEdit,
   IconSearch,
   IconTrash,
 } from '@tabler/icons-react';
@@ -263,34 +263,33 @@ export function LocationListPage() {
                         </Stack>
                       </Group>
 
-                      <Menu position="bottom-end" shadow="md">
-                        <Menu.Target>
-                          <ActionIcon variant="subtle" onClick={(e) => e.stopPropagation()}>
-                            <IconDotsVertical size={18} />
-                          </ActionIcon>
-                        </Menu.Target>
-
-                        <Menu.Dropdown>
-                          <Menu.Item
+                      <Group gap={4}>
+                        <Tooltip label={t('common.edit')}>
+                          <ActionIcon
+                            variant="light"
+                            color="blue"
                             onClick={(e) => {
                               e.stopPropagation();
                               openEditModal(location);
                             }}
                           >
-                            {t('common.edit')}
-                          </Menu.Item>
+                            <IconEdit size={16} />
+                          </ActionIcon>
+                        </Tooltip>
 
-                          <Menu.Item
+                        <Tooltip label={t('common.delete')}>
+                          <ActionIcon
+                            variant="light"
                             color="red"
                             onClick={(e) => {
                               e.stopPropagation();
                               setDeletingLocation(location);
                             }}
                           >
-                            {t('common.delete')}
-                          </Menu.Item>
-                        </Menu.Dropdown>
-                      </Menu>
+                            <IconTrash size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Group>
                     </Group>
 
                     <Divider />

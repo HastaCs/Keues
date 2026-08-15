@@ -13,7 +13,7 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 
-import { IconCheck, IconTicket } from "@tabler/icons-react";
+import { IconCheck, IconDeviceTv, IconTicket } from "@tabler/icons-react";
 import {colors} from "../../data/common";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -149,6 +149,8 @@ export function CounterFormModal(props: CounterFormModalProps) {
         <Stack gap="md">
           <TextInput
             label={t("counterForm.code")}
+            placeholder={t("counterForm.codePlaceholder")}
+            leftSection={<IconDeviceTv size={16} />}
             value={formState.code}
             onChange={(event) => {
               const value = event.currentTarget.value;
