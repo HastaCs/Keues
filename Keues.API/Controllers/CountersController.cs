@@ -11,6 +11,7 @@ using Keues.Application.Features.Counters.CreateCounter;
 using Keues.Application.Features.Counters.DeleteCounter;
 using Keues.Application.Features.Counters.GetAllCounters;
 using Keues.Application.Features.Counters.GetCounter;
+using Keues.Application.Features.Counters.GetQueues;
 using Keues.Application.Features.Counters.UpdateCounter;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -271,9 +272,14 @@ namespace Keues.API.Controllers
         if (counter == null)
           throw new Exception($"No counter found for {request.CounterId}");
         //TODO una clase o algo para no escribir esto tan hardcoded.. "ticketcalled" , "locaitonId:type:.".. etc
+        
+        //El codigo de la queue, para ponerla delante del numero
+        
+        var queues=await _counterUseCases.GetQueues.Handle(new GetQueuesQuery(request.CounterId));
+        var code = queues.FirstOrDefault()?.Code;
+        var ticketCalled = new TicketCalled(null,$"{code}{request.Code}", counter.Code);
+        
         var group = $"locationId:{request.LocationId}:typeDevice:Monitor:flowId:{request.FlowId}";
-
-        var ticketCalled = new TicketCalled(null, request.Code, counter.Code);
         await _hubContext.Clients.Group(group).SendAsync("TicketCalled", ticketCalled);
         return Ok();
       }
@@ -311,5 +317,7 @@ namespace Keues.API.Controllers
         return BadRequest(new ErrorResponse(e.Message));
       }
     }
+    
+    
   }
 }

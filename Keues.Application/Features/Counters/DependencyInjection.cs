@@ -5,7 +5,9 @@ using Keues.Application.Features.Counters.CreateCounter;
 using Keues.Application.Features.Counters.DeleteCounter;
 using Keues.Application.Features.Counters.GetAllCounters;
 using Keues.Application.Features.Counters.GetCounter;
+using Keues.Application.Features.Counters.GetQueues;
 using Keues.Application.Features.Counters.UpdateCounter;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Keues.Application.Features.Counters;
@@ -23,6 +25,7 @@ public static class DependencyInjection
     services.AddScoped<CallNextTicketHandler>();
     services.AddScoped<AttendTicketHandler>();
     services.AddScoped<CancelTicketHandler>();
+    services.AddScoped<GetQueuesHandle>();
     services.AddScoped<CounterUseCases>();
     
     return services;
