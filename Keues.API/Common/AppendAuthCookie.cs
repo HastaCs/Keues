@@ -9,7 +9,7 @@ public static class AppendAuthCookie
     response.Cookies.Append(Name, jwt, new CookieOptions
     {
       HttpOnly = true,
-      Secure = true,
+      Secure = response.HttpContext.Request.IsHttps,
       SameSite = SameSiteMode.Lax,
       Expires = DateTimeOffset.UtcNow.AddYears(100)
     });
@@ -20,7 +20,7 @@ public static class AppendAuthCookie
     response.Cookies.Delete(Name, new CookieOptions
     {
       HttpOnly = true,
-      Secure = true,
+      Secure = response.HttpContext.Request.IsHttps,
       SameSite = SameSiteMode.Lax
     });
   }

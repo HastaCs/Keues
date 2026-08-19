@@ -182,7 +182,7 @@ namespace Keues.API.Controllers
       Response.Cookies.Delete("access_token", new CookieOptions
       {
         HttpOnly = true,
-        Secure = true,
+        Secure = Request.IsHttps,
         SameSite = SameSiteMode.Lax
       });
       return Ok();
