@@ -5,7 +5,7 @@
       "package-name": "dashboard"
     },
     "Keues.API": {
-      "release-type": "dotnet",
+      "release-type": "simple",
       "package-name": "api"
     }
   },
