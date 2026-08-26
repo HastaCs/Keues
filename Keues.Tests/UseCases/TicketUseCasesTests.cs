@@ -110,4 +110,22 @@ public class TicketUseCasesTests : IDisposable
     Assert.Single(byQueue.Tickets);
     Assert.Equal(3, byRange.Tickets.Count());
   }
+
+  [Fact]
+  public async Task GetAllTickets_sorts_by_created_at_ascending_and_descending()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var flow = await Seed.FlowAsync(context, location.Id);
+    var queue = await Seed.QueueAsync(context, location.Id, code: "P");
+    var first = await Seed.TicketAsync(context, queue.Id, flow.Id, createdAt: DateTime.UtcNow.AddDays(-2));
+    var second = await Seed.TicketAsync(context, queue.Id, flow.Id, createdAt: DateTime.UtcNow.AddDays(-1));
+    var handler = new GetAllTicketsHandler(context);
+
+    var ascending = await handler.Handle(new GetAllTicketsCommand { SortOrder = SortOrder.Asc });
+    var descending = await handler.Handle(new GetAllTicketsCommand { SortOrder = SortOrder.Desc });
+
+    Assert.Equal([first.Id, second.Id], ascending.Tickets.Select(t => t.Id).ToArray());
+    Assert.Equal([second.Id, first.Id], descending.Tickets.Select(t => t.Id).ToArray());
+  }
 }

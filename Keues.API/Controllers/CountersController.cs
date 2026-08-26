@@ -251,8 +251,7 @@ namespace Keues.API.Controllers
         var ticket = await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(command.TicketId));
         if (ticket == null)
           throw new Exception($"No ticket found for {command.TicketId}");
-        //await _counterUseCases.CancelTicket.Handle(command);
-        
+        await _counterUseCases.CancelTicket.Handle(command);
         
         var group = $"locationId:{ticket.LocationId}:typeDevice:Monitor:flowId:{ticket.FlowId}";
         await _hubContext.Clients.Group(group).SendAsync("TicketCancelled", new { ticketId = ticket.Id });

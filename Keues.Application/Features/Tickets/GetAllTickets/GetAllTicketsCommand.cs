@@ -12,4 +12,5 @@ public record GetAllTicketsCommand
   public Guid? QueueId { get; init; }
   public int Page { get; init; } = 1;
   public int Limit { get; init; } = 20;
+  public SortOrder SortOrder { get; init; } = SortOrder.Desc;
 }

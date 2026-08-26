@@ -46,7 +46,11 @@ public class GetAllTicketsHandler
     var total = await ticketQuery.CountAsync();
     var totalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)limit);
 
-    var tickets = await ticketQuery.OrderByDescending(t => t.CreatedAt)
+    var orderedQuery = request.SortOrder == Keues.Domain.Enums.SortOrder.Asc
+      ? ticketQuery.OrderBy(t => t.CreatedAt)
+      : ticketQuery.OrderByDescending(t => t.CreatedAt);
+
+    var tickets = await orderedQuery
                                    .Skip((page - 1) * limit)
                                    .Take(limit)
                                    .Include(t => t.Queue)
