@@ -33,6 +33,8 @@ public class GetTicketHandler
       Counter = ticket.Counter != null ? new CounterMin { Id = ticket.Counter.Id, Name = ticket.Counter.Name } : null,
       Code = ticket.Code,
       Flow= new FlowMin { Id = ticket.FlowId, Name = ticket.Flow.Name },
+      FlowId = ticket.FlowId,
+      LocationId = ticket.Flow.LocationId
     };
     
   }

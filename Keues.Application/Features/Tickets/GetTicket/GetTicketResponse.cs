@@ -33,7 +33,9 @@ public record GetTicketResponse
  public QueueMin? Queue { get; init; }
  public CounterMin? Counter { get; init; }
  
- public Guid FlowId { get; init; }
+ public required Guid FlowId { get; init; }
  public required FlowMin Flow { get; init; }
+
+ public required Guid LocationId { get; init; }
  public string Code { get; init; }
 }

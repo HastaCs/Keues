@@ -13,6 +13,8 @@ using Keues.Application.Features.Counters.GetAllCounters;
 using Keues.Application.Features.Counters.GetCounter;
 using Keues.Application.Features.Counters.GetQueues;
 using Keues.Application.Features.Counters.UpdateCounter;
+using Keues.Application.Features.Tickets;
+using Keues.Application.Features.Tickets.GetTicket;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -30,11 +32,13 @@ namespace Keues.API.Controllers
   public class CountersController : ControllerBase
   {
     private CounterUseCases _counterUseCases;
+    private TicketsUseCases _ticketUseCases;
     private readonly IHubContext<DeviceHub> _hubContext;
 
-    public CountersController(CounterUseCases counterUseCases, IHubContext<DeviceHub> hubContext)
+    public CountersController(CounterUseCases counterUseCases, TicketsUseCases ticketsUseCases, IHubContext<DeviceHub> hubContext)
     {
       _counterUseCases = counterUseCases;
+      _ticketUseCases = ticketsUseCases;
       _hubContext = hubContext;
     }
 
@@ -244,7 +248,14 @@ namespace Keues.API.Controllers
     {
       try
       {
-        await _counterUseCases.CancelTicket.Handle(command);
+        var ticket = await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(command.TicketId));
+        if (ticket == null)
+          throw new Exception($"No ticket found for {command.TicketId}");
+        //await _counterUseCases.CancelTicket.Handle(command);
+        
+        
+        var group = $"locationId:{ticket.LocationId}:typeDevice:Monitor:flowId:{ticket.FlowId}";
+        await _hubContext.Clients.Group(group).SendAsync("TicketCancelled", new { ticketId = ticket.Id });
         return Ok();
       }
       catch (Exception e)

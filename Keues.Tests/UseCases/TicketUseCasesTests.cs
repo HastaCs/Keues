@@ -34,6 +34,7 @@ public class TicketUseCasesTests : IDisposable
     Assert.Equal("Pescadería", response.Queue.Name);
     Assert.Equal(counter.Id, response.Counter!.Id);
     Assert.Equal(flow.Id, response.Flow.Id);
+    Assert.Equal(location.Id, response.LocationId);
   }
 
   [Fact]
@@ -54,7 +55,7 @@ public class TicketUseCasesTests : IDisposable
 
     var result = await handler.Handle(new GetAllTicketsCommand());
 
-    Assert.Empty(result);
+    Assert.Empty(result.Tickets);
   }
 
   [Fact]
@@ -77,9 +78,9 @@ public class TicketUseCasesTests : IDisposable
       Code = waiting.Code
     });
 
-    Assert.Single(waitingOnly);
-    Assert.Equal(waiting.Id, waitingOnly.Single().Id);
-    Assert.Single(byCode);
+    Assert.Single(waitingOnly.Tickets);
+    Assert.Equal(waiting.Id, waitingOnly.Tickets.Single().Id);
+    Assert.Single(byCode.Tickets);
   }
 
   [Fact]
@@ -105,8 +106,8 @@ public class TicketUseCasesTests : IDisposable
       CreatedTo = DateTime.UtcNow.AddMinutes(1)
     });
 
-    Assert.Equal(2, byLocation.Count());
-    Assert.Single(byQueue);
-    Assert.Equal(3, byRange.Count());
+    Assert.Equal(2, byLocation.Tickets.Count());
+    Assert.Single(byQueue.Tickets);
+    Assert.Equal(3, byRange.Tickets.Count());
   }
 }

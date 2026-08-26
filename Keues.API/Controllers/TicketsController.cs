@@ -28,8 +28,9 @@ namespace Keues.API.Controllers
     {
       try
       {
-        var tickets =await ticketsUseCases.GetAllTickets.Handle(command);
-        return Ok(new DataResponse<IEnumerable<GetTicketResponse>>(tickets));
+        var result = await ticketsUseCases.GetAllTickets.Handle(command);
+        var pagination = new Pagination(result.Page, result.Limit, result.Total, result.TotalPages);
+        return Ok(new DataResponse<IEnumerable<GetTicketResponse>>(result.Tickets, pagination));
       }
       catch (Exception e)
       {
