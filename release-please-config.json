@@ -1,4 +1,15 @@
 {
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "changelog-sections": [
+    { "type": "feat", "section": "🚀 Features", "hidden": false },
+    { "type": "fix", "section": "🐛 Bug Fixes", "hidden": false },
+    { "type": "perf", "section": "⚡ Performance", "hidden": false },
+    { "type": "deps", "section": "📦 Dependencies", "hidden": false },
+    { "type": "chore", "section": "🧹 Miscellaneous", "hidden": false },
+    { "type": "docs", "section": "📚 Documentation", "hidden": false },
+    { "type": "refactor", "section": "♻️ Code Refactoring", "hidden": false },
+    { "type": "test", "section": "🧪 Tests", "hidden": false }
+  ],
   "packages": {
     "Keues.Dashboard": {
       "release-type": "node",
@@ -6,7 +17,10 @@
     },
     "Keues.API": {
       "release-type": "simple",
-      "package-name": "api"
+      "package-name": "api",
+      "extra-files": [
+        "Keues.API/Keues.API.csproj"
+      ]
     }
   },
   "plugins": [
