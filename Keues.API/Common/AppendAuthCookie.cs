@@ -11,7 +11,7 @@ public static class AppendAuthCookie
       HttpOnly = true,
       Secure = response.HttpContext.Request.IsHttps,
       SameSite = SameSiteMode.Lax,
-      Expires = DateTimeOffset.UtcNow.AddYears(100)
+      Expires = DateTimeOffset.UtcNow.AddYears(1)
     });
   }
 
