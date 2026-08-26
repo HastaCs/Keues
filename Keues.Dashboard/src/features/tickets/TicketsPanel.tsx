@@ -4,6 +4,7 @@ import {
   Button,
   Group,
   Loader,
+  Pagination,
   Paper,
   Select,
   Stack,
@@ -13,7 +14,7 @@ import {
   ThemeIcon,
 } from '@mantine/core';
 import { IconSearch, IconTicket, IconX } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '@/api/httpClient';
 import { queuesApi } from '@/api/QueuesApi';
@@ -25,6 +26,8 @@ import { useActiveLocation } from '@/features/locations/LocationContext';
 
 type SortDirection = 'asc' | 'desc';
 type StatusFilter = 'all' | TicketStatus;
+
+const PAGE_SIZE = 20;
 
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
@@ -91,14 +94,6 @@ function formatDate(value: string | null): string {
   return date.toLocaleString();
 }
 
-function sortTickets(items: Ticket[], direction: SortDirection): Ticket[] {
-  const sorted = [...items].sort((left, right) => {
-    return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
-  });
-
-  return direction === 'asc' ? sorted : sorted.reverse();
-}
-
 export function TicketsPanel() {
   const { t } = useTranslation();
   const location = useActiveLocation();
@@ -113,6 +108,12 @@ export function TicketsPanel() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
+  const [pagination, setPagination] = useState<{ total: number; totalPages: number }>({
+    total: 0,
+    totalPages: 1,
+  });
 
   useEffect(() => {
     if (!location) {
@@ -138,34 +139,55 @@ export function TicketsPanel() {
     };
   }, [location]);
 
-  const refreshTickets = useCallback(async () => {
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, queueFilter, dateFrom, dateTo, pageSize]);
+
+  useEffect(() => {
     if (!location) {
       return;
     }
 
+    let cancelled = false;
+
     setError(null);
     setLoading(true);
 
-    try {
-      const response = await ticketsApi.list({
+    ticketsApi
+      .list({
         locationId: location.id,
         status: statusFilter === 'all' ? undefined : statusFilter,
         queueId: queueFilter === 'all' ? undefined : queueFilter,
         createdFrom: toIsoDate(dateFrom, false),
         createdTo: toIsoDate(dateTo, true),
+        page,
+        limit: pageSize,
+        sortOrder: sortDirection,
+      })
+      .then((response) => {
+        if (!cancelled) {
+          setTickets(response.data);
+          setPagination({
+            total: response.pagination?.total ?? 0,
+            totalPages: response.pagination?.totalPages ?? 1,
+          });
+        }
+      })
+      .catch((requestError) => {
+        if (!cancelled) {
+          setError(getErrorMessage(requestError, t('errors.unexpected')));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
 
-      setTickets(response.data);
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    } finally {
-      setLoading(false);
-    }
-  }, [location, statusFilter, queueFilter, dateFrom, dateTo]);
-
-  useEffect(() => {
-    void refreshTickets();
-  }, [refreshTickets]);
+    return () => {
+      cancelled = true;
+    };
+  }, [location, statusFilter, queueFilter, dateFrom, dateTo, page, pageSize, sortDirection, t]);
 
   const filteredTickets = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -180,8 +202,8 @@ export function TicketsPanel() {
       return matchesQuery;
     });
 
-    return sortTickets(matches, sortDirection);
-  }, [tickets, search, sortDirection]);
+    return matches;
+  }, [tickets, search]);
 
   function handleClearFilters() {
     setSearch('');
@@ -189,6 +211,7 @@ export function TicketsPanel() {
     setQueueFilter('all');
     setDateFrom('');
     setDateTo('');
+    setPage(1);
   }
 
   if (!location) {
@@ -350,6 +373,36 @@ export function TicketsPanel() {
               ))}
             </Table.Tbody>
           </Table>
+
+          <Group
+            justify="space-between"
+            align="center"
+            wrap="wrap"
+            gap="sm"
+            px="sm"
+            py="sm"
+            style={{ borderTop: '1px solid var(--mantine-color-default-border)' }}
+          >
+            <Text size="sm" c="dimmed">
+              {t('tickets.showing', {
+                from: pagination.total === 0 ? 0 : (page - 1) * pageSize + 1,
+                to: Math.min(page * pageSize, pagination.total),
+                total: pagination.total,
+              })}
+            </Text>
+
+            <Group gap="xs">
+              <Pagination total={pagination.totalPages} value={page} onChange={setPage} />
+              <Select
+                value={String(pageSize)}
+                onChange={(value) => setPageSize(Number(value) || PAGE_SIZE)}
+                data={[10, 20, 50, 100].map((size) => ({ value: String(size), label: `${size}` }))}
+                aria-label={t('tickets.pageSize')}
+                allowDeselect={false}
+                style={{ width: 90 }}
+              />
+            </Group>
+          </Group>
         </Paper>
       )}
     </Stack>

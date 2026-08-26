@@ -185,6 +185,8 @@ const resources = {
         dateFrom: 'Fecha desde',
         dateTo: 'Fecha hasta',
         clearFilters: 'Limpiar filtros',
+        showing: 'Mostrando {{from}}–{{to}} de {{total}}',
+        pageSize: 'Tamaño de página',
       },
       ticketTypes: {
         title: 'Colas de la location activa',
@@ -603,6 +605,8 @@ const resources = {
         dateFrom: 'From date',
         dateTo: 'To date',
         clearFilters: 'Clear filters',
+        showing: 'Showing {{from}}–{{to}} of {{total}}',
+        pageSize: 'Page size',
       },
       ticketTypes: {
         title: 'Queues for active location',

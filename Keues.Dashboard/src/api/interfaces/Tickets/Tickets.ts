@@ -37,4 +37,7 @@ export interface ListTicketsParams {
   queueId?: string;
   createdFrom?: string;
   createdTo?: string;
+  page?: number;
+  limit?: number;
+  sortOrder?: 'asc' | 'desc';
 }

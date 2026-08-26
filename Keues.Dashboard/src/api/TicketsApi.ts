@@ -1,28 +1,40 @@
-import { request } from "./httpClient";
+import { request } from './httpClient';
 
-import type { ApiResponse } from "./interfaces/common/ApiResponse";
-import { ListTicketsParams, Ticket, TicketId } from "./interfaces/Tickets/Tickets";
+import type { ApiResponse } from './interfaces/common/ApiResponse';
+import { ListTicketsParams, Ticket, TicketId } from './interfaces/Tickets/Tickets';
 
-const endpoint = "/tickets";
+const endpoint = '/tickets';
 
 function buildQuery(params: ListTicketsParams): string {
   const query = new URLSearchParams();
-  query.set("locationId", params.locationId);
+  query.set('locationId', params.locationId);
 
   if (params.status !== undefined) {
-    query.set("status", String(params.status));
+    query.set('status', String(params.status));
   }
 
   if (params.queueId) {
-    query.set("queueId", params.queueId);
+    query.set('queueId', params.queueId);
   }
 
   if (params.createdFrom) {
-    query.set("createdFrom", params.createdFrom);
+    query.set('createdFrom', params.createdFrom);
   }
 
   if (params.createdTo) {
-    query.set("createdTo", params.createdTo);
+    query.set('createdTo', params.createdTo);
+  }
+
+  if (params.page !== undefined) {
+    query.set('page', String(params.page));
+  }
+
+if (params.limit !== undefined) {
+    query.set("limit", String(params.limit));
+  }
+
+  if (params.sortOrder !== undefined) {
+    query.set("sortOrder", params.sortOrder);
   }
 
   return query.toString();
