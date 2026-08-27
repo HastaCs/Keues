@@ -25,6 +25,7 @@ import {
   IconDeviceFloppy,
   IconEdit,
   IconHomePlus,
+  IconInfoCircle,
   IconPlus,
   IconTrash,
 } from '@tabler/icons-react';
@@ -33,6 +34,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import cardHoverClasses from '@/styles/card-hover.module.css';
+import statusDotStyles from '@/styles/status-dot.module.css';
 import { FlowIconKey, FlowMenuItem, Flow, MenuNodeType } from '@/api/interfaces/Flow/Flows';
 import { flowsApi } from '@/api/FlowsApi';
 import { queuesApi } from '@/api/QueuesApi';
@@ -105,6 +107,7 @@ export function FlowsPanel() {
   const [menuItems, setMenuItems] = useState<FlowMenuItem[]>([]);
   const [deletingFlow, setDeletingFlow] = useState<Flow | undefined>();
   const [unsavedModalOpened, setUnsavedModalOpened] = useState(false);
+  const [confirmDeleteNodeOpened, setConfirmDeleteNodeOpened] = useState(false);
   const flowsRef = useRef(flows);
   flowsRef.current = flows;
   const [savedMenuItemsJson, setSavedMenuItemsJson] = useState('');
@@ -442,6 +445,55 @@ export function FlowsPanel() {
     setRuleError(null);
   }
 
+  function handleTreeDrop(payload: {
+    draggedNode: string;
+    targetNode: string;
+    position: 'before' | 'after' | 'inside';
+  }) {
+    if (!activeFlow) {
+      return;
+    }
+
+    const { draggedNode, targetNode, position } = payload;
+
+    if (draggedNode === targetNode) {
+      return;
+    }
+
+    const items = activeFlow.menuItems;
+    const dragItem = items.find((item) => item.id === draggedNode);
+    const target = items.find((item) => item.id === targetNode);
+
+    if (!dragItem || !target) {
+      return;
+    }
+
+    const newParentId = position === 'inside' ? target.id : target.parentId;
+    const remaining = items.filter((item) => item.id !== draggedNode);
+    const targetIndex = remaining.findIndex((item) => item.id === targetNode);
+
+    if (targetIndex === -1) {
+      return;
+    }
+
+    const updatedDragItem = { ...dragItem, parentId: newParentId };
+    const nextItems = [...remaining];
+    let insertIndex: number;
+
+    if (position === 'inside') {
+      const lastChildIndex = remaining.reduce((acc, item, index) => {
+        return item.parentId === target.id ? index : acc;
+      }, -1);
+      insertIndex = lastChildIndex === -1 ? targetIndex + 1 : lastChildIndex + 1;
+    } else {
+      insertIndex = position === 'after' ? targetIndex + 1 : targetIndex;
+    }
+
+    nextItems.splice(insertIndex, 0, updatedDragItem);
+
+    updateActiveFlow((flow) => ({ ...flow, menuItems: nextItems }));
+  }
+
   function updateSelectedNode(changes: Partial<FlowMenuItem>) {
     if (!selectedNode) {
       return;
@@ -570,17 +622,23 @@ export function FlowsPanel() {
             value={flowDescription}
             onChange={(event) => setFlowDescription(event.currentTarget.value)}
           />
-          <Select
-            label={t('flows.flowMode')}
-            value={flowMode}
-            onChange={(value) => setFlowMode((value as number) ?? 0)}
-            allowDeselect={false}
-            data={[
-              { value: 0, label: t('flows.TicketMachine') },
-              { value: 1, label: t('flows.SetFree') },
-              { value: 2, label: t('flows.ManualCall') },
-            ]}
-          />
+          <Stack gap={6}>
+            <Text size="sm" fw={500}>
+              {t('flows.flowMode')}
+            </Text>
+
+            <SegmentedControl
+              fullWidth
+              color="blue"
+              value={String(flowMode)}
+              onChange={(value) => setFlowMode(Number(value))}
+              data={[
+                { value: '0', label: t('flows.TicketMachine') },
+                { value: '1', label: t('flows.SetFree') },
+                { value: '2', label: t('flows.ManualCall') },
+              ]}
+            />
+          </Stack>
           <Group justify="flex-end">
             <Button variant="default" onClick={() => setFlowModalOpened(false)}>
               {t('common.cancel')}
@@ -605,6 +663,37 @@ export function FlowsPanel() {
             </Button>
 
             <Button color="red" onClick={handleConfirmDeleteFlow}>
+              {t('common.delete')}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Modal
+        opened={confirmDeleteNodeOpened}
+        onClose={() => setConfirmDeleteNodeOpened(false)}
+        title={t('flows.deleteNodeTitle')}
+        centered
+      >
+        <Stack gap="lg">
+          <Text>
+            {t('flows.deleteNodeDescription', {
+              name: selectedNode?.name ?? '',
+            })}
+          </Text>
+
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setConfirmDeleteNodeOpened(false)}>
+              {t('common.cancel')}
+            </Button>
+
+            <Button
+              color="red"
+              onClick={() => {
+                deleteSelectedNode();
+                setConfirmDeleteNodeOpened(false);
+              }}
+            >
               {t('common.delete')}
             </Button>
           </Group>
@@ -687,29 +776,17 @@ export function FlowsPanel() {
                       </Text>
                     </Stack>
                     <Group gap={4}>
-                      <Tooltip label={t('common.edit')}>
-                        <ActionIcon
-                          variant="light"
-                          color="blue"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            openEditFlowModal(flow);
-                          }}
-                        >
-                          <IconEdit size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-
                       <Tooltip label={t('common.delete')}>
                         <ActionIcon
                           variant="light"
                           color="red"
+                          size="md"
                           onClick={(event) => {
                             event.stopPropagation();
                             setDeletingFlow(flow);
                           }}
                         >
-                          <IconTrash size={16} />
+                          <IconTrash size={18} />
                         </ActionIcon>
                       </Tooltip>
                     </Group>
@@ -734,32 +811,49 @@ export function FlowsPanel() {
         ) : (
           <>
             <Group justify="space-between" align="center">
-              <Button
-                variant="light"
-                leftSection={<IconArrowLeft size={14} />}
-                onClick={() => {
-                  if (hasUnsavedChanges) {
-                    setUnsavedModalOpened(true);
-                    return;
-                  }
+              <Group gap="sm">
+                <Button
+                  variant="light"
+                  leftSection={<IconArrowLeft size={14} />}
+                  onClick={() => {
+                    if (hasUnsavedChanges) {
+                      setUnsavedModalOpened(true);
+                      return;
+                    }
 
-                  setActiveFlowId(null);
-                }}
-              >
-                {t('flows.backToFlows')}
-              </Button>
+                    setActiveFlowId(null);
+                  }}
+                >
+                  {t('flows.backToFlows')}
+                </Button>
+
+                {activeFlow ? (
+                  <Group gap={4} wrap="nowrap">
+                    <Text fw={700}>{activeFlow.name}</Text>
+
+                    <Button
+                      variant="subtle"
+                      size="compact-sm"
+                      color="blue"
+                      leftSection={<IconEdit size={14} />}
+                      onClick={() => openEditFlowModal()}
+                    >
+                      {t('common.edit')}
+                    </Button>
+                  </Group>
+                ) : null}
+              </Group>
+
               {activeFlow ? (
-                <Badge size="lg" variant="light">
-                  {activeFlow.name}
-                </Badge>
+                <Badge variant="light">{t(getFlowModeLabelKey(activeFlow.flowType))}</Badge>
               ) : null}
             </Group>
 
             <Group align="flex-start" grow>
               {activeFlow.flowType === 1 ? (
-                <Paper withBorder radius="md" p="xl">
-                  <Text>{t('flows.noMenusForFreeFlow')}</Text>
-                </Paper>
+                <Alert color="teal" variant="light" icon={<IconInfoCircle size={18} />} radius="md">
+                  {t('flows.noMenusForFreeFlow')}
+                </Alert>
               ) : (
                 <>
                   <Card withBorder radius="md" p="md" style={{ minHeight: 560 }}>
@@ -796,7 +890,13 @@ export function FlowsPanel() {
                             <ActionIcon
                               variant="light"
                               color="red"
-                              onClick={deleteSelectedNode}
+                              onClick={() => {
+                                if (selectedNodeChildrenCount > 0) {
+                                  setConfirmDeleteNodeOpened(true);
+                                } else {
+                                  deleteSelectedNode();
+                                }
+                              }}
                               disabled={!selectedNode}
                             >
                               <IconTrash size={14} />
@@ -821,6 +921,32 @@ export function FlowsPanel() {
                           expandOnClick={false}
                           expandOnSpace={false}
                           withLines
+                          onDragDrop={handleTreeDrop}
+                          allowDrop={({ draggedNode, targetNode, position }) => {
+                            if (!activeFlow || draggedNode === targetNode) {
+                              return false;
+                            }
+
+                            const dragged = activeFlow.menuItems.find(
+                              (item) => item.id === draggedNode
+                            );
+                            const target = activeFlow.menuItems.find(
+                              (item) => item.id === targetNode
+                            );
+
+                            if (!dragged || !target) {
+                              return false;
+                            }
+
+                            if (position === 'inside' && target.nodeType !== 'menu') {
+                              return false;
+                            }
+
+                            return !collectDescendantIds(
+                              activeFlow.menuItems,
+                              draggedNode
+                            ).includes(targetNode);
+                          }}
                           renderNode={({ node, elementProps }) => {
                             const item = activeItemsById.get(node.value);
                             if (!item) {
@@ -854,7 +980,18 @@ export function FlowsPanel() {
 
                       <Divider />
 
-                      <Group justify="flex-end">
+                      <Group justify="space-between" align="center">
+                        {hasUnsavedChanges ? (
+                          <Group gap={6} wrap="nowrap">
+                            <span className={statusDotStyles.dot} />
+                            <Text size="xs" c="dimmed">
+                              {t('flows.unsavedIndicator')}
+                            </Text>
+                          </Group>
+                        ) : (
+                          <span />
+                        )}
+
                         <Button
                           variant="filled"
                           color="blue"

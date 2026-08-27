@@ -1,6 +1,5 @@
-import type { LocationId } from "@/api/interfaces/Location/Locations";
-import type { QueueId } from "@/api/interfaces/Queue/Queues";
-
+import type { LocationId } from '@/api/interfaces/Location/Locations';
+import type { QueueId } from '@/api/interfaces/Queue/Queues';
 
 export type CounterId = string;
 
@@ -11,7 +10,8 @@ export interface Counter {
   color: string;
   description: string;
   locationId: LocationId;
-  queues: QueueId[]|null;
+  queues: QueueId[] | null;
+  createdAt: string;
 }
 
 export interface CreateCounterInput {

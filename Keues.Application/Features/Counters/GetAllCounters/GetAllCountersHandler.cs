@@ -18,6 +18,6 @@ public class GetAllCountersHandler
       query=query.Where(x=>x.LocationId==command.LocationId.Value);
     
     var counters = await query.ToListAsync();
-    return counters.Select(counter => new CounterBaseResponse(counter.Id, counter.Name, counter.Code, counter.Description, counter.Color, counter.Queues.Select(x => x.Id),counter.LocationId));
+    return counters.Select(counter => new CounterBaseResponse(counter.Id, counter.Name, counter.Code, counter.Description, counter.Color, counter.Queues.Select(x => x.Id),counter.LocationId,counter.CreatedAt!.Value));
   }
 }

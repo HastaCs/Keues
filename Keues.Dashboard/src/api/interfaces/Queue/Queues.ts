@@ -1,4 +1,4 @@
-import { CounterId } from "../Counter/Counters";
+import { CounterId } from '../Counter/Counters';
 
 export interface Queue {
   id: QueueId;
@@ -13,12 +13,13 @@ export interface Queue {
   color: string;
   locationId: string;
   counters: CounterId[];
+  createdAt: string;
 }
 
 export type QueueId = string;
 
 export interface QueueInput {
-   name: string;
+  name: string;
   description: string;
   maxValue: number | null;
   code: string;

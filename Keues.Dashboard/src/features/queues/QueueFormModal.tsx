@@ -15,7 +15,7 @@ import {
   ThemeIcon,
   Tooltip,
 } from '@mantine/core';
-import { IconCheck, IconDeviceDesktop, IconInfoCircle } from '@tabler/icons-react';
+import { IconCheck, IconDeviceDesktop, IconDeviceTv, IconInfoCircle } from '@tabler/icons-react';
 import { colors } from '../../data/common';
 
 import { useEffect, useState } from 'react';
@@ -189,6 +189,7 @@ export function QueueFormModal(props: QueueFormModalProps) {
               style={{ width: 80, flexShrink: 0 }}
               maxLength={2}
               label={t('queueForm.prefix')}
+              leftSection={<IconDeviceTv size={16} />}
               value={formState.code}
               onChange={(event) => {
                 const value = event.currentTarget.value

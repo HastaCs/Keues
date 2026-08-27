@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   Alert,
+  Badge,
   Button,
   Card,
   Divider,
@@ -17,13 +18,25 @@ import {
   Tooltip,
 } from '@mantine/core';
 
-import { IconEdit, IconHash, IconSearch, IconTicket, IconTrash } from '@tabler/icons-react';
+import {
+  IconDeviceTv,
+  IconEdit,
+  IconHash,
+  IconHourglass,
+  IconListNumbers,
+  IconScale,
+  IconSearch,
+  IconTicket,
+  IconTrash,
+  IconUsers,
+} from '@tabler/icons-react';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ApiError } from '@/api/httpClient';
 import { queuesApi } from '@/api/QueuesApi';
+import { countersApi } from '@/api/CountersApi';
 import { Queue, QueueInput } from '@/api/interfaces/Queue/Queues';
 import { useActiveLocation } from '@/features/locations/LocationContext';
 import { QueueFormModal } from './QueueFormModal';
@@ -42,14 +55,34 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-function sortQueues(items: Queue[], direction: string): Queue[] {
-  const sorted = [...items].sort((a, b) => a.code.localeCompare(b.code, 'es'));
+type QueueSortMode = 'created' | 'asc' | 'desc';
 
-  return direction === 'asc' ? sorted : sorted.reverse();
+const SORT_STORAGE_KEY = 'keues.queues.sort';
+
+function getStoredSort(): QueueSortMode {
+  const stored = window.localStorage.getItem(SORT_STORAGE_KEY);
+  return stored === 'asc' || stored === 'desc' || stored === 'created' ? stored : 'created';
+}
+
+function sortQueues(items: Queue[], mode: QueueSortMode): Queue[] {
+  if (mode === 'created') {
+    return [...items].sort(
+      (left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+    );
+  }
+
+  const sorted = [...items].sort((left, right) => left.name.localeCompare(right.name, 'es'));
+
+  return mode === 'asc' ? sorted : sorted.reverse();
 }
 
 function getDisplayExample(displayCode: string) {
   return `${displayCode}001`;
+}
+
+interface CounterMeta {
+  name: string;
+  color: string;
 }
 
 export function QueuesPanel() {
@@ -67,7 +100,9 @@ export function QueuesPanel() {
 
   const [search, setSearch] = useState('');
 
-  const [sortDirection, setSortDirection] = useState<string>('asc');
+  const [sortDirection, setSortDirection] = useState<QueueSortMode>(getStoredSort);
+
+  const [counterMeta, setCounterMeta] = useState<Record<string, CounterMeta>>({});
 
   const [formOpened, setFormOpened] = useState(false);
 
@@ -87,6 +122,17 @@ export function QueuesPanel() {
       const response = await queuesApi.list(location.id);
 
       setQueues(response.data);
+
+      const countersResponse = await countersApi.list(location.id);
+
+      setCounterMeta(
+        Object.fromEntries(
+          countersResponse.data.map((counter) => [
+            counter.id,
+            { name: counter.name, color: counter.color },
+          ])
+        )
+      );
     } catch (err) {
       setError(getErrorMessage(err, t('errors.unexpected')));
     } finally {
@@ -224,15 +270,23 @@ export function QueuesPanel() {
 
           <Select
             value={sortDirection}
-            onChange={(v) => setSortDirection((v as string) ?? 'asc')}
+            onChange={(value) => {
+              const next = (value as QueueSortMode) ?? 'created';
+              setSortDirection(next);
+              window.localStorage.setItem(SORT_STORAGE_KEY, next);
+            }}
             data={[
               {
+                value: 'created',
+                label: t('ticketTypes.sortCreated'),
+              },
+              {
                 value: 'asc',
-                label: t('ticketTypes.sortDisplayCodeAZ'),
+                label: t('ticketTypes.sortNameAZ'),
               },
               {
                 value: 'desc',
-                label: t('ticketTypes.sortDisplayCodeZA'),
+                label: t('ticketTypes.sortNameZA'),
               },
             ]}
             allowDeselect={false}
@@ -259,7 +313,8 @@ export function QueuesPanel() {
             cols={{
               base: 1,
               sm: 2,
-              lg: 3,
+              md: 3,
+              xl: 4,
             }}
             spacing="md"
           >
@@ -268,85 +323,149 @@ export function QueuesPanel() {
                 key={ticketType.id}
                 withBorder
                 radius="lg"
-                p="lg"
+                p="md"
                 className={styles.hoverCard}
+                onClick={() => openEditModal(ticketType)}
                 style={{
                   borderLeft: `6px solid var(--mantine-color-${ticketType.color}-6)`,
+                  cursor: 'pointer',
                 }}
               >
-                <Stack gap="md">
-                  <Group justify="space-between" align="flex-start">
-                    <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-                      <ThemeIcon size={44} radius="xl" color={ticketType.color} variant="light">
-                        <IconTicket size={22} />
-                      </ThemeIcon>
+                <Group justify="space-between" align="flex-start" wrap="nowrap">
+                  <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
+                    <ThemeIcon size={36} radius="xl" color={ticketType.color} variant="light">
+                      <IconTicket size={18} />
+                    </ThemeIcon>
 
-                      <Stack gap={2} style={{ minWidth: 0 }}>
-                        <Text fw={700} truncate>
-                          {ticketType.code}
-                        </Text>
+                    <Stack gap={1} style={{ minWidth: 0 }}>
+                      <Text fw={700} truncate>
+                        {ticketType.name}
+                      </Text>
+
+                      <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
+                        <Tooltip label={t('ticketTypes.prefixMonitorHelp')} withArrow>
+                          <IconDeviceTv size={13} />
+                        </Tooltip>
 
                         <Text size="xs" c="dimmed" truncate>
-                          {ticketType.name}
+                          {ticketType.code}
                         </Text>
-                      </Stack>
-                    </Group>
-
-                    <Group gap={4}>
-                      <Tooltip label={t('common.edit')}>
-                        <ActionIcon
-                          variant="light"
-                          color="blue"
-                          onClick={() => openEditModal(ticketType)}
-                        >
-                          <IconEdit size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-
-                      <Tooltip label={t('common.delete')}>
-                        <ActionIcon
-                          variant="light"
-                          color="red"
-                          onClick={() => setDeletingQueue(ticketType)}
-                        >
-                          <IconTrash size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-                    </Group>
-                  </Group>
-
-                  <Divider />
-
-                  <Text size="sm" c="dimmed" lineClamp={2}>
-                    {ticketType.description || t('ticketTypes.noDescription')}
-                  </Text>
-
-                  <Group gap="xs" wrap="nowrap" align="center">
-                    <IconTicket size={17} stroke={1.5} style={{ flexShrink: 0 }} />
-
-                    <Stack gap={0}>
-                      <Text size="xs" c="dimmed">
-                        {t('ticketTypes.exampleTicket')}
-                      </Text>
-
-                      <Text size="sm" ff="monospace">
-                        {getDisplayExample(ticketType.code)}
-                      </Text>
+                      </Group>
                     </Stack>
                   </Group>
 
-                  <Group gap="xs" wrap="nowrap" align="center">
-                    <IconHash size={17} stroke={1.5} style={{ flexShrink: 0 }} />
+                  <Group gap={2}>
+                    <Tooltip label={t('common.delete')}>
+                      <ActionIcon
+                        variant="light"
+                        color="red"
+                        size="md"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setDeletingQueue(ticketType);
+                        }}
+                      >
+                        <IconTrash size={18} />
+                      </ActionIcon>
+                    </Tooltip>
+                  </Group>
+                </Group>
 
-                    <Stack gap={0}>
+                <Text size="sm" c="dimmed" lineClamp={2} mt="xs">
+                  {ticketType.description || t('ticketTypes.noDescription')}
+                </Text>
+
+                <Group gap="lg" wrap="wrap" mt="sm">
+                  <Group gap={6} wrap="nowrap">
+                    <IconTicket size={14} stroke={1.5} color="var(--mantine-color-dimmed)" />
+
+                    <Text size="xs" c="dimmed">
+                      {t('ticketTypes.exampleTicket')}
+                    </Text>
+
+                    <Text size="sm" fw={600} ff="monospace">
+                      {getDisplayExample(ticketType.code)}
+                    </Text>
+                  </Group>
+
+                  <Group gap={6} wrap="nowrap">
+                    <IconHash size={14} stroke={1.5} color="var(--mantine-color-dimmed)" />
+
+                    <Text size="xs" c="dimmed">
+                      {t('ticketTypes.maxValue')}
+                    </Text>
+
+                    <Text size="sm" fw={600}>
+                      {ticketType.maxValue ?? t('ticketTypes.noMaxValue')}
+                    </Text>
+                  </Group>
+                </Group>
+
+                <Paper bg="var(--mantine-color-gray-light)" radius="md" p="xs" mt="xs">
+                  <Group gap="lg" wrap="wrap">
+                    <Group gap={6} wrap="nowrap">
+                      <IconListNumbers size={14} stroke={1.5} color="var(--mantine-color-dimmed)" />
+
                       <Text size="xs" c="dimmed">
-                        {t('ticketTypes.maxValue')}
+                        {t('queueForm.priority')}
                       </Text>
 
-                      <Text size="sm">{ticketType.maxValue ?? t('ticketTypes.noMaxValue')}</Text>
-                    </Stack>
+                      <Text size="sm" fw={600}>
+                        {ticketType.priority}
+                      </Text>
+                    </Group>
+
+                    <Group gap={6} wrap="nowrap">
+                      <IconScale size={14} stroke={1.5} color="var(--mantine-color-dimmed)" />
+
+                      <Text size="xs" c="dimmed">
+                        {t('queueForm.weight')}
+                      </Text>
+
+                      <Text size="sm" fw={600}>
+                        {ticketType.weight}
+                      </Text>
+                    </Group>
+
+                    <Group gap={6} wrap="nowrap">
+                      <IconHourglass size={14} stroke={1.5} color="var(--mantine-color-dimmed)" />
+
+                      <Text size="xs" c="dimmed">
+                        {t('ticketTypes.aging')}
+                      </Text>
+
+                      <Text size="sm" fw={600}>
+                        {ticketType.agingIntervalMinutes === 0
+                          ? t('ticketTypes.disabled')
+                          : `${ticketType.agingIntervalMinutes} min`}
+                      </Text>
+                    </Group>
                   </Group>
-                </Stack>
+                </Paper>
+
+                <Divider mt="sm" />
+
+                <Group gap="xs" wrap="nowrap" align="center" mt="sm">
+                  <IconUsers size={14} stroke={1.5} style={{ flexShrink: 0 }} />
+
+                  {ticketType.counters.length === 0 ? (
+                    <Text size="xs" c="dimmed">
+                      {t('ticketTypes.noCounters')}
+                    </Text>
+                  ) : (
+                    <Group gap={4} wrap="wrap">
+                      {ticketType.counters.map((counterId) => {
+                        const meta = counterMeta[counterId];
+
+                        return (
+                          <Badge key={counterId} size="xs" variant="light" color={meta?.color}>
+                            {meta?.name ?? counterId}
+                          </Badge>
+                        );
+                      })}
+                    </Group>
+                  )}
+                </Group>
               </Card>
             ))}
           </SimpleGrid>

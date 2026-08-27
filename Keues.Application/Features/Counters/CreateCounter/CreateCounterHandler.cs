@@ -22,7 +22,7 @@ public class CreateCounterHandler(IApplicationDbContext _context)
     _context.Counters.Add(counter);
     await _context.SaveChangesAsync();
 
-    return new CounterBaseResponse(counter.Id, counter.Name, counter.Code, counter.Description, counter.Color,counter.Queues.Select(q => q.Id),counter.LocationId);
+    return new CounterBaseResponse(counter.Id, counter.Name, counter.Code, counter.Description, counter.Color,counter.Queues.Select(q => q.Id),counter.LocationId,counter.CreatedAt!.Value);
    
   }
 }

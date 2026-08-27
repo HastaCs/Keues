@@ -20,6 +20,6 @@ public class GetQueueHandler
 
     return new QueueBaseResponse(queue.Id, queue.Name, queue.Description, queue.MaxValue,
       queue.Code, queue.Priority, queue.Weight, queue.AgingIntervalMinutes,
-      queue.MaxAgingBonus, queue.Color,queue.Counters.Select(x => x.Id));
+      queue.MaxAgingBonus, queue.Color,queue.Counters.Select(x => x.Id), queue.CreatedAt);
   }
 }

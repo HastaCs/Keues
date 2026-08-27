@@ -1,7 +1,6 @@
 import {
   ActionIcon,
   Alert,
-  Badge,
   Button,
   Card,
   Divider,
@@ -18,7 +17,14 @@ import {
   Tooltip,
 } from '@mantine/core';
 
-import { IconEdit, IconSearch, IconTrash, IconUsers } from '@tabler/icons-react';
+import {
+  IconDeviceTv,
+  IconEdit,
+  IconSearch,
+  IconTicket,
+  IconTrash,
+  IconUsers,
+} from '@tabler/icons-react';
 import { countersApi } from '@/api/CountersApi';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -43,10 +49,25 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-function sortCounters(items: Counter[], direction: string): Counter[] {
-  const sorted = [...items].sort((left, right) => left.code.localeCompare(right.code, 'es'));
+type CounterSortMode = 'created' | 'asc' | 'desc';
 
-  return direction === 'asc' ? sorted : sorted.reverse();
+const SORT_STORAGE_KEY = 'keues.counters.sort';
+
+function getStoredSort(): CounterSortMode {
+  const stored = window.localStorage.getItem(SORT_STORAGE_KEY);
+  return stored === 'asc' || stored === 'desc' || stored === 'created' ? stored : 'created';
+}
+
+function sortCounters(items: Counter[], mode: CounterSortMode): Counter[] {
+  if (mode === 'created') {
+    return [...items].sort(
+      (left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+    );
+  }
+
+  const sorted = [...items].sort((left, right) => left.name.localeCompare(right.name, 'es'));
+
+  return mode === 'asc' ? sorted : sorted.reverse();
 }
 
 export function CountersPanel() {
@@ -64,7 +85,7 @@ export function CountersPanel() {
 
   const [search, setSearch] = useState('');
 
-  const [sortDirection, setSortDirection] = useState<string>('asc');
+  const [sortDirection, setSortDirection] = useState<CounterSortMode>(getStoredSort);
 
   const [formOpened, setFormOpened] = useState(false);
 
@@ -236,15 +257,23 @@ export function CountersPanel() {
 
           <Select
             value={sortDirection}
-            onChange={(value) => setSortDirection((value as string) ?? 'asc')}
+            onChange={(value) => {
+              const next = (value as CounterSortMode) ?? 'created';
+              setSortDirection(next);
+              window.localStorage.setItem(SORT_STORAGE_KEY, next);
+            }}
             data={[
               {
+                value: 'created',
+                label: t('counters.sortCreated'),
+              },
+              {
                 value: 'asc',
-                label: t('counters.sortCodeAZ'),
+                label: t('counters.sortNameAZ'),
               },
               {
                 value: 'desc',
-                label: t('counters.sortCodeZA'),
+                label: t('counters.sortNameZA'),
               },
             ]}
             allowDeselect={false}
@@ -273,7 +302,8 @@ export function CountersPanel() {
             cols={{
               base: 1,
               sm: 2,
-              lg: 3,
+              md: 3,
+              xl: 4,
             }}
             spacing="md"
           >
@@ -282,75 +312,72 @@ export function CountersPanel() {
                 key={counter.id}
                 withBorder
                 radius="lg"
-                p="lg"
+                p="md"
                 className={styles.hoverCard}
+                onClick={() => openEditModal(counter)}
                 style={{
                   borderLeft: `6px solid var(--mantine-color-${counter.color}-6)`,
+                  cursor: 'pointer',
                 }}
               >
-                <Stack gap="md">
-                  <Group justify="space-between" align="flex-start">
-                    <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-                      <ThemeIcon size={44} radius="xl" color={counter.color} variant="light">
-                        <IconUsers size={22} />
-                      </ThemeIcon>
+                <Group justify="space-between" align="flex-start" wrap="nowrap">
+                  <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
+                    <ThemeIcon size={36} radius="xl" color={counter.color} variant="light">
+                      <IconUsers size={18} />
+                    </ThemeIcon>
 
-                      <Stack gap={2} style={{ minWidth: 0 }}>
-                        <Text fw={700} truncate>
+                    <Stack gap={1} style={{ minWidth: 0 }}>
+                      <Text fw={700} truncate>
+                        {counter.name}
+                      </Text>
+
+                      <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
+                        <Tooltip label={t('counters.codeMonitorHelp')} withArrow>
+                          <IconDeviceTv size={13} />
+                        </Tooltip>
+                        <Text size="xs" c="dimmed" truncate>
                           {counter.code}
                         </Text>
-
-                        <Text size="xs" c="dimmed" truncate>
-                          {counter.name}
-                        </Text>
-                      </Stack>
-                    </Group>
-
-                    <Group gap={4}>
-                      <Tooltip label={t('common.edit')}>
-                        <ActionIcon
-                          variant="light"
-                          color="blue"
-                          onClick={() => openEditModal(counter)}
-                        >
-                          <IconEdit size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-
-                      <Tooltip label={t('common.delete')}>
-                        <ActionIcon
-                          variant="light"
-                          color="red"
-                          onClick={() => setDeletingCounter(counter)}
-                        >
-                          <IconTrash size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-                    </Group>
+                      </Group>
+                    </Stack>
                   </Group>
 
-                  <Divider />
+                  <Group gap={2}>
+                    <Tooltip label={t('common.delete')}>
+                      <ActionIcon
+                        variant="light"
+                        color="red"
+                        size="md"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setDeletingCounter(counter);
+                        }}
+                      >
+                        <IconTrash size={18} />
+                      </ActionIcon>
+                    </Tooltip>
+                  </Group>
+                </Group>
 
-                  <Text size="sm" c="dimmed" lineClamp={2}>
-                    {counter.description || t('counters.noDescription')}
-                  </Text>
+                <Text size="sm" c="dimmed" lineClamp={2} mt="xs">
+                  {counter.description || t('counters.noDescription')}
+                </Text>
 
-                  <Stack gap={6}>
-                    <Text fw={600} size="sm">
-                      {t('sidebar.ticketTypes')}
+                <Divider mt="sm" />
+
+                <Group gap="xs" wrap="nowrap" align="center" mt="sm">
+                  <IconTicket size={14} stroke={1.5} style={{ flexShrink: 0 }} />
+
+                  {counter.queues && counter.queues.length === 0 ? (
+                    <Text size="xs" c="dimmed">
+                      {t('counters.noQueues')}
                     </Text>
-
-                    {counter.queues && counter.queues.length === 0 ? (
-                      <Text size="sm" c="dimmed">
-                        {t('counters.noQueues')}
-                      </Text>
-                    ) : (
-                      <Badge variant="light" color={counter.color}>
-                        {t('counters.queueTypeCount', { count: counter.queues?.length ?? 0 })}
-                      </Badge>
-                    )}
-                  </Stack>
-                </Stack>
+                  ) : (
+                    <Text size="sm" fw={600}>
+                      {t('counters.queueTypeCount', { count: counter.queues?.length ?? 0 })}
+                    </Text>
+                  )}
+                </Group>
               </Card>
             ))}
           </SimpleGrid>
