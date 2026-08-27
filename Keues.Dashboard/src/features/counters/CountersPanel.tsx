@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   Alert,
+  Badge,
   Button,
   Card,
   Divider,
@@ -26,6 +27,7 @@ import {
   IconUsers,
 } from '@tabler/icons-react';
 import { countersApi } from '@/api/CountersApi';
+import { queuesApi } from '@/api/QueuesApi';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '@/api/httpClient';
@@ -70,6 +72,11 @@ function sortCounters(items: Counter[], mode: CounterSortMode): Counter[] {
   return mode === 'asc' ? sorted : sorted.reverse();
 }
 
+interface QueueMeta {
+  name: string;
+  color: string;
+}
+
 export function CountersPanel() {
   const { t } = useTranslation();
 
@@ -86,6 +93,8 @@ export function CountersPanel() {
   const [search, setSearch] = useState('');
 
   const [sortDirection, setSortDirection] = useState<CounterSortMode>(getStoredSort);
+
+  const [queueMeta, setQueueMeta] = useState<Record<string, QueueMeta>>({});
 
   const [formOpened, setFormOpened] = useState(false);
 
@@ -105,6 +114,17 @@ export function CountersPanel() {
       const response = await countersApi.list(location.id);
 
       setCounters(response.data);
+
+      const queuesResponse = await queuesApi.list(location.id);
+
+      setQueueMeta(
+        Object.fromEntries(
+          queuesResponse.data.map((queue) => [
+            queue.id,
+            { name: queue.name, color: queue.color },
+          ])
+        )
+      );
     } catch (requestError) {
       setError(getErrorMessage(requestError, t('errors.unexpected')));
     } finally {
@@ -365,7 +385,7 @@ export function CountersPanel() {
 
                 <Divider mt="sm" />
 
-                <Group gap="xs" wrap="nowrap" align="center" mt="sm">
+                <Group gap="xs" wrap="nowrap" align="flex-start" mt="sm">
                   <IconTicket size={14} stroke={1.5} style={{ flexShrink: 0 }} />
 
                   {counter.queues && counter.queues.length === 0 ? (
@@ -373,9 +393,17 @@ export function CountersPanel() {
                       {t('counters.noQueues')}
                     </Text>
                   ) : (
-                    <Text size="sm" fw={600}>
-                      {t('counters.queueTypeCount', { count: counter.queues?.length ?? 0 })}
-                    </Text>
+                    <Group gap={4} wrap="wrap">
+                      {counter.queues?.map((queueId) => {
+                        const meta = queueMeta[queueId];
+
+                        return (
+                          <Badge key={queueId} size="xs" variant="light" color={meta?.color}>
+                            {meta?.name ?? queueId}
+                          </Badge>
+                        );
+                      })}
+                    </Group>
                   )}
                 </Group>
               </Card>
