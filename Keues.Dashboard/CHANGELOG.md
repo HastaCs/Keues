@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.0](https://github.com/HastaCs/Keues/compare/dashboard-v1.1.0...dashboard-v1.2.0) (2026-08-28)
+
+
+### 🚀 Features
+
+* Enhance Counter and Queue features with CreatedAt property ([7a11f91](https://github.com/HastaCs/Keues/commit/7a11f913c494d4365d95a11d9e827794a9f216ee))
+* Expand FlowIconKey options and add corresponding translations for new icons ([4bbfc48](https://github.com/HastaCs/Keues/commit/4bbfc48404cd207837419f25ccedc4f25b2178de))
+* Implement sorting and view options for Counters and Queues panels with translations ([a1a53c5](https://github.com/HastaCs/Keues/commit/a1a53c581d225488e696f50f0fde8dfeaa30833f))
+* Integrate queue metadata display in CountersPanel ([9a3e62b](https://github.com/HastaCs/Keues/commit/9a3e62b6f19a03385c5b4ba7d277d4516fecb4ef))
+
 ## [1.1.0](https://github.com/HastaCs/Keues/compare/dashboard-v1.0.2...dashboard-v1.1.0) (2026-08-26)
 
 
