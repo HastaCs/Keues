@@ -23,6 +23,7 @@ import {
   IconArrowDown,
   IconArrowLeft,
   IconDeviceFloppy,
+  IconDeviceTv,
   IconEdit,
   IconHomePlus,
   IconInfoCircle,
@@ -53,6 +54,22 @@ const iconOptions: IconOption[] = [
   { key: 'fish', labelKey: 'flows.iconFish', emoji: '🐟' },
   { key: 'meat', labelKey: 'flows.iconMeat', emoji: '🥩' },
   { key: 'car', labelKey: 'flows.iconCar', emoji: '🚗' },
+  { key: 'pharmacy', labelKey: 'flows.iconPharmacy', emoji: '💊' },
+  { key: 'drink', labelKey: 'flows.iconDrink', emoji: '🥤' },
+  { key: 'bakery', labelKey: 'flows.iconBakery', emoji: '🥐' },
+  { key: 'clothing', labelKey: 'flows.iconClothing', emoji: '👕' },
+  { key: 'electronics', labelKey: 'flows.iconElectronics', emoji: '📱' },
+  { key: 'dentist', labelKey: 'flows.iconDentist', emoji: '🦷' },
+  { key: 'medicine', labelKey: 'flows.iconMedicine', emoji: '🩺' },
+  { key: 'haircut', labelKey: 'flows.iconHaircut', emoji: '💇' },
+  { key: 'coffee', labelKey: 'flows.iconCoffee', emoji: '☕' },
+  { key: 'burger', labelKey: 'flows.iconBurger', emoji: '🍔' },
+  { key: 'money', labelKey: 'flows.iconMoney', emoji: '💰' },
+  { key: 'book', labelKey: 'flows.iconBook', emoji: '📖' },
+  { key: 'gift', labelKey: 'flows.iconGift', emoji: '🎁' },
+  { key: 'pet', labelKey: 'flows.iconPet', emoji: '🐾' },
+  { key: 'flower', labelKey: 'flows.iconFlower', emoji: '🌸' },
+  { key: 'glasses', labelKey: 'flows.iconGlasses', emoji: '🕶️' },
 ];
 
 function createId() {
@@ -849,14 +866,13 @@ export function FlowsPanel() {
               ) : null}
             </Group>
 
-            <Group align="flex-start" grow>
-              {activeFlow.flowType === 1 ? (
-                <Alert color="teal" variant="light" icon={<IconInfoCircle size={18} />} radius="md">
-                  {t('flows.noMenusForFreeFlow')}
-                </Alert>
-              ) : (
-                <>
-                  <Card withBorder radius="md" p="md" style={{ minHeight: 560 }}>
+            {activeFlow.flowType === 1 ? (
+              <Alert color="teal" variant="light" icon={<IconInfoCircle size={18} />} radius="md">
+                {t('flows.noMenusForFreeFlow')}
+              </Alert>
+            ) : (
+              <SimpleGrid cols={2} spacing="md">
+                <Card withBorder radius="md" p="md" style={{ minHeight: 560 }}>
                     <Stack gap="sm">
                       <Group justify="space-between">
                         <Text fw={700}>{t('flows.treeTitle')}</Text>
@@ -1036,6 +1052,11 @@ export function FlowsPanel() {
                             updateSelectedNode({ name: event.currentTarget.value })
                           }
                           withAsterisk
+                          leftSection={
+                            <Tooltip label={t('flows.nodeNameMonitorHelp')} withArrow>
+                              <IconDeviceTv size={16} />
+                            </Tooltip>
+                          }
                         />
 
                         <TextInput
@@ -1095,9 +1116,8 @@ export function FlowsPanel() {
                       </Stack>
                     )}
                   </Card>
-                </>
-              )}
-            </Group>
+              </SimpleGrid>
+            )}
           </>
         )}
       </Stack>

@@ -1,7 +1,29 @@
 import type { LocationId } from "@/api/interfaces/Location/Locations";
 
 export type MenuNodeType = "menu" | "ticket";
-export type FlowIconKey = "fruit" | "fish" | "meat" | "car" | "house" | "ticket";
+export type FlowIconKey =
+  | "fruit"
+  | "fish"
+  | "meat"
+  | "car"
+  | "house"
+  | "ticket"
+  | "pharmacy"
+  | "drink"
+  | "bakery"
+  | "clothing"
+  | "electronics"
+  | "dentist"
+  | "medicine"
+  | "haircut"
+  | "coffee"
+  | "burger"
+  | "money"
+  | "book"
+  | "gift"
+  | "pet"
+  | "flower"
+  | "glasses";
 
 export interface FlowMenuItem {
   id: string;
