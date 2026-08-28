@@ -9,9 +9,11 @@ import {
   Loader,
   Modal,
   Paper,
+  SegmentedControl,
   Select,
   SimpleGrid,
   Stack,
+  Table,
   Text,
   TextInput,
   ThemeIcon,
@@ -19,19 +21,24 @@ import {
 } from '@mantine/core';
 
 import {
+  IconArrowsSort,
+  IconChevronDown,
+  IconChevronUp,
   IconDeviceTv,
   IconEdit,
   IconHash,
   IconHourglass,
+  IconLayoutGrid,
   IconListNumbers,
   IconScale,
   IconSearch,
+  IconTable,
   IconTicket,
   IconTrash,
   IconUsers,
 } from '@tabler/icons-react';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ApiError } from '@/api/httpClient';
@@ -55,25 +62,99 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-type QueueSortMode = 'created' | 'asc' | 'desc';
+type QueueView = 'cards' | 'table';
+
+type QueueSortField = 'createdAt' | 'name' | 'code';
+
+interface QueueSort {
+  field: QueueSortField;
+  direction: 'asc' | 'desc';
+}
 
 const SORT_STORAGE_KEY = 'keues.queues.sort';
 
-function getStoredSort(): QueueSortMode {
-  const stored = window.localStorage.getItem(SORT_STORAGE_KEY);
-  return stored === 'asc' || stored === 'desc' || stored === 'created' ? stored : 'created';
-}
+const VIEW_STORAGE_KEY = 'keues.queues.view';
 
-function sortQueues(items: Queue[], mode: QueueSortMode): Queue[] {
-  if (mode === 'created') {
-    return [...items].sort(
-      (left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
-    );
+function getStoredSort(): QueueSort {
+  const stored = window.localStorage.getItem(SORT_STORAGE_KEY);
+
+  if (stored) {
+    const [field, direction] = stored.split(':');
+
+    if (
+      (field === 'createdAt' || field === 'name' || field === 'code') &&
+      (direction === 'asc' || direction === 'desc')
+    ) {
+      return { field, direction };
+    }
+
+    if (stored === 'asc') {
+      return { field: 'name', direction: 'asc' };
+    }
+
+    if (stored === 'desc') {
+      return { field: 'name', direction: 'desc' };
+    }
   }
 
-  const sorted = [...items].sort((left, right) => left.name.localeCompare(right.name, 'es'));
+  return { field: 'createdAt', direction: 'asc' };
+}
 
-  return mode === 'asc' ? sorted : sorted.reverse();
+function persistSort(sort: QueueSort) {
+  window.localStorage.setItem(SORT_STORAGE_KEY, `${sort.field}:${sort.direction}`);
+}
+
+function getStoredView(): QueueView {
+  const stored = window.localStorage.getItem(VIEW_STORAGE_KEY);
+  return stored === 'cards' || stored === 'table' ? stored : 'cards';
+}
+
+function sortQueues(items: Queue[], sort: QueueSort): Queue[] {
+  const sorted = [...items].sort((left, right) => {
+    if (sort.field === 'createdAt') {
+      return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+    }
+
+    return left[sort.field].localeCompare(right[sort.field], 'es');
+  });
+
+  return sort.direction === 'desc' ? sorted.reverse() : sorted;
+}
+
+function SortableTh({
+  field,
+  sort,
+  onSort,
+  children,
+}: {
+  field: QueueSortField;
+  sort: QueueSort;
+  onSort: (field: QueueSortField) => void;
+  children: ReactNode;
+}) {
+  const active = sort.field === field;
+
+  return (
+    <Table.Th>
+      <Group
+        gap={4}
+        wrap="nowrap"
+        onClick={() => onSort(field)}
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+      >
+        {children}
+        {active ? (
+          sort.direction === 'asc' ? (
+            <IconChevronUp size={14} />
+          ) : (
+            <IconChevronDown size={14} />
+          )
+        ) : (
+          <IconArrowsSort size={14} style={{ opacity: 0.35 }} />
+        )}
+      </Group>
+    </Table.Th>
+  );
 }
 
 function getDisplayExample(displayCode: string) {
@@ -100,7 +181,9 @@ export function QueuesPanel() {
 
   const [search, setSearch] = useState('');
 
-  const [sortDirection, setSortDirection] = useState<QueueSortMode>(getStoredSort);
+  const [sort, setSort] = useState<QueueSort>(getStoredSort);
+
+  const [view, setView] = useState<QueueView>(getStoredView);
 
   const [counterMeta, setCounterMeta] = useState<Record<string, CounterMeta>>({});
 
@@ -156,8 +239,21 @@ export function QueuesPanel() {
         )
       : queues;
 
-    return sortQueues(filtered, sortDirection);
-  }, [queues, search, sortDirection]);
+    return sortQueues(filtered, sort);
+  }, [queues, search, sort]);
+
+  function handleSort(field: QueueSortField) {
+    setSort((previous) => {
+      const next: QueueSort =
+        previous.field === field
+          ? { field, direction: previous.direction === 'asc' ? 'desc' : 'asc' }
+          : { field, direction: 'asc' };
+
+      persistSort(next);
+
+      return next;
+    });
+  }
 
   function openCreateModal() {
     setEditingQueue(undefined);
@@ -268,30 +364,66 @@ export function QueuesPanel() {
             style={{ maxWidth: 420, width: '100%' }}
           />
 
-          <Select
-            value={sortDirection}
-            onChange={(value) => {
-              const next = (value as QueueSortMode) ?? 'created';
-              setSortDirection(next);
-              window.localStorage.setItem(SORT_STORAGE_KEY, next);
-            }}
-            data={[
-              {
-                value: 'created',
-                label: t('ticketTypes.sortCreated'),
-              },
-              {
-                value: 'asc',
-                label: t('ticketTypes.sortNameAZ'),
-              },
-              {
-                value: 'desc',
-                label: t('ticketTypes.sortNameZA'),
-              },
-            ]}
-            allowDeselect={false}
-            style={{ minWidth: 220 }}
-          />
+          <Group gap="sm" align="flex-end">
+            <SegmentedControl
+              value={view}
+              onChange={(value) => {
+                const next = value as QueueView;
+                setView(next);
+                window.localStorage.setItem(VIEW_STORAGE_KEY, next);
+              }}
+              data={[
+                {
+                  value: 'cards',
+                  label: (
+                    <Group gap={6} wrap="nowrap">
+                      <IconLayoutGrid size={14} />
+                      {t('ticketTypes.viewCards')}
+                    </Group>
+                  ),
+                },
+                {
+                  value: 'table',
+                  label: (
+                    <Group gap={6} wrap="nowrap">
+                      <IconTable size={14} />
+                      {t('ticketTypes.viewTable')}
+                    </Group>
+                  ),
+                },
+              ]}
+            />
+
+            <Select
+              value={`${sort.field}:${sort.direction}`}
+              onChange={(value) => {
+                const next: QueueSort =
+                  value === 'name:asc'
+                    ? { field: 'name', direction: 'asc' }
+                    : value === 'name:desc'
+                      ? { field: 'name', direction: 'desc' }
+                      : { field: 'createdAt', direction: 'asc' };
+                setSort(next);
+                persistSort(next);
+              }}
+              data={[
+                {
+                  value: 'createdAt:asc',
+                  label: t('ticketTypes.sortCreated'),
+                },
+                {
+                  value: 'name:asc',
+                  label: t('ticketTypes.sortNameAZ'),
+                },
+                {
+                  value: 'name:desc',
+                  label: t('ticketTypes.sortNameZA'),
+                },
+              ]}
+              allowDeselect={false}
+              style={{ minWidth: 220 }}
+            />
+          </Group>
         </Group>
 
         {loading ? (
@@ -308,7 +440,7 @@ export function QueuesPanel() {
               </Text>
             </Stack>
           </Paper>
-        ) : (
+        ) : view === 'cards' ? (
           <SimpleGrid
             cols={{
               base: 1,
@@ -469,6 +601,127 @@ export function QueuesPanel() {
               </Card>
             ))}
           </SimpleGrid>
+        ) : (
+          <Paper withBorder radius="md" p="sm" style={{ overflowX: 'auto' }}>
+            <Table highlightOnHover>
+              <Table.Thead>
+                <Table.Tr>
+                  <SortableTh field="name" sort={sort} onSort={handleSort}>
+                    {t('ticketTypes.name')}
+                  </SortableTh>
+                  <SortableTh field="code" sort={sort} onSort={handleSort}>
+                    {t('ticketTypes.displayCode')}
+                  </SortableTh>
+                  <Table.Th>{t('ticketTypes.description')}</Table.Th>
+                  <Table.Th>{t('ticketTypes.maxValue')}</Table.Th>
+                  <Table.Th>{t('ticketTypes.aging')}</Table.Th>
+                  <Table.Th>{t('ticketTypes.counters')}</Table.Th>
+                  <SortableTh field="createdAt" sort={sort} onSort={handleSort}>
+                    {t('ticketTypes.createdAt')}
+                  </SortableTh>
+                  <Table.Th>{t('ticketTypes.actions')}</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {filteredTicketTypes.map((ticketType) => (
+                  <Table.Tr
+                    key={ticketType.id}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => openEditModal(ticketType)}
+                  >
+                    <Table.Td>
+                      <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
+                        <ThemeIcon size={28} radius="xl" color={ticketType.color} variant="light">
+                          <IconTicket size={14} />
+                        </ThemeIcon>
+                        <Text fw={600} truncate>
+                          {ticketType.name}
+                        </Text>
+                      </Group>
+                    </Table.Td>
+                    <Table.Td>
+                      <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
+                        <Tooltip label={t('ticketTypes.prefixMonitorHelp')} withArrow>
+                          <IconDeviceTv size={13} />
+                        </Tooltip>
+                        <Text size="sm" fw={500}>
+                          {ticketType.code}
+                        </Text>
+                      </Group>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm" c="dimmed" lineClamp={2}>
+                        {ticketType.description || t('ticketTypes.noDescription')}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm">{ticketType.maxValue ?? t('ticketTypes.noMaxValue')}</Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm">
+                        {ticketType.agingIntervalMinutes === 0
+                          ? t('ticketTypes.disabled')
+                          : `${ticketType.agingIntervalMinutes} min`}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      {ticketType.counters.length === 0 ? (
+                        <Text size="xs" c="dimmed">
+                          {t('ticketTypes.noCounters')}
+                        </Text>
+                      ) : (
+                        <Group gap={4} wrap="wrap">
+                          {ticketType.counters.map((counterId) => {
+                            const meta = counterMeta[counterId];
+
+                            return (
+                              <Badge key={counterId} size="xs" variant="light" color={meta?.color}>
+                                {meta?.name ?? counterId}
+                              </Badge>
+                            );
+                          })}
+                        </Group>
+                      )}
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm" c="dimmed">
+                        {new Date(ticketType.createdAt).toLocaleDateString()}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Group gap={2} wrap="nowrap">
+                        <Tooltip label={t('common.edit')}>
+                          <ActionIcon
+                            variant="light"
+                            size="md"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openEditModal(ticketType);
+                            }}
+                          >
+                            <IconEdit size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label={t('common.delete')}>
+                          <ActionIcon
+                            variant="light"
+                            color="red"
+                            size="md"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeletingQueue(ticketType);
+                            }}
+                          >
+                            <IconTrash size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Group>
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </Paper>
         )}
       </Stack>
     </>

@@ -9,9 +9,11 @@ import {
   Loader,
   Modal,
   Paper,
+  SegmentedControl,
   Select,
   SimpleGrid,
   Stack,
+  Table,
   Text,
   TextInput,
   ThemeIcon,
@@ -19,16 +21,21 @@ import {
 } from '@mantine/core';
 
 import {
+  IconArrowsSort,
+  IconChevronDown,
+  IconChevronUp,
   IconDeviceTv,
   IconEdit,
+  IconLayoutGrid,
   IconSearch,
+  IconTable,
   IconTicket,
   IconTrash,
   IconUsers,
 } from '@tabler/icons-react';
 import { countersApi } from '@/api/CountersApi';
 import { queuesApi } from '@/api/QueuesApi';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '@/api/httpClient';
 
@@ -51,25 +58,99 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-type CounterSortMode = 'created' | 'asc' | 'desc';
+type CounterView = 'cards' | 'table';
+
+type CounterSortField = 'createdAt' | 'name' | 'code';
+
+interface CounterSort {
+  field: CounterSortField;
+  direction: 'asc' | 'desc';
+}
 
 const SORT_STORAGE_KEY = 'keues.counters.sort';
 
-function getStoredSort(): CounterSortMode {
-  const stored = window.localStorage.getItem(SORT_STORAGE_KEY);
-  return stored === 'asc' || stored === 'desc' || stored === 'created' ? stored : 'created';
-}
+const VIEW_STORAGE_KEY = 'keues.counters.view';
 
-function sortCounters(items: Counter[], mode: CounterSortMode): Counter[] {
-  if (mode === 'created') {
-    return [...items].sort(
-      (left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
-    );
+function getStoredSort(): CounterSort {
+  const stored = window.localStorage.getItem(SORT_STORAGE_KEY);
+
+  if (stored) {
+    const [field, direction] = stored.split(':');
+
+    if (
+      (field === 'createdAt' || field === 'name' || field === 'code') &&
+      (direction === 'asc' || direction === 'desc')
+    ) {
+      return { field, direction };
+    }
+
+    if (stored === 'asc') {
+      return { field: 'name', direction: 'asc' };
+    }
+
+    if (stored === 'desc') {
+      return { field: 'name', direction: 'desc' };
+    }
   }
 
-  const sorted = [...items].sort((left, right) => left.name.localeCompare(right.name, 'es'));
+  return { field: 'createdAt', direction: 'asc' };
+}
 
-  return mode === 'asc' ? sorted : sorted.reverse();
+function persistSort(sort: CounterSort) {
+  window.localStorage.setItem(SORT_STORAGE_KEY, `${sort.field}:${sort.direction}`);
+}
+
+function getStoredView(): CounterView {
+  const stored = window.localStorage.getItem(VIEW_STORAGE_KEY);
+  return stored === 'cards' || stored === 'table' ? stored : 'cards';
+}
+
+function sortCounters(items: Counter[], sort: CounterSort): Counter[] {
+  const sorted = [...items].sort((left, right) => {
+    if (sort.field === 'createdAt') {
+      return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+    }
+
+    return left[sort.field].localeCompare(right[sort.field], 'es');
+  });
+
+  return sort.direction === 'desc' ? sorted.reverse() : sorted;
+}
+
+function SortableTh({
+  field,
+  sort,
+  onSort,
+  children,
+}: {
+  field: CounterSortField;
+  sort: CounterSort;
+  onSort: (field: CounterSortField) => void;
+  children: ReactNode;
+}) {
+  const active = sort.field === field;
+
+  return (
+    <Table.Th>
+      <Group
+        gap={4}
+        wrap="nowrap"
+        onClick={() => onSort(field)}
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+      >
+        {children}
+        {active ? (
+          sort.direction === 'asc' ? (
+            <IconChevronUp size={14} />
+          ) : (
+            <IconChevronDown size={14} />
+          )
+        ) : (
+          <IconArrowsSort size={14} style={{ opacity: 0.35 }} />
+        )}
+      </Group>
+    </Table.Th>
+  );
 }
 
 interface QueueMeta {
@@ -92,7 +173,9 @@ export function CountersPanel() {
 
   const [search, setSearch] = useState('');
 
-  const [sortDirection, setSortDirection] = useState<CounterSortMode>(getStoredSort);
+  const [sort, setSort] = useState<CounterSort>(getStoredSort);
+
+  const [view, setView] = useState<CounterView>(getStoredView);
 
   const [queueMeta, setQueueMeta] = useState<Record<string, QueueMeta>>({});
 
@@ -149,8 +232,21 @@ export function CountersPanel() {
         })
       : counters;
 
-    return sortCounters(matches, sortDirection);
-  }, [counters, search, sortDirection]);
+    return sortCounters(matches, sort);
+  }, [counters, search, sort]);
+
+  function handleSort(field: CounterSortField) {
+    setSort((previous) => {
+      const next: CounterSort =
+        previous.field === field
+          ? { field, direction: previous.direction === 'asc' ? 'desc' : 'asc' }
+          : { field, direction: 'asc' };
+
+      persistSort(next);
+
+      return next;
+    });
+  }
 
   function openCreateModal() {
     setEditingCounter(undefined);
@@ -275,32 +371,68 @@ export function CountersPanel() {
             }}
           />
 
-          <Select
-            value={sortDirection}
-            onChange={(value) => {
-              const next = (value as CounterSortMode) ?? 'created';
-              setSortDirection(next);
-              window.localStorage.setItem(SORT_STORAGE_KEY, next);
-            }}
-            data={[
-              {
-                value: 'created',
-                label: t('counters.sortCreated'),
-              },
-              {
-                value: 'asc',
-                label: t('counters.sortNameAZ'),
-              },
-              {
-                value: 'desc',
-                label: t('counters.sortNameZA'),
-              },
-            ]}
-            allowDeselect={false}
-            style={{
-              minWidth: 220,
-            }}
-          />
+          <Group gap="sm" align="flex-end">
+            <SegmentedControl
+              value={view}
+              onChange={(value) => {
+                const next = value as CounterView;
+                setView(next);
+                window.localStorage.setItem(VIEW_STORAGE_KEY, next);
+              }}
+              data={[
+                {
+                  value: 'cards',
+                  label: (
+                    <Group gap={6} wrap="nowrap">
+                      <IconLayoutGrid size={14} />
+                      {t('counters.viewCards')}
+                    </Group>
+                  ),
+                },
+                {
+                  value: 'table',
+                  label: (
+                    <Group gap={6} wrap="nowrap">
+                      <IconTable size={14} />
+                      {t('counters.viewTable')}
+                    </Group>
+                  ),
+                },
+              ]}
+            />
+
+            <Select
+              value={`${sort.field}:${sort.direction}`}
+              onChange={(value) => {
+                const next: CounterSort =
+                  value === 'name:asc'
+                    ? { field: 'name', direction: 'asc' }
+                    : value === 'name:desc'
+                      ? { field: 'name', direction: 'desc' }
+                      : { field: 'createdAt', direction: 'asc' };
+                setSort(next);
+                persistSort(next);
+              }}
+              data={[
+                {
+                  value: 'createdAt:asc',
+                  label: t('counters.sortCreated'),
+                },
+                {
+                  value: 'name:asc',
+                  label: t('counters.sortNameAZ'),
+                },
+                {
+                  value: 'name:desc',
+                  label: t('counters.sortNameZA'),
+                },
+              ]}
+              allowDeselect={false}
+              style={{
+                minWidth: 220,
+              }}
+            />
+          </Group>
         </Group>
 
         {loading ? (
@@ -317,7 +449,7 @@ export function CountersPanel() {
               </Text>
             </Stack>
           </Paper>
-        ) : (
+        ) : view === 'cards' ? (
           <SimpleGrid
             cols={{
               base: 1,
@@ -409,6 +541,115 @@ export function CountersPanel() {
               </Card>
             ))}
           </SimpleGrid>
+        ) : (
+          <Paper withBorder radius="md" p="sm" style={{ overflowX: 'auto' }}>
+            <Table highlightOnHover>
+              <Table.Thead>
+                <Table.Tr>
+                  <SortableTh field="name" sort={sort} onSort={handleSort}>
+                    {t('counters.name')}
+                  </SortableTh>
+                  <SortableTh field="code" sort={sort} onSort={handleSort}>
+                    {t('counters.codeMonitor')}
+                  </SortableTh>
+                  <Table.Th>{t('counters.description')}</Table.Th>
+                  <Table.Th>{t('counters.queues')}</Table.Th>
+                  <SortableTh field="createdAt" sort={sort} onSort={handleSort}>
+                    {t('counters.createdAt')}
+                  </SortableTh>
+                  <Table.Th>{t('counters.actions')}</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {filteredCounters.map((counter) => (
+                  <Table.Tr
+                    key={counter.id}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => openEditModal(counter)}
+                  >
+                    <Table.Td>
+                      <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
+                        <ThemeIcon size={28} radius="xl" color={counter.color} variant="light">
+                          <IconUsers size={14} />
+                        </ThemeIcon>
+                        <Text fw={600} truncate>
+                          {counter.name}
+                        </Text>
+                      </Group>
+                    </Table.Td>
+                    <Table.Td>
+                      <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
+                        <Tooltip label={t('counters.codeMonitorHelp')} withArrow>
+                          <IconDeviceTv size={13} />
+                        </Tooltip>
+                        <Text size="sm" fw={500}>
+                          {counter.code}
+                        </Text>
+                      </Group>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm" c="dimmed" lineClamp={2}>
+                        {counter.description || t('counters.noDescription')}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      {counter.queues && counter.queues.length === 0 ? (
+                        <Text size="xs" c="dimmed">
+                          {t('counters.noQueues')}
+                        </Text>
+                      ) : (
+                        <Group gap={4} wrap="wrap">
+                          {counter.queues?.map((queueId) => {
+                            const meta = queueMeta[queueId];
+
+                            return (
+                              <Badge key={queueId} size="xs" variant="light" color={meta?.color}>
+                                {meta?.name ?? queueId}
+                              </Badge>
+                            );
+                          })}
+                        </Group>
+                      )}
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm" c="dimmed">
+                        {new Date(counter.createdAt).toLocaleDateString()}
+                      </Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Group gap={2} wrap="nowrap">
+                        <Tooltip label={t('common.edit')}>
+                          <ActionIcon
+                            variant="light"
+                            size="md"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openEditModal(counter);
+                            }}
+                          >
+                            <IconEdit size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label={t('common.delete')}>
+                          <ActionIcon
+                            variant="light"
+                            color="red"
+                            size="md"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeletingCounter(counter);
+                            }}
+                          >
+                            <IconTrash size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Group>
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </Paper>
         )}
       </Stack>
     </>
