@@ -10,27 +10,16 @@
     { "type": "refactor", "section": "♻️ Code Refactoring", "hidden": false },
     { "type": "test", "section": "🧪 Tests", "hidden": false }
   ],
+  "include-component-in-tag": false,
+  "include-v-in-tag": true,
   "packages": {
     "Keues.Dashboard": {
       "release-type": "node",
-      "package-name": "dashboard"
-    },
-    "Keues.API": {
-      "release-type": "simple",
-      "package-name": "api",
+      "package-name": "Keues",
+      "changelog-path": "/CHANGELOG.md",
       "extra-files": [
         "Keues.API/Keues.API.csproj"
       ]
     }
-  },
-  "plugins": [
-    {
-      "type": "linked-versions",
-      "groupName": "keues-monorepo",
-      "components": [
-        "Keues.Dashboard",
-        "Keues.API"
-      ]
-    }
-  ]
+  }
 }
