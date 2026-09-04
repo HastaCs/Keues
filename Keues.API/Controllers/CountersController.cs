@@ -12,6 +12,7 @@ using Keues.Application.Features.Counters.DeleteCounter;
 using Keues.Application.Features.Counters.GetAllCounters;
 using Keues.Application.Features.Counters.GetCounter;
 using Keues.Application.Features.Counters.GetQueues;
+using Keues.Application.Features.Counters.TransferTicket;
 using Keues.Application.Features.Counters.UpdateCounter;
 using Keues.Application.Features.Tickets;
 using Keues.Application.Features.Tickets.GetTicket;
@@ -328,6 +329,27 @@ namespace Keues.API.Controllers
       }
     }
     
-    
+    /// <summary>
+    /// Transfers a ticket from one queue to another, allowing the customer to change their service type.
+    /// THe ticket is put in waiting status in the new queue.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    [HttpPost("{id:guid}/transfer-ticket")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> TransferTicket(Guid id,TransferTicketRequest request)
+    {
+      try
+      {
+        await _counterUseCases.TransferTicket.Handle(new TransferTicketCommand(id, request.TicketId, request.QueueId));
+        return Ok();
+      }
+      catch (Exception e)
+      {
+        return BadRequest(new ErrorResponse(e.Message));
+      }
+    }
   }
 }
