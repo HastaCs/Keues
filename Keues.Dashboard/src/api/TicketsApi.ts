@@ -1,7 +1,7 @@
 import { request } from './httpClient';
 
 import type { ApiResponse } from './interfaces/common/ApiResponse';
-import { ListTicketsParams, Ticket, TicketId } from './interfaces/Tickets/Tickets';
+import { ListTicketsParams, Ticket, TicketHistory, TicketId } from './interfaces/Tickets/Tickets';
 
 const endpoint = '/tickets';
 
@@ -29,12 +29,12 @@ function buildQuery(params: ListTicketsParams): string {
     query.set('page', String(params.page));
   }
 
-if (params.limit !== undefined) {
-    query.set("limit", String(params.limit));
+  if (params.limit !== undefined) {
+    query.set('limit', String(params.limit));
   }
 
   if (params.sortOrder !== undefined) {
-    query.set("sortOrder", params.sortOrder);
+    query.set('sortOrder', params.sortOrder);
   }
 
   return query.toString();
@@ -47,5 +47,9 @@ export const ticketsApi = {
 
   get(id: TicketId) {
     return request<Ticket>(`${endpoint}/${id}`);
+  },
+
+  getHistory(id: TicketId) {
+    return request<TicketHistory[]>(`${endpoint}/${id}/history`);
   },
 };

@@ -31,6 +31,13 @@ export interface Ticket {
   counter: TicketCounter | null;
 }
 
+export interface TicketHistory {
+  id: string;
+  event: string;
+  createdAt: string;
+  counterName: string | null;
+}
+
 export interface ListTicketsParams {
   locationId: string;
   status?: TicketStatus;
