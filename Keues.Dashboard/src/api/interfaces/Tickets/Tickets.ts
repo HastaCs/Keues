@@ -36,6 +36,7 @@ export interface TicketHistory {
   event: string;
   createdAt: string;
   counterName: string | null;
+  queueName: string | null;
 }
 
 export interface ListTicketsParams {

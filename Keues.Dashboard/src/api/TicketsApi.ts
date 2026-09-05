@@ -50,6 +50,6 @@ export const ticketsApi = {
   },
 
   getHistory(id: TicketId) {
-    return request<TicketHistory[]>(`${endpoint}/${id}/history`);
+    return request<ApiResponse<TicketHistory[]>>(`${endpoint}/${id}/history`);
   },
 };

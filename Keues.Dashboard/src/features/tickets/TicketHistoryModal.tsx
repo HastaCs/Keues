@@ -88,7 +88,7 @@ export function TicketHistoryModal({ ticket, opened, onClose }: TicketHistoryMod
       .getHistory(ticket.id)
       .then((response) => {
         if (!cancelled) {
-          setHistory(response);
+          setHistory(response.data);
         }
       })
       .catch((requestError) => {
@@ -131,14 +131,18 @@ export function TicketHistoryModal({ ticket, opened, onClose }: TicketHistoryMod
               <Timeline.Item
                 key={entry.id}
                 color={meta.color}
-                title={t(meta.labelKey)}
+                title={
+                  entry.event === 'Ticket.Transferred' && entry.queueName
+                    ? `${t(meta.labelKey)} → ${entry.queueName}`
+                    : t(meta.labelKey)
+                }
                 bullet={<EventIcon size={14} />}
               >
                 <Stack gap={2}>
                   <Text size="sm" c="dimmed">
                     {formatDate(entry.createdAt)}
                   </Text>
-                  <Text size="sm">{entry.counterName ?? '-'}</Text>
+                  {entry.counterName ? <Text size="sm">{entry.counterName}</Text> : null}
                 </Stack>
               </Timeline.Item>
             );
