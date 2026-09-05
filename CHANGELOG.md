@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.4.0](https://github.com/HastaCs/Keues/compare/v1.3.0...v1.4.0) (2026-09-05)
+
+
+### 🚀 Features
+
+* Add ticket transfer functionality between queues ([e4619ff](https://github.com/HastaCs/Keues/commit/e4619ff85635d5263e9542f601cf2b390883ee1d))
+* Add ticket transfer functionality between queues ([2615290](https://github.com/HastaCs/Keues/commit/26152909483f789eff861f3eb1b3d05f1f5a706e))
+* Implement ticket history functionality with modal display ([0215465](https://github.com/HastaCs/Keues/commit/02154656f9f309596086ca4f16d981845d04273c)), closes [#10](https://github.com/HastaCs/Keues/issues/10)
+* Implement ticket history functionality with modal display ([3fcab4b](https://github.com/HastaCs/Keues/commit/3fcab4b67f434cf6dca1541748848ca564cbf2b5))
+
+
+### 🐛 Bug Fixes
+
+* release please ([16bebf9](https://github.com/HastaCs/Keues/commit/16bebf9bf21e82d2a1d19c312ea6254c58eea78e))
+
+
+### ♻️ Code Refactoring
+
+* Rename response and request classes for consistency and clarity ([6959df1](https://github.com/HastaCs/Keues/commit/6959df16a74131477d65b7289baf9e456224c4c9))
+
 ## [1.3.0](https://github.com/HastaCs/Keues/compare/v1.2.0...v1.3.0) (2026-08-28)
 
 
