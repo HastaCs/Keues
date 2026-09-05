@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using Keues.Domain.Enums;
+using Keues.Domain.Events;
 
 namespace Keues.Domain.Entities;
 
@@ -25,7 +26,7 @@ public class Ticket
   public void Attend()
   {
     Status = TicketStatus.Attended;
-    AttendedAt = DateTime.UtcNow;
+    AttendedAt = DateTime.UtcNow; 
   }
 
   public void Cancel()
@@ -76,4 +77,6 @@ public class Ticket
 
   public Guid FlowId { get; set; }
   public Flow Flow { get; set; }
+
+  public ICollection<TicketHistory> TicketHistories { get; set; } = new List<TicketHistory>();
 }

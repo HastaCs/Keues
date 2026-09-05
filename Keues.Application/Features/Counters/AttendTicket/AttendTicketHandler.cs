@@ -1,4 +1,6 @@
 using Keues.Application.Common;
+using Keues.Domain.Entities;
+using Keues.Domain.Events;
 
 namespace Keues.Application.Features.Counters.AttendTicket;
 
@@ -25,7 +27,17 @@ public class AttendTicketHandler
     }
 
     ticket.Attend();
-    await _context.SaveChangesAsync();
-
+    var history = new TicketHistory
+    {
+      Id = Guid.NewGuid(),
+      TicketId = ticket.Id,
+      Event = KeuesEventsType.Ticket.Attended,
+      CreatedAt = DateTime.UtcNow,
+      CounterId = request.CounterId
+    };
+   await _context.TicketHistories.AddAsync(history);
+    
+   var result= await _context.SaveChangesAsync();
+  
   }
 }

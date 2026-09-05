@@ -245,14 +245,14 @@ namespace Keues.API.Controllers
     [HttpPost("{id:guid}/cancel-ticket")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CancelTicket(Guid id, CancelTicketCommand command)
+    public async Task<IActionResult> CancelTicket(Guid id, CancelTicketRequest command)
     {
       try
       {
         var ticket = await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(command.TicketId));
         if (ticket == null)
           throw new Exception($"No ticket found for {command.TicketId}");
-        await _counterUseCases.CancelTicket.Handle(command);
+        await _counterUseCases.CancelTicket.Handle(new CancelTicketCommand(command.TicketId,id));
         
         var group = $"locationId:{ticket.LocationId}:typeDevice:Monitor:flowId:{ticket.FlowId}";
         await _hubContext.Clients.Group(group).SendAsync("TicketCancelled", new { ticketId = ticket.Id });

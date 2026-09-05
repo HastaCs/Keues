@@ -3,6 +3,7 @@ using System;
 using Keues.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Keues.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260905090332_Added_ticketHistory")]
+    partial class Added_ticketHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
@@ -267,7 +270,7 @@ namespace Keues.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("CounterId")
+                    b.Property<Guid>("CounterId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -403,7 +406,9 @@ namespace Keues.Infrastructure.Migrations
                 {
                     b.HasOne("Keues.Domain.Entities.Counter", "Counter")
                         .WithMany()
-                        .HasForeignKey("CounterId");
+                        .HasForeignKey("CounterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Keues.Domain.Entities.Ticket", "Ticket")
                         .WithMany("TicketHistories")

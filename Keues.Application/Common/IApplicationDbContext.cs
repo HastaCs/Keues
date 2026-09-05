@@ -20,6 +20,8 @@ public interface IApplicationDbContext
   
   DbSet<Device> Devices { get; }
   
+  DbSet<TicketHistory> TicketHistories { get; }
+  
   DatabaseFacade Database { get; }
   
   Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

@@ -26,6 +26,7 @@ public class AppDbContext:DbContext,IApplicationDbContext
 
     modelBuilder.Entity<Ticket>()
       .HasQueryFilter(t => t.Queue.RemovedAt == null && t.Flow.RemovedAt == null);
+    
    
   }
   
@@ -41,6 +42,8 @@ public class AppDbContext:DbContext,IApplicationDbContext
   public DbSet<Flow> Flows => Set<Flow>();
   
   public DbSet<Device> Devices => Set<Device>();
+  
+  public DbSet<TicketHistory> TicketHistories => Set<TicketHistory>();
   
  
 }
