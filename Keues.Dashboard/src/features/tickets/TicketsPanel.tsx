@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -13,7 +14,7 @@ import {
   TextInput,
   ThemeIcon,
 } from '@mantine/core';
-import { IconSearch, IconTicket, IconX } from '@tabler/icons-react';
+import { IconHistory, IconSearch, IconTicket, IconX } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '@/api/httpClient';
@@ -23,6 +24,7 @@ import type { Queue } from '@/api/interfaces/Queue/Queues';
 import { TICKET_STATUS, type Ticket, type TicketStatus } from '@/api/interfaces/Tickets/Tickets';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { useActiveLocation } from '@/features/locations/LocationContext';
+import { TicketHistoryModal } from '@/features/tickets/TicketHistoryModal';
 
 type SortDirection = 'asc' | 'desc';
 type StatusFilter = 'all' | TicketStatus;
@@ -114,6 +116,7 @@ export function TicketsPanel() {
     total: 0,
     totalPages: 1,
   });
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
   useEffect(() => {
     if (!location) {
@@ -325,6 +328,7 @@ export function TicketsPanel() {
           <Table highlightOnHover>
             <Table.Thead>
               <Table.Tr>
+                <Table.Th>{t('tickets.history')}</Table.Th>
                 <Table.Th>{t('tickets.code')}</Table.Th>
                 <Table.Th>{t('tickets.status')}</Table.Th>
                 <Table.Th>{t('tickets.queue')}</Table.Th>
@@ -338,6 +342,16 @@ export function TicketsPanel() {
             <Table.Tbody>
               {filteredTickets.map((ticket) => (
                 <Table.Tr key={ticket.id}>
+                  <Table.Td>
+                    <ActionIcon
+                      variant="light"
+                      color="blue"
+                      title={t('tickets.viewHistory')}
+                      onClick={() => setSelectedTicket(ticket)}
+                    >
+                      <IconHistory size={16} />
+                    </ActionIcon>
+                  </Table.Td>
                   <Table.Td>
                     <Group gap="xs" wrap="nowrap">
                       <ThemeIcon variant="light" color="blue" size={24}>
@@ -405,6 +419,12 @@ export function TicketsPanel() {
           </Group>
         </Paper>
       )}
+
+      <TicketHistoryModal
+        ticket={selectedTicket}
+        opened={Boolean(selectedTicket)}
+        onClose={() => setSelectedTicket(null)}
+      />
     </Stack>
   );
 }
