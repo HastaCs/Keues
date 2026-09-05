@@ -13,7 +13,7 @@ public class UpdateCounterHandler
     _context = context;
   }
 
-  public async Task<CounterBaseResponse> Handle(UpdateCounterCommand command)
+  public async Task<CounterBaseResult> Handle(UpdateCounterCommand command)
   {
     var counter = await _context.Counters
       .Include(c => c.Queues)
@@ -49,6 +49,6 @@ public class UpdateCounterHandler
     }
 
     await _context.SaveChangesAsync();
-    return new CounterBaseResponse(counter.Id, counter.Name, counter.Code, counter.Description, counter.Color, counter.Queues.Select(q => q.Id),counter.LocationId,counter.CreatedAt!.Value);
+    return new CounterBaseResult(counter.Id, counter.Name, counter.Code, counter.Description, counter.Color, counter.Queues.Select(q => q.Id),counter.LocationId,counter.CreatedAt!.Value);
   }
 }

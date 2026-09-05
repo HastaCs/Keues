@@ -11,13 +11,13 @@ public class GetAllCountersHandler
   {
     _context = context;
   }
-  public async Task<IEnumerable<CounterBaseResponse>> Handle(GetAllCountersCommand command)
+  public async Task<IEnumerable<CounterBaseResult>> Handle(GetAllCountersCommand command)
   {
     var query=_context.Counters.Include(x=>x.Queues).AsQueryable();
     if(command.LocationId.HasValue)
       query=query.Where(x=>x.LocationId==command.LocationId.Value);
     
     var counters = await query.ToListAsync();
-    return counters.Select(counter => new CounterBaseResponse(counter.Id, counter.Name, counter.Code, counter.Description, counter.Color, counter.Queues.Select(x => x.Id),counter.LocationId,counter.CreatedAt!.Value));
+    return counters.Select(counter => new CounterBaseResult(counter.Id, counter.Name, counter.Code, counter.Description, counter.Color, counter.Queues.Select(x => x.Id),counter.LocationId,counter.CreatedAt!.Value));
   }
 }

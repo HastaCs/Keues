@@ -22,7 +22,7 @@ public class CallNextTicketHandler
     _context = context;
   }
 
-  public async Task<CallNextTicketResponse?> Handle(CallNextTicketCommand command)
+  public async Task<CallNextTicketResult?> Handle(CallNextTicketCommand command)
   {
     // Usamos una transacción con nivel de aislamiento Serializable para prevenir race conditions
     // cuando múltiples counters intentan llamar al siguiente ticket al mismo tiempo.
@@ -64,7 +64,7 @@ public class CallNextTicketHandler
           await _context.TicketHistories.AddAsync(history);
           await _context.SaveChangesAsync();
           await transaction.CommitAsync();
-          return new CallNextTicketResponse(currentTicket.Id, currentTicket.Code, currentTicket.QueueId);
+          return new CallNextTicketResult(currentTicket.Id, currentTicket.Code, currentTicket.QueueId);
         }
 
         var queueIds = counter.Queues
@@ -161,7 +161,7 @@ public class CallNextTicketHandler
         await _context.SaveChangesAsync();
         await transaction.CommitAsync();
 
-        return new CallNextTicketResponse(ticket.Id, ticket.Code, ticket.QueueId);
+        return new CallNextTicketResult(ticket.Id, ticket.Code, ticket.QueueId);
       }
       catch
       {

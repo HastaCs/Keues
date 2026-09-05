@@ -1,7 +1,9 @@
 using System.Configuration;
 using Keues.API.Hubs;
+using Keues.API.Mappers;
 using Keues.API.Requests.Counters;
 using Keues.API.Responses;
+using Keues.API.Responses.Counters;
 using Keues.Application.DeviceRegistry.Messages;
 using Keues.Application.Features.Counters;
 using Keues.Application.Features.Counters.AttendTicket;
@@ -20,8 +22,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.WebUtilities;
 
-//TODO Hacer los request en vez de los commands
+
 namespace Keues.API.Controllers
 {
   /// <summary>
@@ -36,7 +39,8 @@ namespace Keues.API.Controllers
     private TicketsUseCases _ticketUseCases;
     private readonly IHubContext<DeviceHub> _hubContext;
 
-    public CountersController(CounterUseCases counterUseCases, TicketsUseCases ticketsUseCases, IHubContext<DeviceHub> hubContext)
+    public CountersController(CounterUseCases counterUseCases, TicketsUseCases ticketsUseCases,
+      IHubContext<DeviceHub> hubContext)
     {
       _counterUseCases = counterUseCases;
       _ticketUseCases = ticketsUseCases;
@@ -46,20 +50,22 @@ namespace Keues.API.Controllers
     /// <summary>
     /// Creates a new service desk.
     /// </summary>
-    /// <param name="command">Data of the counter to create.</param>
+    /// <param name="request">Data of the counter to create.</param>
     /// <returns>The created counter.</returns>
     /// <response code="200">Counter created.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPost]
     [Authorize]
-    [ProducesResponseType(typeof(CounterBaseResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CounterResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create(CreateCounterCommand command)
+    public async Task<IActionResult> Create(CreateCounterRequest request)
     {
       try
       {
-        var counter = await _counterUseCases.Create.Handle(command);
-        return Ok(counter);
+        var createCommand = request.ToCommand(); 
+        var counter = await _counterUseCases.Create.Handle(createCommand);
+        var counterResponse = counter.ToResponse();
+        return Ok(counterResponse);
       }
       catch (Exception e)
       {
@@ -71,21 +77,22 @@ namespace Keues.API.Controllers
     /// Updates an existing service desk.
     /// </summary>
     /// <param name="id">Identifier of the counter.</param>
-    /// <param name="command">Data to update. The body Id is overridden with the one from the path.</param>
+    /// <param name="request">Data to update the counter.</param>
     /// <returns>The updated counter.</returns>
     /// <response code="200">Counter updated.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPut("{id:guid}")]
     [Authorize]
-    [ProducesResponseType(typeof(CounterBaseResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CounterResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Update(Guid id, UpdateCounterCommand command)
+    public async Task<IActionResult> Update(Guid id, UpdateCounterRequest request)
     {
       try
       {
-        var commandCopy = command with { Id = id };
-        var counter = await _counterUseCases.Update.Handle(commandCopy);
-        return Ok(counter);
+        var command =request.ToCommand(id);
+        var counter = await _counterUseCases.Update.Handle(command);
+        var counterResponse = counter.ToResponse();
+        return Ok(counterResponse);
       }
       catch (Exception e)
       {
@@ -94,7 +101,7 @@ namespace Keues.API.Controllers
     }
 
     /// <summary>
-    /// Deletes a service desk.
+    /// Deletes a counter
     /// </summary>
     /// <param name="id">Identifier of the counter.</param>
     /// <response code="200">Counter deleted.</response>
@@ -117,21 +124,21 @@ namespace Keues.API.Controllers
     }
 
     /// <summary>
-    /// Gets a service desk by its identifier.
+    /// Gets a counter by its identifier.
     /// </summary>
     /// <param name="id">Identifier of the counter.</param>
     /// <returns>The requested counter.</returns>
     /// <response code="200">Counter found.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(CounterBaseResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CounterResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Get(Guid id)
     {
       try
       {
         var counter = await _counterUseCases.Get.Handle(new GetCounterCommand(id));
-        return Ok(counter);
+        return Ok(counter.ToResponse());
       }
       catch (Exception e)
       {
@@ -140,21 +147,23 @@ namespace Keues.API.Controllers
     }
 
     /// <summary>
-    /// Gets all service desks, optionally filtered by location.
+    /// Gets all counters desks, optionally filtered by location.
     /// </summary>
     /// <param name="query">Query filters (optional LocationId).</param>
     /// <returns>List of counters.</returns>
     /// <response code="200">List of counters.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpGet]
-    [ProducesResponseType(typeof(DataResponse<IEnumerable<CounterBaseResponse>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(DataResponse<IEnumerable<CounterResponse>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetAll([FromQuery] GetAllCountersCommand query)
+    public async Task<IActionResult> GetAll([FromQuery] GetAllCountersRequest query)
     {
       try
       {
-        var counters = await _counterUseCases.GetAll.Handle(query);
-        return Ok(new DataResponse<IEnumerable<CounterBaseResponse>>(counters));
+        var command=query.ToCommand();
+        var counters = await _counterUseCases.GetAll.Handle(command);
+        var response = counters.Select(c => c.ToResponse());
+        return Ok(new DataResponse<IEnumerable<CounterResponse>>(response));
       }
       catch (Exception e)
       {
@@ -176,17 +185,18 @@ namespace Keues.API.Controllers
     /// <response code="200">Ticket called (may be null).</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPost("{id:guid}/call-next-ticket")]
-    [ProducesResponseType(typeof(CallNextTicketResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CallNextTicketResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CallNextTicket(Guid id, CallNextTicketRequest request)
     {
       try
       {
         var ticket = await _counterUseCases.CallNextTicket.Handle(new CallNextTicketCommand(id));
-        if(ticket==null)
+        if (ticket == null)
         {
           return new JsonResult(null);
         }
+
         var counter = await _counterUseCases.Get.Handle(new GetCounterCommand(id));
         var ticketCalled = new TicketCalled(ticket?.TicketId, ticket?.Code, counter.Code);
 
@@ -221,8 +231,9 @@ namespace Keues.API.Controllers
     {
       try
       {
-        var command=new AttendTicketCommand(id,request.TicketId);
+        var command = request.ToCommand(id);
         await _counterUseCases.AttendTicket.Handle(command);
+        
         var counter = await _counterUseCases.Get.Handle(new GetCounterCommand(id));
         var group = $"locationId:{counter.LocationId}:typeDevice:Monitor:flowId:{request.FlowId}";
         await _hubContext.Clients.Group(group).SendAsync("TicketAttended", new { ticketId = request.TicketId });
@@ -239,21 +250,21 @@ namespace Keues.API.Controllers
     /// </summary>
     /// <remarks>The path id (counter) is not used; the ticket is identified by its TicketId in the body.</remarks>
     /// <param name="id">Identifier of the counter (not used).</param>
-    /// <param name="command">TicketId of the ticket to cancel.</param>
+    /// <param name="request">TicketId of the ticket to cancel.</param>
     /// <response code="200">Ticket canceled.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPost("{id:guid}/cancel-ticket")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CancelTicket(Guid id, CancelTicketRequest command)
+    public async Task<IActionResult> CancelTicket(Guid id, CancelTicketRequest request)
     {
       try
       {
-        var ticket = await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(command.TicketId));
+        var ticket = await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(request.TicketId));
         if (ticket == null)
-          throw new Exception($"No ticket found for {command.TicketId}");
-        await _counterUseCases.CancelTicket.Handle(new CancelTicketCommand(command.TicketId,id));
-        
+          throw new Exception($"No ticket found for {request.TicketId}");
+        await _counterUseCases.CancelTicket.Handle(new CancelTicketCommand(request.TicketId, id));
+
         var group = $"locationId:{ticket.LocationId}:typeDevice:Monitor:flowId:{ticket.FlowId}";
         await _hubContext.Clients.Group(group).SendAsync("TicketCancelled", new { ticketId = ticket.Id });
         return Ok();
@@ -283,13 +294,13 @@ namespace Keues.API.Controllers
         if (counter == null)
           throw new Exception($"No counter found for {request.CounterId}");
         //TODO una clase o algo para no escribir esto tan hardcoded.. "ticketcalled" , "locaitonId:type:.".. etc
-        
+
         //El codigo de la queue, para ponerla delante del numero
-        
-        var queues=await _counterUseCases.GetQueues.Handle(new GetQueuesQuery(request.CounterId));
+
+        var queues = await _counterUseCases.GetQueues.Handle(new GetQueuesQuery(request.CounterId));
         var code = queues.FirstOrDefault()?.Code;
-        var ticketCalled = new TicketCalled(null,$"{code}{request.Code}", counter.Code);
-        
+        var ticketCalled = new TicketCalled(null, $"{code}{request.Code}", counter.Code);
+
         var group = $"locationId:{request.LocationId}:typeDevice:Monitor:flowId:{request.FlowId}";
         await _hubContext.Clients.Group(group).SendAsync("TicketCalled", ticketCalled);
         return Ok();
@@ -320,7 +331,8 @@ namespace Keues.API.Controllers
           throw new Exception($"No counter found for {id}");
 
         var group = $"locationId:{counter.LocationId}:typeDevice:Monitor:flowId:{request.FlowId}";
-        await _hubContext.Clients.Group(group).SendAsync("CounterFree", new { counterId = id, counterCode = counter.Code });
+        await _hubContext.Clients.Group(group)
+          .SendAsync("CounterFree", new { counterId = id, counterCode = counter.Code });
         return Ok();
       }
       catch (Exception e)
@@ -328,7 +340,7 @@ namespace Keues.API.Controllers
         return BadRequest(new ErrorResponse(e.Message));
       }
     }
-    
+
     /// <summary>
     /// Transfers a ticket from one queue to another, allowing the customer to change their service type.
     /// THe ticket is put in waiting status in the new queue.
@@ -339,11 +351,18 @@ namespace Keues.API.Controllers
     [HttpPost("{id:guid}/transfer-ticket")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> TransferTicket(Guid id,TransferTicketRequest request)
+    public async Task<IActionResult> TransferTicket(Guid id, TransferTicketRequest request)
     {
       try
       {
+        var ticket=await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(request.TicketId));
+        if(ticket == null)
+          throw new Exception($"No ticket found for {request.TicketId}");
+
         await _counterUseCases.TransferTicket.Handle(new TransferTicketCommand(id, request.TicketId, request.QueueId));
+        //Para que no haga falta actualizar los monitores le mando la señal de cancelado, para uqe desaparezca
+        var group = $"locationId:{ticket.LocationId}:typeDevice:Monitor:flowId:{ticket.FlowId}";
+        await _hubContext.Clients.Group(group).SendAsync("TicketCancelled", new { ticketId = ticket.Id });
         return Ok();
       }
       catch (Exception e)
