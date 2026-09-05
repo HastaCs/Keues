@@ -15,4 +15,7 @@ public class TicketHistory
   public Guid? CounterId { get; set; }
   public Counter? Counter { get; set; } 
   
+  //Queue destination for transfers
+  public Guid? QueueId { get; set; }
+  public Queue? Queue { get; set; }
 }

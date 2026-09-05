@@ -49,6 +49,7 @@ public class TransferTicketHandler
       CounterId = counter.Id,
       CreatedAt = DateTime.UtcNow,
       Event = KeuesEventsType.Ticket.Transferred,
+      QueueId = destinationQueue.Id
     };
     await _context.TicketHistories.AddAsync(history);
     await _context.SaveChangesAsync();

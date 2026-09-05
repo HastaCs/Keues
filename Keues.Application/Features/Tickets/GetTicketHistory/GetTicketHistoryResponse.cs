@@ -7,4 +7,6 @@ public class GetTicketHistoryResponse
   public DateTime CreatedAt { get; set; }
   public string CounterName { get; set; }
   
+  public string QueueName { get; set; }
+  
 }

@@ -70,14 +70,14 @@ namespace Keues.API.Controllers
     /// <response code="200">Ticket history found.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpGet("{id:guid}/history")]
-    [ProducesResponseType(typeof(IEnumerable<GetTicketHistoryResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(DataResponse<IEnumerable<GetTicketHistoryResponse>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetHistory(Guid id)
     {
       try
       {
         var histories = await ticketsUseCases.GetTicketHistory.Handle(new GetTicketRequest(id));
-        return Ok(histories);
+        return Ok(new DataResponse<IEnumerable<GetTicketHistoryResponse>>(histories));
       }
       catch (Exception e)
       {
