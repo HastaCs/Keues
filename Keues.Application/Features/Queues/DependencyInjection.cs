@@ -11,7 +11,7 @@ namespace Keues.Application.Features.Queues;
 
 public static class DependencyInjection
 {
-  public static IServiceCollection AddTicketTypesUseCases(this IServiceCollection services)
+  public static IServiceCollection AddQueuesUseCases(this IServiceCollection services)
   {
     services.AddScoped<CreateQueueHandler>();
     services.AddScoped<UpdateQueueHandler>();

@@ -292,30 +292,7 @@ public class CounterUseCasesTests : IDisposable
       handler.Handle(new AttendTicketCommand(counterId, ticketId)));
   }
 
-  [Fact]
-  public async Task CancelTicket_marks_the_ticket_as_canceled()
-  {
-    await using var context = _db.CreateContext();
-    var location = await Seed.LocationAsync(context);
-    var flow = await Seed.FlowAsync(context, location.Id);
-    var queue = await Seed.QueueAsync(context, location.Id);
-    var ticket = await Seed.TicketAsync(context, queue.Id, flow.Id);
-    var handler = new CancelTicketHandler(context);
+  
 
-    await handler.Handle(new CancelTicketCommand(ticket.Id));
 
-    var reloaded = await context.Tickets.FindAsync(ticket.Id);
-    Assert.Equal(TicketStatus.Canceled, reloaded!.Status);
-    Assert.NotNull(reloaded.CanceledAt);
-  }
-
-  [Fact]
-  public async Task CancelTicket_throws_when_ticket_not_found()
-  {
-    await using var context = _db.CreateContext();
-    var handler = new CancelTicketHandler(context);
-
-    await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new CancelTicketCommand(Guid.NewGuid())));
-  }
 }

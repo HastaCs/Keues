@@ -2,7 +2,8 @@ using Keues.API.Responses;
 using Keues.Application.Features.Tickets;
 using Keues.Application.Features.Tickets.GetAllTickets;
 using Keues.Application.Features.Tickets.GetTicket;
-using Microsoft.AspNetCore.Http;
+using Keues.Application.Features.Tickets.GetTicketHistory;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace Keues.API.Controllers
@@ -54,6 +55,29 @@ namespace Keues.API.Controllers
       {
         var ticket=await ticketsUseCases.GetTicket.Handle(new GetTicketCommand(id));
         return Ok(ticket);
+      }
+      catch (Exception e)
+      {
+        return BadRequest(new ErrorResponse(e.Message));
+      }
+    }
+    
+    /// <summary>
+    /// Gets the history of a ticket by its identifier.
+    /// </summary>
+    /// <param name="id">Ticket identifier.</param>
+    /// <returns>List of ticket history events.</returns>
+    /// <response code="200">Ticket history found.</response>
+    /// <response code="400">Validation or business rule error.</response>
+    [HttpGet("{id:guid}/history")]
+    [ProducesResponseType(typeof(IEnumerable<GetTicketHistoryResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetHistory(Guid id)
+    {
+      try
+      {
+        var histories = await ticketsUseCases.GetTicketHistory.Handle(new GetTicketRequest(id));
+        return Ok(histories);
       }
       catch (Exception e)
       {

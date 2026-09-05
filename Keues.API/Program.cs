@@ -106,7 +106,7 @@ builder.Services.AddScoped<IApplicationDbContext>(sp =>
   sp.GetRequiredService<AppDbContext>());
 
 #region useCases
-builder.Services.AddTicketTypesUseCases();
+builder.Services.AddQueuesUseCases();
 builder.Services.AddCountersUseCases();
 builder.Services.AddLocationUseCases();
 builder.Services.AddTicketsUseCases();
