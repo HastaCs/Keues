@@ -112,7 +112,13 @@ function getStoredView(): QueueView {
 function sortQueues(items: Queue[], sort: QueueSort): Queue[] {
   const sorted = [...items].sort((left, right) => {
     if (sort.field === 'createdAt') {
-      return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+      const timeDiff = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+
+      if (timeDiff !== 0) {
+        return timeDiff;
+      }
+
+      return left.name.localeCompare(right.name, 'es');
     }
 
     return left[sort.field].localeCompare(right[sort.field], 'es');

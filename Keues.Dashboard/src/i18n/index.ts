@@ -457,7 +457,7 @@ const resources = {
         maxAgingBonusHelp:
           'La cantidad de niveles de prioridad que el ticket puede subir como máximo.',
         color: 'Color',
-        allowedCounters: 'Counters permitidos',
+        allowedCounters: 'Puestos permitidos',
       },
       errors: {
         requestFailed: 'No se pudo completar la operacion',

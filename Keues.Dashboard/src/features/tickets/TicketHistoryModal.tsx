@@ -132,7 +132,7 @@ export function TicketHistoryModal({ ticket, opened, onClose }: TicketHistoryMod
                 key={entry.id}
                 color={meta.color}
                 title={
-                  entry.event === 'Ticket.Transferred' && entry.queueName
+                  entry.queueName
                     ? `${t(meta.labelKey)} → ${entry.queueName}`
                     : t(meta.labelKey)
                 }

@@ -169,40 +169,44 @@ export function QueueFormModal(props: QueueFormModalProps) {
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
           <Group align="flex-start" wrap="nowrap">
-            <TextInput
-              style={{ flex: 1 }}
-              label={t('ticketTypeForm.name')}
-              required
-              value={formState.name}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
+            <Stack gap={4} style={{ flex: 1 }}>
+              <Text fw={600}>{t('ticketTypeForm.name')}</Text>
 
-                setFormState((previous) => ({
-                  ...previous,
-                  name: value,
-                }));
-              }}
-              error={nameError}
-            />
+              <TextInput
+                required
+                value={formState.name}
+                onChange={(event) => {
+                  const value = event.currentTarget.value;
 
-            <TextInput
-              style={{ width: 80, flexShrink: 0 }}
-              maxLength={2}
-              label={t('queueForm.prefix')}
-              leftSection={<IconDeviceTv size={16} />}
-              value={formState.code}
-              onChange={(event) => {
-                const value = event.currentTarget.value
-                  .toUpperCase()
-                  .replace(/[^A-Z]/g, '')
-                  .slice(0, 2);
+                  setFormState((previous) => ({
+                    ...previous,
+                    name: value,
+                  }));
+                }}
+                error={nameError}
+              />
+            </Stack>
 
-                setFormState((previous) => ({
-                  ...previous,
-                  code: value,
-                }));
-              }}
-            />
+            <Stack gap={4} style={{ width: 80, flexShrink: 0 }}>
+              <Text fw={600}>{t('queueForm.prefix')}</Text>
+
+              <TextInput
+                maxLength={2}
+                leftSection={<IconDeviceTv size={16} />}
+                value={formState.code}
+                onChange={(event) => {
+                  const value = event.currentTarget.value
+                    .toUpperCase()
+                    .replace(/[^A-Z]/g, '')
+                    .slice(0, 2);
+
+                  setFormState((previous) => ({
+                    ...previous,
+                    code: value,
+                  }));
+                }}
+              />
+            </Stack>
           </Group>
 
           <SimpleGrid
@@ -211,54 +215,63 @@ export function QueueFormModal(props: QueueFormModalProps) {
               md: 3,
             }}
           >
-            <NumberInput
-              label={
+            <Stack gap={4}>
+              <Text fw={600}>
                 <Group gap={6} wrap="nowrap">
                   <span>{t('queueForm.maxValue')}</span>
                   <Tooltip label={t('queueForm.maxValueHelp')} withArrow>
                     <IconInfoCircle size={14} style={{ cursor: 'pointer', flexShrink: 0 }} />
                   </Tooltip>
                 </Group>
-              }
-              value={formState.maxValue === '' ? undefined : Number(formState.maxValue)}
-              onChange={(value) =>
-                setFormState((previous) => ({
-                  ...previous,
-                  maxValue: value == null ? '' : String(value),
-                }))
-              }
-              min={0}
-              error={maxValueError}
-            />
+              </Text>
 
-            <NumberInput
-              label={t('queueForm.priority')}
-              value={Number(formState.priority)}
-              onChange={(value) =>
-                setFormState((previous) => ({
-                  ...previous,
-                  priority: String(value ?? 0),
-                }))
-              }
-            />
+              <NumberInput
+                value={formState.maxValue === '' ? undefined : Number(formState.maxValue)}
+                onChange={(value) =>
+                  setFormState((previous) => ({
+                    ...previous,
+                    maxValue: value == null ? '' : String(value),
+                  }))
+                }
+                min={0}
+                error={maxValueError}
+              />
+            </Stack>
 
-            <NumberInput
-              label={
+            <Stack gap={4}>
+              <Text fw={600}>{t('queueForm.priority')}</Text>
+
+              <NumberInput
+                value={Number(formState.priority)}
+                onChange={(value) =>
+                  setFormState((previous) => ({
+                    ...previous,
+                    priority: String(value ?? 0),
+                  }))
+                }
+              />
+            </Stack>
+
+            <Stack gap={4}>
+              <Text fw={600}>
                 <Group gap={6} wrap="nowrap">
                   <span>{t('queueForm.weight')}</span>
                   <Tooltip label={t('queueForm.weightHelp')} withArrow>
                     <IconInfoCircle size={14} style={{ cursor: 'pointer', flexShrink: 0 }} />
                   </Tooltip>
                 </Group>
-              }
-              value={Number(formState.weight)}
-              onChange={(value) =>
-                setFormState((previous) => ({
-                  ...previous,
-                  weight: String(value ?? 0),
-                }))
-              }
-            />
+              </Text>
+
+              <NumberInput
+                value={Number(formState.weight)}
+                onChange={(value) =>
+                  setFormState((previous) => ({
+                    ...previous,
+                    weight: String(value ?? 0),
+                  }))
+                }
+              />
+            </Stack>
           </SimpleGrid>
 
           <SimpleGrid
@@ -267,45 +280,51 @@ export function QueueFormModal(props: QueueFormModalProps) {
               sm: 2,
             }}
           >
-            <NumberInput
-              label={
+            <Stack gap={4}>
+              <Text fw={600}>
                 <Group gap={6} wrap="nowrap">
                   <span>{t('queueForm.agingIntervalMinutes')}</span>
                   <Tooltip label={t('queueForm.agingIntervalHelp')} withArrow>
                     <IconInfoCircle size={14} style={{ cursor: 'pointer', flexShrink: 0 }} />
                   </Tooltip>
                 </Group>
-              }
-              value={Number(formState.agingIntervalMinutes)}
-              onChange={(value) =>
-                setFormState((previous) => ({
-                  ...previous,
-                  agingIntervalMinutes: String(value ?? 0),
-                }))
-              }
-            />
+              </Text>
 
-            <NumberInput
-              label={
+              <NumberInput
+                value={Number(formState.agingIntervalMinutes)}
+                onChange={(value) =>
+                  setFormState((previous) => ({
+                    ...previous,
+                    agingIntervalMinutes: String(value ?? 0),
+                  }))
+                }
+              />
+            </Stack>
+
+            <Stack gap={4}>
+              <Text fw={600}>
                 <Group gap={6} wrap="nowrap">
                   <span>{t('queueForm.maxAgingBonus')}</span>
                   <Tooltip label={t('queueForm.maxAgingBonusHelp')} withArrow>
                     <IconInfoCircle size={14} style={{ cursor: 'pointer', flexShrink: 0 }} />
                   </Tooltip>
                 </Group>
-              }
-              value={Number(formState.maxAgingBonus)}
-              onChange={(value) =>
-                setFormState((previous) => ({
-                  ...previous,
-                  maxAgingBonus: String(value ?? 0),
-                }))
-              }
-            />
+              </Text>
+
+              <NumberInput
+                value={Number(formState.maxAgingBonus)}
+                onChange={(value) =>
+                  setFormState((previous) => ({
+                    ...previous,
+                    maxAgingBonus: String(value ?? 0),
+                  }))
+                }
+              />
+            </Stack>
           </SimpleGrid>
 
           <Stack gap="xs">
-            <Text fw={500}>{t('queueForm.color')}</Text>
+            <Text fw={600}>{t('queueForm.color')}</Text>
 
             <Group gap="sm">
               {colors.map((color) => (
@@ -332,18 +351,21 @@ export function QueueFormModal(props: QueueFormModalProps) {
               ))}
             </Group>
           </Stack>
-          <Textarea
-            label={t('ticketTypeForm.description')}
-            value={formState.description}
-            onChange={(event) => {
-              const value = event.currentTarget.value;
+          <Stack gap={4}>
+            <Text fw={600}>{t('ticketTypeForm.description')}</Text>
 
-              setFormState((previous) => ({
-                ...previous,
-                description: value,
-              }));
-            }}
-          />
+            <Textarea
+              value={formState.description}
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+
+                setFormState((previous) => ({
+                  ...previous,
+                  description: value,
+                }));
+              }}
+            />
+          </Stack>
 
           <Stack gap="sm">
             <Text fw={600}>{t('queueForm.allowedCounters')}</Text>
@@ -384,11 +406,11 @@ export function QueueFormModal(props: QueueFormModalProps) {
 
                         <div>
                           <Text size="sm" fw={600}>
-                            {counter.code}
+                            {counter.name}
                           </Text>
 
                           <Text size="xs" c="dimmed">
-                            {counter.name}
+                            {counter.code}
                           </Text>
                         </div>
                       </Group>

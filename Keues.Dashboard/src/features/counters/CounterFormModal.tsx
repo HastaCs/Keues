@@ -147,53 +147,62 @@ export function CounterFormModal(props: CounterFormModalProps) {
     >
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
-          <TextInput
-            label={t("counterForm.code")}
-            placeholder={t("counterForm.codePlaceholder")}
-            leftSection={<IconDeviceTv size={16} />}
-            value={formState.code}
-            onChange={(event) => {
-              const value = event.currentTarget.value;
+          <Stack gap={4}>
+            <Text fw={600}>{t("counterForm.code")}</Text>
 
-              setFormState((previous) => ({
-                ...previous,
-                code: value,
-              }));
-            }}
-            error={codeError}
-            withAsterisk
-          />
+            <TextInput
+              placeholder={t("counterForm.codePlaceholder")}
+              leftSection={<IconDeviceTv size={16} />}
+              value={formState.code}
+              onChange={(event) => {
+                const value = event.currentTarget.value;
 
-          <TextInput
-            label={t("counterForm.name")}
-            value={formState.name}
-            onChange={(event) => {
-              const value = event.currentTarget.value;
+                setFormState((previous) => ({
+                  ...previous,
+                  code: value,
+                }));
+              }}
+              error={codeError}
+              withAsterisk
+            />
+          </Stack>
 
-              setFormState((previous) => ({
-                ...previous,
-                name: value,
-              }));
-            }}
-            error={nameError}
-            withAsterisk
-          />
+          <Stack gap={4}>
+            <Text fw={600}>{t("counterForm.name")}</Text>
 
-          <Textarea
-            label={t("counterForm.description")}
-            minRows={3}
-            value={formState.description}
-            onChange={(event) => {
-              const value = event.currentTarget.value;
+            <TextInput
+              value={formState.name}
+              onChange={(event) => {
+                const value = event.currentTarget.value;
 
-              setFormState((previous) => ({
-                ...previous,
-                description: value,
-              }));
-            }}
-          />
+                setFormState((previous) => ({
+                  ...previous,
+                  name: value,
+                }));
+              }}
+              error={nameError}
+              withAsterisk
+            />
+          </Stack>
+
+          <Stack gap={4}>
+            <Text fw={600}>{t("counterForm.description")}</Text>
+
+            <Textarea
+              minRows={3}
+              value={formState.description}
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+
+                setFormState((previous) => ({
+                  ...previous,
+                  description: value,
+                }));
+              }}
+            />
+          </Stack>
  <Stack gap="xs">
-            <Text fw={500}>{t("counterForm.color")}</Text>
+            <Text fw={600}>{t("counterForm.color")}</Text>
 
             <Group gap="sm">
               {colors.map((color) => (
@@ -265,11 +274,11 @@ export function CounterFormModal(props: CounterFormModalProps) {
 
         <div>
           <Text size="sm" fw={600}>
-            {ticket.code}
+            {ticket.name}
           </Text>
 
           <Text size="xs" c="dimmed">
-            {ticket.name}
+            {ticket.code}
           </Text>
         </div>
       </Group>
