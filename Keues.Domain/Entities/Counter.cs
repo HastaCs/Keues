@@ -25,7 +25,7 @@ public class Counter
   public Location Location { get; set; } = null!;
 
   public DateTime? RemovedAt { get; set; }
-  public DateTime? CreatedAt { get; set; } 
+  public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
 
   /// <summary>
   /// Colas a las que puede llamar, para no llamar turnos de otros puestos.

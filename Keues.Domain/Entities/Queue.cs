@@ -26,6 +26,7 @@ public class Queue
       AgingIntervalMinutes = agingIntervalMinutes,
       MaxAgingBonus = maxAgingBonus,
       Color= color,
+      CreatedAt = DateTime.UtcNow
     
     };
   }
@@ -70,7 +71,7 @@ public class Queue
   /// </summary>
   public string Code { get; set; } = "";
   
-  public DateTime CreatedAt { get; } = DateTime.UtcNow;
+  public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
  
   /// <summary>
   /// Para el soft delete y no eliminarlo de la base de datos
