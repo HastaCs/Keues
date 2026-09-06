@@ -15,22 +15,23 @@ public class CreateNewTicketHandler
 
   public async Task<CreateNewTicketResponse> Handle(CreateNewTicketCommand request)
   {
-    var ticketType = await _context.Queues.FindAsync(request.QueueId);
-    if (ticketType == null)
+    var queue = await _context.Queues.FindAsync(request.QueueId);
+    if (queue == null)
     {
       throw new Exception("Ticket type not found");
     }
 
-    var ticket = ticketType.CreateNewTicket(request.FlowId);
+    var ticket = queue.CreateNewTicket(request.FlowId);
     _context.Tickets.Add(ticket);
-    
+
     var history = new TicketHistory
     {
       TicketId = ticket.Id,
       Event = KeuesEventsType.Ticket.Created,
-      Counter = null
+      Counter = null,
+      QueueId = queue.Id,
     };
-   await _context.TicketHistories.AddAsync(history);  
+    await _context.TicketHistories.AddAsync(history);
     await _context.SaveChangesAsync();
 
     return new CreateNewTicketResponse(ticket.Id, ticket.Code);
