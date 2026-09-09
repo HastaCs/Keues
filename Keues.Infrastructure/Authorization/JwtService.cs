@@ -2,7 +2,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Keues.Application.Common;
-
 using Keues.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -59,7 +58,7 @@ public class JwtService : IJwtService
       }
 
       var sub = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-        ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
       return Guid.TryParse(sub, out var userId) ? userId : null;
     }
     catch (Exception)
@@ -73,9 +72,7 @@ public class JwtService : IJwtService
     var key = new SymmetricSecurityKey(
       Encoding.UTF8.GetBytes(_options.Key));
 
-    var credentials = new SigningCredentials(
-      key,
-      SecurityAlgorithms.HmacSha256);
+    var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
     var token = new JwtSecurityToken(
       issuer: _options.Issuer,

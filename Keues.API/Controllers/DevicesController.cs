@@ -61,7 +61,7 @@ namespace Keues.API.Controllers
         /// <response code="200">Device deleted.</response>
         /// <response code="400">Validation or business rule error (does not exist or is still connected).</response>
         [HttpDelete("{id:guid}")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Delete(Guid id)

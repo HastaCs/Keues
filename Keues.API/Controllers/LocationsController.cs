@@ -33,7 +33,7 @@ namespace Keues.API.Controllers
     /// <response code="201">Location created.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPost]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(LocationResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(LocationRequest request)
@@ -65,7 +65,7 @@ namespace Keues.API.Controllers
     /// <response code="200">Location updated.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPut("{id:guid}")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(LocationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Update(Guid id, LocationRequest request)
@@ -96,7 +96,7 @@ namespace Keues.API.Controllers
     /// <response code="204">Location deleted.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpDelete("{id:guid}")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Delete(Guid id)

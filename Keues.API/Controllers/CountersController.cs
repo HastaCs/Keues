@@ -55,7 +55,7 @@ namespace Keues.API.Controllers
     /// <response code="200">Counter created.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPost]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(CounterResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(CreateCounterRequest request)
@@ -82,7 +82,7 @@ namespace Keues.API.Controllers
     /// <response code="200">Counter updated.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpPut("{id:guid}")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(CounterResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Update(Guid id, UpdateCounterRequest request)
@@ -107,7 +107,7 @@ namespace Keues.API.Controllers
     /// <response code="200">Counter deleted.</response>
     /// <response code="400">Validation or business rule error.</response>
     [HttpDelete("{id:guid}")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Delete(Guid id)
