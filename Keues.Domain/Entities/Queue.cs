@@ -108,6 +108,13 @@ public class Queue
   public int MaxAgingBonus { get; set; } = 0;
   
   public string Color { get; set; } = "blue";
+  
+  /// <summary>
+  /// A que hora se resetea la cola a 1 y los tickets en waiting quedan cancelados
+  /// </summary>
+  public TimeOnly? ResetAt { get; set; } = null;
+  
+  public DateTime? LastResetAt { get; set; } = null;
 
 
 }

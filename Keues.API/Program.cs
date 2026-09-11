@@ -23,6 +23,7 @@ using Keues.Application.Features.Users.Me;
 using Keues.Application.Features.Users.ForgotPassword;
 using Keues.Application.Features.Users.ResetPassword;
 using Keues.Infrastructure.Authorization;
+using Keues.Infrastructure.BackgroundServices;
 using Keues.Infrastructure.Email;
 
 using Keues.Infrastructure.Persistence;
@@ -161,7 +162,7 @@ builder.Services
   });
 
 builder.Services.AddAuthorization();
-
+builder.Services.AddHostedService<QueueResetBackgroundService>();
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {

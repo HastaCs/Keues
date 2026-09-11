@@ -4,6 +4,7 @@ using Keues.Application.Features.Queues.CreateQueue;
 using Keues.Application.Features.Queues.DeleteQueue;
 using Keues.Application.Features.Queues.GetAllQueues;
 using Keues.Application.Features.Queues.GetQueue;
+using Keues.Application.Features.Queues.ResetQueues;
 using Keues.Application.Features.Queues.UpdateQueue;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,7 +20,9 @@ public static class DependencyInjection
     services.AddScoped<GetQueueHandler>();
     services.AddScoped<GetAllQueuesHandler>();
     services.AddScoped<CreateNewTicketHandler>();
+    services.AddScoped<ResetQueuesHandle>();
     services.AddScoped<QueuesUseCases>();
+   
   
     return services;
   }
