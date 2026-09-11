@@ -17,4 +17,6 @@ public record QueueBaseCommand
   public int AgingIntervalMinutes { get; set; }
   public int MaxAgingBonus { get; set; }
   public string Color { get; set; }
+  
+  public TimeOnly? ResetAt { get; set; }
 }

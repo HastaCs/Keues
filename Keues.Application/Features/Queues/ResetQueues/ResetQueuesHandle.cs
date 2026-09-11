@@ -21,11 +21,17 @@ public class ResetQueuesHandle
     var queuesToReset = await _context.Queues.Where(q => q.ResetAt == timeNow).ToListAsync();
     foreach (var queue in queuesToReset)
     {
+      if(queue.LastResetAt.HasValue && queue.LastResetAt.Value.Date == now.Date)
+      {
+        continue; //Ya se reseteo hoy
+      }
       //Tickets de esa queue
       queue.LastResetAt = now;
+      queue.NextNumber = 1;
       var ticketsToReset = await _context.Tickets.Where(t => t.QueueId == queue.Id && (t.Status==TicketStatus.InProgress || t.Status==TicketStatus.Waiting)).ToListAsync();
       foreach (var ticket in ticketsToReset)
       {
+        
         ticket.Cancel();
         var ticketHistory = new Domain.Entities.TicketHistory
         {

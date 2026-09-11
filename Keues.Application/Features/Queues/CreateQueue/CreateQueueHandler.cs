@@ -17,6 +17,7 @@ public class CreateQueueHandler
     //TODO Mappers para estas cosas
     var queue = Queue.Create(command.Name, command.Code, command.MaxValue, command.Description, command.LocationId,
       command.Priority, command.Weight, command.AgingIntervalMinutes, command.MaxAgingBonus, command.Color);
+    queue.ResetAt = command.ResetAt;
     var counters = _context.Counters.Where(x => command.Counters.Contains(x.Id)).ToList();
     foreach (var counter in counters)
     {
@@ -26,6 +27,6 @@ public class CreateQueueHandler
     await _context.SaveChangesAsync();
     //TODO Mapper aqui tambien
     return new QueueBaseResponse(queue.Id, queue.Name, queue.Description, queue.MaxValue, queue.Code, queue.Priority,
-      queue.Weight, queue.AgingIntervalMinutes, queue.MaxAgingBonus, queue.Color, queue.Counters.Select(x => x.Id), queue.CreatedAt);
+      queue.Weight, queue.AgingIntervalMinutes, queue.MaxAgingBonus, queue.Color, queue.Counters.Select(x => x.Id), queue.CreatedAt,queue.ResetAt);
   }
 }

@@ -28,6 +28,7 @@ public class UpdateQueueHandler
     queue.AgingIntervalMinutes=command.AgingIntervalMinutes;
     queue.Weight=command.Weight;
     queue.Counters.Clear();
+    queue.ResetAt=command.ResetAt;
     if (command.Counters != null)
     {
       var counters = await _context.Counters.Where(c => command.Counters.Contains(c.Id)).ToListAsync();
@@ -37,7 +38,7 @@ public class UpdateQueueHandler
 
     await _context.SaveChangesAsync();
    
-    return  new QueueBaseResponse(queue.Id, queue.Name, queue.Description, queue.MaxValue, queue.Code, queue.Priority, queue.Weight, queue.AgingIntervalMinutes, queue.MaxAgingBonus, queue.Color, queue.Counters.Select(x => x.Id), queue.CreatedAt);
+    return  new QueueBaseResponse(queue.Id, queue.Name, queue.Description, queue.MaxValue, queue.Code, queue.Priority, queue.Weight, queue.AgingIntervalMinutes, queue.MaxAgingBonus, queue.Color, queue.Counters.Select(x => x.Id), queue.CreatedAt,queue.ResetAt);
   }
   
 }
