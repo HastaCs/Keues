@@ -458,6 +458,9 @@ const resources = {
           'La cantidad de niveles de prioridad que el ticket puede subir como máximo.',
         color: 'Color',
         allowedCounters: 'Puestos permitidos',
+        resetAt: 'Hora de reseteo',
+        resetAtHelp:
+          'Actívalo para resetear la cola automáticamente a esa hora cada día: la numeración volverá a 1 y todos los tickets en espera o siendo atendidos pasarán a cancelados. Desactivado, la cola no se resetea.',
       },
       errors: {
         requestFailed: 'No se pudo completar la operacion',
@@ -922,6 +925,9 @@ const resources = {
         maxAgingBonusHelp: 'The maximum number of priority levels the ticket can rise.',
         color: 'Color',
         allowedCounters: 'Allowed counters',
+        resetAt: 'Reset time',
+        resetAtHelp:
+          'Enable to automatically reset the queue at that time each day: numbering will restart at 1 and all waiting or in-progress tickets will be canceled. Disabled means the queue is not reset.',
       },
       errors: {
         requestFailed: 'The operation could not be completed',

@@ -42,6 +42,7 @@ interface QueueFormState {
   agingIntervalMinutes: string;
   maxAgingBonus: string;
   color: string;
+  resetAt: string;
   locaitonId: string;
 }
 
@@ -49,6 +50,32 @@ interface CounterOption {
   id: string;
   code: string;
   name: string;
+}
+
+function padTimePart(value: number): string {
+  return value.toString().padStart(2, '0');
+}
+
+function utcTimeToLocal(value?: string | null): string {
+  if (!value) {
+    return '00:00';
+  }
+
+  const [hours, minutes] = value.slice(0, 5).split(':').map(Number);
+
+  const date = new Date();
+  date.setUTCHours(hours, minutes, 0, 0);
+
+  return `${padTimePart(date.getHours())}:${padTimePart(date.getMinutes())}`;
+}
+
+function localTimeToUtc(value: string): string {
+  const [hours, minutes] = value.split(':').map(Number);
+
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+
+  return `${padTimePart(date.getUTCHours())}:${padTimePart(date.getUTCMinutes())}`;
 }
 
 function getInitialState(initialQueue?: Queue): QueueFormState {
@@ -62,6 +89,7 @@ function getInitialState(initialQueue?: Queue): QueueFormState {
     agingIntervalMinutes: initialQueue?.agingIntervalMinutes?.toString() ?? '0',
     maxAgingBonus: initialQueue?.maxAgingBonus?.toString() ?? '0',
     color: initialQueue?.color ?? 'blue',
+    resetAt: utcTimeToLocal(initialQueue?.resetAt),
     locaitonId: initialQueue?.locationId ?? '',
   };
 }
@@ -75,6 +103,8 @@ export function QueueFormModal(props: QueueFormModalProps) {
 
   const [nameError, setNameError] = useState<string | null>(null);
   const [maxValueError, setMaxValueError] = useState<string | null>(null);
+
+  const [resetAtEnabled, setResetAtEnabled] = useState(Boolean(initialQueue?.resetAt));
 
   const [counters, setCounters] = useState<CounterOption[]>([]);
   const [selectedCounters, setSelectedCounters] = useState<string[]>([]);
@@ -105,6 +135,8 @@ export function QueueFormModal(props: QueueFormModalProps) {
 
     setNameError(null);
     setMaxValueError(null);
+
+    setResetAtEnabled(Boolean(initialQueue?.resetAt));
 
     setSelectedCounters(initialQueue?.counters ?? []);
   }, [opened, initialQueue]);
@@ -156,6 +188,7 @@ export function QueueFormModal(props: QueueFormModalProps) {
       color: formState.color,
       locationId: locationId,
       counters: selectedCounters,
+      resetAt: resetAtEnabled ? localTimeToUtc(formState.resetAt || '00:00') : null,
     });
   }
   return (
@@ -322,6 +355,47 @@ export function QueueFormModal(props: QueueFormModalProps) {
               />
             </Stack>
           </SimpleGrid>
+
+          <Stack gap="xs">
+            <Group gap={6} wrap="nowrap">
+              <Switch
+                checked={resetAtEnabled}
+                label={t('queueForm.resetAt')}
+                onChange={(event) => {
+                  const checked = event.currentTarget.checked;
+
+                  setResetAtEnabled(checked);
+
+                  if (checked && !formState.resetAt) {
+                    setFormState((previous) => ({
+                      ...previous,
+                      resetAt: '00:00',
+                    }));
+                  }
+                }}
+              />
+
+              <Tooltip label={t('queueForm.resetAtHelp')} withArrow>
+                <IconInfoCircle size={14} style={{ cursor: 'pointer', flexShrink: 0 }} />
+              </Tooltip>
+            </Group>
+
+            {resetAtEnabled && (
+              <TextInput
+                type="time"
+                value={formState.resetAt}
+                onChange={(event) => {
+                  const value = event.currentTarget.value;
+
+                  setFormState((previous) => ({
+                    ...previous,
+                    resetAt: value,
+                  }));
+                }}
+                style={{ maxWidth: 160 }}
+              />
+            )}
+          </Stack>
 
           <Stack gap="xs">
             <Text fw={600}>{t('queueForm.color')}</Text>

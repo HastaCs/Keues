@@ -14,6 +14,7 @@ export interface Queue {
   locationId: string;
   counters: CounterId[];
   createdAt: string;
+  resetAt: string | null;
 }
 
 export type QueueId = string;
@@ -30,6 +31,7 @@ export interface QueueInput {
   color: string;
   locationId: string;
   counters: CounterId[];
+  resetAt: string | null;
 }
 export interface UpdateQueueInput extends QueueInput {
   id: QueueId;
