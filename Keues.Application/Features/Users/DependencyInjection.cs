@@ -1,5 +1,6 @@
 using Keues.Application.Features.Users.CreateAdmin;
 using Keues.Application.Features.Users.CreateUser;
+using Keues.Application.Features.Users.DeleteUser;
 using Keues.Application.Features.Users.EnableDisableUser;
 using Keues.Application.Features.Users.ForgotPassword;
 using Keues.Application.Features.Users.GetAllUsers;
@@ -28,6 +29,7 @@ public static class DependencyInjection
     services.AddScoped<GetUserHandler>();
     services.AddScoped<GetAllUsersHandler>();
     services.AddScoped<EnableDisableUserHandler>();
+    services.AddScoped<DeleteUserHandler>();
     
     services.AddScoped<UsersUseCases>();
     return services;

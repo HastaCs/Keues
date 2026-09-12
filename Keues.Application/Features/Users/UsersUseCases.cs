@@ -1,5 +1,6 @@
 using Keues.Application.Features.Users.CreateAdmin;
 using Keues.Application.Features.Users.CreateUser;
+using Keues.Application.Features.Users.DeleteUser;
 using Keues.Application.Features.Users.EnableDisableUser;
 using Keues.Application.Features.Users.ForgotPassword;
 using Keues.Application.Features.Users.GetAllUsers;
@@ -14,7 +15,7 @@ namespace Keues.Application.Features.Users;
 
 public class UsersUseCases(CreateAdminHandle createAdmin, CreateUserHandler createUser, ForgotPasswordHandler forgotPassword, HasAdminHandler hasAdmin, LoginHandler login,
   GetCurrentUserHandler getCurrentUser, ResetPasswordHandler resetPassword, UpdateUserHandler updateUser, GetUserHandler getUser,
-  GetAllUsersHandler getAllUsers,EnableDisableUserHandler enableDisableUser)
+  GetAllUsersHandler getAllUsers,EnableDisableUserHandler enableDisableUser,DeleteUserHandler deleteUser)
 {
   public CreateAdminHandle CreateAdmin => createAdmin;
   public CreateUserHandler CreateUser => createUser;
@@ -29,4 +30,5 @@ public class UsersUseCases(CreateAdminHandle createAdmin, CreateUserHandler crea
   public GetAllUsersHandler GetAllUsers => getAllUsers;
   
   public EnableDisableUserHandler EnableDisableUser => enableDisableUser;
+  public DeleteUserHandler DeleteUser => deleteUser;
 }

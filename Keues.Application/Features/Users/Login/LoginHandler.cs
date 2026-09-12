@@ -1,4 +1,5 @@
 using Keues.Application.Common;
+using Keues.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Keues.Application.Features.Users.Login;
@@ -16,7 +17,7 @@ public class LoginHandler
   public async Task<LoginResponse> Handle(LoginCommand request)
   {
     var mail = request.Email.ToLower();
-    var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == mail);
+    var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == mail );
     if (user == null)
     {
       throw new Exception($"Invalid credentials");

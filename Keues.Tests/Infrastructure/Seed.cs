@@ -77,6 +77,29 @@ public static class Seed
     return counter;
   }
 
+  public static async Task<User> UserAsync(
+    AppDbContext context,
+    Guid? locationId = null,
+    string name = "Usuario",
+    string email = "user@keues.dev",
+    string password = "P@ssw0rd!",
+    Rol role = Rol.User,
+    bool enabled = true)
+  {
+    var user = new User
+    {
+      Name = name,
+      Email = email.ToLower(),
+      PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+      Role = role,
+      LocationId = locationId,
+      Enabled = enabled
+    };
+    context.Users.Add(user);
+    await context.SaveChangesAsync();
+    return user;
+  }
+
   public static async Task<Ticket> TicketAsync(
     AppDbContext context,
     Guid queueId,

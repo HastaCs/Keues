@@ -7,6 +7,7 @@ using Keues.API.Responses.Users;
 using Keues.Application.Features.Users;
 using Keues.Application.Features.Users.CreateAdmin;
 using Keues.Application.Features.Users.CreateUser;
+using Keues.Application.Features.Users.DeleteUser;
 using Keues.Application.Features.Users.EnableDisableUser;
 using Keues.Application.Features.Users.ForgotPassword;
 using Keues.Application.Features.Users.GetAllUsers;
@@ -290,6 +291,26 @@ namespace Keues.API.Controllers
       {
        var command= new EnableDisableUserCommand(id, request.IsEnabled);
         await _userUseCases.EnableDisableUser.Handle(command);
+        return Ok();
+      }
+      catch (Exception e)
+      {
+        return BadRequest(new ErrorResponse(e.Message));
+      }
+    }
+
+    
+    
+    [Authorize(Roles = "Admin")]
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteUser(Guid id)
+    {
+      try
+      {
+        var command = new DeleteUserCommand(id);
+        await _userUseCases.DeleteUser.Handle(command);
         return Ok();
       }
       catch (Exception e)
