@@ -21,6 +21,7 @@ import {
 } from '@mantine/core';
 
 import {
+  IconArmchair,
   IconArrowsSort,
   IconChevronDown,
   IconChevronUp,
@@ -31,7 +32,6 @@ import {
   IconTable,
   IconTicket,
   IconTrash,
-  IconUsers,
 } from '@tabler/icons-react';
 import { countersApi } from '@/api/CountersApi';
 import { queuesApi } from '@/api/QueuesApi';
@@ -202,10 +202,7 @@ export function CountersPanel() {
 
       setQueueMeta(
         Object.fromEntries(
-          queuesResponse.data.map((queue) => [
-            queue.id,
-            { name: queue.name, color: queue.color },
-          ])
+          queuesResponse.data.map((queue) => [queue.id, { name: queue.name, color: queue.color }])
         )
       );
     } catch (requestError) {
@@ -475,7 +472,7 @@ export function CountersPanel() {
                 <Group justify="space-between" align="flex-start" wrap="nowrap">
                   <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
                     <ThemeIcon size={36} radius="xl" color={counter.color} variant="light">
-                      <IconUsers size={18} />
+                      <IconArmchair size={18} />
                     </ThemeIcon>
 
                     <Stack gap={1} style={{ minWidth: 0 }}>
@@ -570,7 +567,7 @@ export function CountersPanel() {
                     <Table.Td>
                       <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
                         <ThemeIcon size={28} radius="xl" color={counter.color} variant="light">
-                          <IconUsers size={14} />
+                          <IconArmchair size={14} />
                         </ThemeIcon>
                         <Text fw={600} truncate>
                           {counter.name}

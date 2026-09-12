@@ -34,3 +34,40 @@ export interface ResetPasswordInput {
   email: string;
   password: string;
 }
+
+export type UserId = string;
+
+export interface User {
+  id: UserId;
+  name: string;
+  email: string;
+  locationId: string | null;
+  createdAt: string;
+  enabled: boolean;
+}
+
+export interface CreateUserInput {
+  name: string;
+  email: string;
+  password: string;
+  locationId: string;
+}
+
+export interface UpdateUserInput extends CreateUserInput {
+  id: UserId;
+}
+
+export interface UserMutationResult {
+  id: UserId;
+  name: string;
+  email: string;
+}
+
+export interface ListUsersParams {
+  locationId: string;
+  name?: string;
+  isActive?: boolean;
+  page?: number;
+  limit?: number;
+  sortOrder?: 'asc' | 'desc';
+}

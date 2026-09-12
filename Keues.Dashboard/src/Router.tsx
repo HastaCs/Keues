@@ -9,6 +9,7 @@ import { CounterDevicesPanel } from './features/devices/CounterDevicesPanel';
 import { MonitorDevicesPanel } from './features/devices/MonitorDevicesPanel';
 import { TicketsPanel } from './features/tickets/TicketsPanel';
 import { QueuesPanel } from './features/queues/QueuePanel';
+import { UsersPanel } from './features/users/UsersPanel';
 import { AppShellLayout } from './layout/AppShellLayout';
 import { HomePage } from './pages/Home.page';
 import Login from './components/Login/Login';
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
           {
             path: 'counters',
             element: <CountersPanel />,
+          },
+          {
+            path: 'users',
+            element: <UsersPanel />,
           },
           {
             path: 'ticketTypes',
