@@ -1,4 +1,4 @@
-import { Button, Group, Modal, PasswordInput, Stack, Text, TextInput } from '@mantine/core';
+import { Alert, Button, Group, Modal, PasswordInput, Stack, Text, TextInput } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,6 +7,7 @@ import type { CreateUserInput, User } from '@/api/interfaces/User/Users';
 interface UserFormModalProps {
   opened: boolean;
   loading: boolean;
+  error: string | null;
   initialUser?: User;
   locationId: string;
   onClose: () => void;
@@ -34,6 +35,7 @@ function getInitialState(initialUser?: User): FormState {
 export function UserFormModal({
   opened,
   loading,
+  error,
   initialUser,
   locationId,
   onClose,
@@ -118,6 +120,8 @@ export function UserFormModal({
     >
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
+          {error ? <Alert color="red">{error}</Alert> : null}
+
           <TextInput
             label={t('userForm.name')}
             placeholder={t('userForm.namePlaceholder')}

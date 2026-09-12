@@ -100,6 +100,7 @@ export function UsersPanel() {
   const [editingUser, setEditingUser] = useState<User | undefined>(undefined);
   const [deletingUser, setDeletingUser] = useState<User | undefined>(undefined);
   const [deleting, setDeleting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -161,6 +162,7 @@ export function UsersPanel() {
 
   function openCreateModal() {
     setEditingUser(undefined);
+    setFormError(null);
     setFormOpened(true);
   }
 
@@ -170,6 +172,7 @@ export function UsersPanel() {
     try {
       const fullUser = await usersApi.get(user.id);
       setEditingUser(fullUser);
+      setFormError(null);
       setFormOpened(true);
     } catch (requestError) {
       setError(getErrorMessage(requestError, t('errors.unexpected')));
@@ -194,7 +197,7 @@ export function UsersPanel() {
 
   async function handleSubmitUser(payload: CreateUserInput) {
     setSaving(true);
-    setError(null);
+    setFormError(null);
 
     try {
       if (editingUser) {
@@ -205,9 +208,10 @@ export function UsersPanel() {
 
       setFormOpened(false);
       setEditingUser(undefined);
+      setFormError(null);
       setReloadKey((current) => current + 1);
     } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
+      setFormError(getErrorMessage(requestError, t('errors.unexpected')));
     } finally {
       setSaving(false);
     }
@@ -271,9 +275,13 @@ export function UsersPanel() {
       <UserFormModal
         opened={formOpened}
         loading={saving}
+        error={formError}
         initialUser={editingUser}
         locationId={location.id}
-        onClose={() => setFormOpened(false)}
+        onClose={() => {
+          setFormOpened(false);
+          setFormError(null);
+        }}
         onSubmit={handleSubmitUser}
       />
 
@@ -350,26 +358,42 @@ export function UsersPanel() {
                   onClick={() => void openEditModal(user)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <Group align="flex-start" wrap="nowrap" gap="sm">
-                    <Avatar size={40} radius="xl" color="blue">
-                      {getInitials(user.name)}
-                    </Avatar>
+                  <Group align="flex-start" justify="space-between" wrap="nowrap" gap="sm">
+                    <Group gap="sm" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
+                      <Avatar size={40} radius="xl" color="blue">
+                        {getInitials(user.name)}
+                      </Avatar>
 
-                    <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
-                      <Text fw={700} style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
-                        {user.name}
-                      </Text>
+                      <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
+                        <Text fw={700} style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
+                          {user.name}
+                        </Text>
 
-                      <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
-                        <IconMail size={13} color="var(--mantine-color-dimmed)" />
+                        <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
+                          <IconMail size={13} color="var(--mantine-color-dimmed)" />
 
-                        <Tooltip label={user.email} withArrow openDelay={300}>
-                          <Text size="xs" c="dimmed" truncate>
-                            {user.email}
-                          </Text>
-                        </Tooltip>
-                      </Group>
-                    </Stack>
+                          <Tooltip label={user.email} withArrow openDelay={300}>
+                            <Text size="xs" c="dimmed" truncate>
+                              {user.email}
+                            </Text>
+                          </Tooltip>
+                        </Group>
+                      </Stack>
+                    </Group>
+
+                    <Tooltip label={t('common.delete')}>
+                      <ActionIcon
+                        variant="light"
+                        color="red"
+                        size="md"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setDeletingUser(user);
+                        }}
+                      >
+                        <IconTrash size={16} />
+                      </ActionIcon>
+                    </Tooltip>
                   </Group>
 
                   <Divider mt="sm" />
@@ -391,25 +415,9 @@ export function UsersPanel() {
                       </Badge>
                     </Group>
 
-                    <Group gap="xs" wrap="nowrap">
-                      <Text size="xs" c="dimmed">
-                        {formatDate(user.createdAt)}
-                      </Text>
-
-                      <Tooltip label={t('common.delete')}>
-                        <ActionIcon
-                          variant="light"
-                          color="red"
-                          size="md"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setDeletingUser(user);
-                          }}
-                        >
-                          <IconTrash size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-                    </Group>
+                    <Text size="xs" c="dimmed">
+                      {formatDate(user.createdAt)}
+                    </Text>
                   </Group>
                 </Card>
               ))}
