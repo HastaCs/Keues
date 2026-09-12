@@ -7,6 +7,7 @@ using Keues.API.Responses.Users;
 using Keues.Application.Features.Users;
 using Keues.Application.Features.Users.CreateAdmin;
 using Keues.Application.Features.Users.CreateUser;
+using Keues.Application.Features.Users.EnableDisableUser;
 using Keues.Application.Features.Users.ForgotPassword;
 using Keues.Application.Features.Users.GetAllUsers;
 using Keues.Application.Features.Users.GetUser;
@@ -268,6 +269,28 @@ namespace Keues.API.Controllers
         var pagination = new Pagination(result.Page, result.Limit, result.Total, result.TotalPages);
         return Ok(new DataResponse<IEnumerable<GetUserResult>>(result.Users, pagination));
       
+      }
+      catch (Exception e)
+      {
+        return BadRequest(new ErrorResponse(e.Message));
+      }
+    }
+    
+    
+    /// <summary>
+    /// Enable or disable a user. Only accessible by Admins. Returns the updated user.
+    /// </summary>
+    [Authorize(Roles = "Admin")]
+    [HttpPost("{id:guid}/enable")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> EnableDisableUser(Guid id, EnableDisableUserRequest request)
+    {
+      try
+      {
+       var command= new EnableDisableUserCommand(id, request.IsEnabled);
+        await _userUseCases.EnableDisableUser.Handle(command);
+        return Ok();
       }
       catch (Exception e)
       {

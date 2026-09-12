@@ -17,7 +17,7 @@ public class GetAllUsersHandler
   public async Task<GetAllUsersResult> Handle(GetAllUsersQuery query)
   {
     var users = _context.Users.AsQueryable();
-    
+
     users = users.Where(u => u.Role != Rol.Admin);
     if (query.LocationId.HasValue)
     {
@@ -29,15 +29,19 @@ public class GetAllUsersHandler
       users = users.Where(u => u.Name.ToLower().Contains(query.Name.ToLower()));
     }
 
-    
-    
+    if (query.IsActive.HasValue)
+    {
+      users = users.Where(u => u.Enabled == query.IsActive.Value);
+    }
+
+
     var total = await users.CountAsync();
     var totalPages = (int)Math.Ceiling((double)total / query.Limit);
 
     var orderedQuery = query.SortOrder == Keues.Domain.Enums.SortOrder.Asc
       ? users.OrderBy(u => u.Name)
       : users.OrderByDescending(u => u.Name);
-    
+
     var result = await orderedQuery
       .Skip((query.Page - 1) * query.Limit)
       .Take(query.Limit)

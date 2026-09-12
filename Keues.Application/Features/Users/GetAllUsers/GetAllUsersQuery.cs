@@ -8,6 +8,8 @@ public record GetAllUsersQuery
   
   public string? Name { get; init; }
   
+  public bool? IsActive { get; init; }
+  
   public int Page { get; init; } = 1;
   public int Limit { get; init; } = 20;
   public SortOrder SortOrder { get; init; } = SortOrder.Desc;
