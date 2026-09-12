@@ -16,6 +16,7 @@ using Keues.Application.Features.Locations.UpdateLocation;
 
 using Keues.Application.Features.Queues;
 using Keues.Application.Features.Tickets;
+using Keues.Application.Features.Users;
 using Keues.Application.Features.Users.CreateAdmin;
 using Keues.Application.Features.Users.HasAdmin;
 using Keues.Application.Features.Users.Login;
@@ -113,12 +114,13 @@ builder.Services.AddLocationUseCases();
 builder.Services.AddTicketsUseCases();
 builder.Services.AddDashboardUseCases();
 builder.Services.AddFlowUseCases();
-builder.Services.AddScoped<CreateAdminHandle>();
+builder.Services.AddUsersUseCases();
+/*builder.Services.AddScoped<CreateAdminHandle>();
 builder.Services.AddScoped<LoginHandler>();
 builder.Services.AddScoped<HasAdminHandler>();
 builder.Services.AddScoped<GetCurrentUserHandler>();
 builder.Services.AddScoped<ForgotPasswordHandler>();
-builder.Services.AddScoped<ResetPasswordHandler>();
+builder.Services.AddScoped<ResetPasswordHandler>();*/
 builder.Services.AddDeviceUseCases();
 #endregion
 
@@ -169,8 +171,6 @@ using (var scope = app.Services.CreateScope())
   var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
   db.Database.Migrate();
 }
-
-
 
 app.UseAuthentication();
 app.UseAuthorization();

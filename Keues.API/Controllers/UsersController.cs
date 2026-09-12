@@ -1,13 +1,20 @@
 using System.Security.Claims;
 using Keues.API.Common;
+using Keues.API.Dtos.Requests.Users;
+using Keues.API.Mappers;
 using Keues.API.Responses;
 using Keues.API.Responses.Users;
+using Keues.Application.Features.Users;
 using Keues.Application.Features.Users.CreateAdmin;
+using Keues.Application.Features.Users.CreateUser;
 using Keues.Application.Features.Users.ForgotPassword;
+using Keues.Application.Features.Users.GetAllUsers;
+using Keues.Application.Features.Users.GetUser;
 using Keues.Application.Features.Users.HasAdmin;
 using Keues.Application.Features.Users.Login;
 using Keues.Application.Features.Users.Me;
 using Keues.Application.Features.Users.ResetPassword;
+using Keues.Application.Features.Users.UpdateUser;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,23 +29,11 @@ namespace Keues.API.Controllers
   [ApiController]
   public class UsersController : ControllerBase
   {
-    private readonly CreateAdminHandle _createAdminHandle;
-    private readonly LoginHandler _loginHandler;
-    private readonly HasAdminHandler _hasAdminHandler;
-    private readonly GetCurrentUserHandler _getCurrentUserHandler;
-    private readonly ForgotPasswordHandler _forgotPasswordHandler;
-    private readonly ResetPasswordHandler _resetPasswordHandler;
+    private readonly UsersUseCases _userUseCases;
 
-    public UsersController(CreateAdminHandle createAdminHandle, LoginHandler loginHandler,
-      HasAdminHandler hasAdminHandler, GetCurrentUserHandler getCurrentUserHandler,
-      ForgotPasswordHandler forgotPasswordHandler, ResetPasswordHandler resetPasswordHandler)
+    public UsersController(UsersUseCases userUseCases)
     {
-      _createAdminHandle = createAdminHandle;
-      _loginHandler = loginHandler;
-      _hasAdminHandler = hasAdminHandler;
-      _getCurrentUserHandler = getCurrentUserHandler;
-      _forgotPasswordHandler = forgotPasswordHandler;
-      _resetPasswordHandler = resetPasswordHandler;
+      _userUseCases = userUseCases;
     }
 
     /// <summary>
@@ -55,7 +50,7 @@ namespace Keues.API.Controllers
     {
       try
       {
-        var result = await _createAdminHandle.Handle(request);
+        var result = await _userUseCases.CreateAdmin.Handle(request);
         AppendAuthCookie.Append(Response, result.Jwt);
         return Ok(result);
       }
@@ -79,8 +74,8 @@ namespace Keues.API.Controllers
     {
       try
       {
-        var login = await _loginHandler.Handle(request);
-       AppendAuthCookie.Append(Response, login.Jwt);
+        var login = await _userUseCases.Login.Handle(request);
+        AppendAuthCookie.Append(Response, login.Jwt);
         return Ok(login);
       }
       catch (Exception e)
@@ -98,7 +93,7 @@ namespace Keues.API.Controllers
     [ProducesResponseType(typeof(HasAdminResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> HasAdmin()
     {
-      var hasAdmin = await _hasAdminHandler.Handle(new HasAdminQuery());
+      var hasAdmin = await _userUseCases.HasAdmin.Handle(new HasAdminQuery());
       return Ok(new HasAdminResponse(hasAdmin));
     }
 
@@ -119,7 +114,7 @@ namespace Keues.API.Controllers
       try
       {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var me = await _getCurrentUserHandler.Handle(new MeQuery(userId));
+        var me = await _userUseCases.GetCurrentUser.Handle(new MeQuery(userId));
         return Ok(me);
       }
       catch (Exception e)
@@ -140,7 +135,7 @@ namespace Keues.API.Controllers
     {
       try
       {
-        await _forgotPasswordHandler.Handle(request);
+        await _userUseCases.ForgotPassword.Handle(request);
         return Ok();
       }
       catch (Exception e)
@@ -162,7 +157,7 @@ namespace Keues.API.Controllers
     {
       try
       {
-        await _resetPasswordHandler.Handle(request);
+        await _userUseCases.ResetPassword.Handle(request);
         return Ok();
       }
       catch (Exception e)
@@ -188,5 +183,96 @@ namespace Keues.API.Controllers
       return Ok();
     }
 
+
+    /// <summary>
+    /// Create a new User. Only accessible by Admins. Returns the created user.
+    /// </summary>
+    /// <returns></returns>
+    [Authorize(Roles = "Admin")]
+    [HttpPost]
+    [ProducesResponseType(typeof(CreateUserResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateUser(CreateUserRequest request)
+    {
+      try
+      {
+        var command= request.ToCommand();
+        var result = await _userUseCases.CreateUser.Handle(command);
+        return Ok(result);
+      }
+      catch (Exception e)
+      {
+        return BadRequest(new ErrorResponse(e.Message));
+      }
+    }
+
+    /// <summary>
+    /// Update a new User. Only accessible by Admins. Returns the updated user.
+    /// </summary>
+    /// <returns></returns>
+    [Authorize(Roles = "Admin")]
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(UpdateUserResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateUser(Guid id, UpdateUserRequest request)
+    {
+      try
+      {
+        var command =request.ToCommand(id);
+        var result = await _userUseCases.UpdateUser.Handle(command);
+        return Ok(result);
+      }
+      catch (Exception e)
+      {
+        return BadRequest(new ErrorResponse(e.Message));
+      }
+    }
+    
+    /// <summary>
+    /// Gets a user by its identifier. Only accessible by Admins. Returns the user.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    [Authorize(Roles = "Admin")]
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(GetUserResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetUser(Guid id)
+    {
+      try
+      {
+        var query = new GetUserQuery(id);
+        var result = await _userUseCases.GetUser.Handle(query);
+        return Ok(result);
+      }
+      catch (Exception e)
+      {
+        return BadRequest(new ErrorResponse(e.Message));
+      }
+    }
+    
+    
+    /// <summary>
+    /// Gets all users
+    /// </summary>
+    /// <returns></returns>
+    [Authorize(Roles = "Admin")]
+    [HttpGet]
+    [ProducesResponseType(typeof(DataResponse<IEnumerable<GetUserResult>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetAllUsers([FromQuery] GetAllUsersQuery query)
+    {
+      try
+      {
+        var result = await _userUseCases.GetAllUsers.Handle(query);
+        var pagination = new Pagination(result.Page, result.Limit, result.Total, result.TotalPages);
+        return Ok(new DataResponse<IEnumerable<GetUserResult>>(result.Users, pagination));
+      
+      }
+      catch (Exception e)
+      {
+        return BadRequest(new ErrorResponse(e.Message));
+      }
+    }
   }
 }

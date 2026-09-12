@@ -22,6 +22,7 @@ public class Location
 
   public string? Color { get; set; } = "blue";
  
+  public ICollection<User> Users { get; set; } = new List<User>();
   private Location() { }
 
   public static Location Create(string name, string description,string color)

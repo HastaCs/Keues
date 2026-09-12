@@ -27,6 +27,9 @@ public class AppDbContext:DbContext,IApplicationDbContext
     modelBuilder.Entity<Ticket>()
       .HasQueryFilter(t => t.Queue.RemovedAt == null && t.Flow.RemovedAt == null);
     
+    modelBuilder.Entity<User>()
+      .HasQueryFilter(u => u.RemovedAt == null);
+    
    
   }
   
