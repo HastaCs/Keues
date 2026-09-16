@@ -13,9 +13,9 @@ using Keues.Application.Features.Locations.DeleteLocation;
 using Keues.Application.Features.Locations.GetAllLocations;
 using Keues.Application.Features.Locations.GetLocation;
 using Keues.Application.Features.Locations.UpdateLocation;
-
 using Keues.Application.Features.Queues;
 using Keues.Application.Features.Tickets;
+using Keues.Application.Features.UserGroups;
 using Keues.Application.Features.Users;
 using Keues.Application.Features.Users.CreateAdmin;
 using Keues.Application.Features.Users.HasAdmin;
@@ -26,7 +26,6 @@ using Keues.Application.Features.Users.ResetPassword;
 using Keues.Infrastructure.Authorization;
 using Keues.Infrastructure.BackgroundServices;
 using Keues.Infrastructure.Email;
-
 using Keues.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -46,8 +45,7 @@ var runtimeConfig = RuntimeConfigStore.LoadOrCreate(configPath);
 runtimeConfig.ApplyEnvironmentOverrides();
 runtimeConfig.BindToConfiguration(builder.Configuration);
 
-builder.Services.Configure<PasswordResetOptions>(
-  options => options.FrontendUrl = runtimeConfig.DashboardUrl);
+builder.Services.Configure<PasswordResetOptions>(options => options.FrontendUrl = runtimeConfig.DashboardUrl);
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
   options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
@@ -61,7 +59,8 @@ builder.Services.AddOpenApi(options =>
   options.AddDocumentTransformer((document, context, cancellationToken) =>
   {
     document.Info.Title = "Keues API";
-    document.Info.Description = "Queue and ticket management API: locations, flows, queues, counters, tickets and devices. Authentication is done via the HttpOnly \"access_token\" cookie (JWT) set by the login and create-admin endpoints.";
+    document.Info.Description =
+      "Queue and ticket management API: locations, flows, queues, counters, tickets and devices. Authentication is done via the HttpOnly \"access_token\" cookie (JWT) set by the login and create-admin endpoints.";
     document.Info.Version = "1.0.0";
     document.Info.Contact = new OpenApiContact
     {
@@ -77,7 +76,8 @@ builder.Services.AddOpenApi(options =>
       Type = SecuritySchemeType.ApiKey,
       Name = "access_token",
       In = ParameterLocation.Cookie,
-      Description = "HttpOnly cookie with the JWT. It is obtained by calling POST /api/users/login or POST /api/users/create-admin."
+      Description =
+        "HttpOnly cookie with the JWT. It is obtained by calling POST /api/users/login or POST /api/users/create-admin."
     });
     return Task.CompletedTask;
   });
@@ -108,6 +108,7 @@ builder.Services.AddScoped<IApplicationDbContext>(sp =>
   sp.GetRequiredService<AppDbContext>());
 
 #region useCases
+
 builder.Services.AddQueuesUseCases();
 builder.Services.AddCountersUseCases();
 builder.Services.AddLocationUseCases();
@@ -115,13 +116,9 @@ builder.Services.AddTicketsUseCases();
 builder.Services.AddDashboardUseCases();
 builder.Services.AddFlowUseCases();
 builder.Services.AddUsersUseCases();
-/*builder.Services.AddScoped<CreateAdminHandle>();
-builder.Services.AddScoped<LoginHandler>();
-builder.Services.AddScoped<HasAdminHandler>();
-builder.Services.AddScoped<GetCurrentUserHandler>();
-builder.Services.AddScoped<ForgotPasswordHandler>();
-builder.Services.AddScoped<ResetPasswordHandler>();*/
+builder.Services.AddUserGroupsUseCases();
 builder.Services.AddDeviceUseCases();
+
 #endregion
 
 
@@ -195,7 +192,7 @@ if (!app.Environment.IsDevelopment())
 {
   app.MapWhen(
     context => !context.Request.Path.StartsWithSegments("/api")
-      && !context.Request.Path.StartsWithSegments("/devices"),
+               && !context.Request.Path.StartsWithSegments("/devices"),
     appBuilder => appBuilder.Run(async context =>
     {
       context.Response.ContentType = "text/html";
@@ -206,4 +203,6 @@ if (!app.Environment.IsDevelopment())
 
 app.Run();
 
-public partial class Program { }
+public partial class Program
+{
+}

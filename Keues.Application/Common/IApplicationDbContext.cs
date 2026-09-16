@@ -22,6 +22,8 @@ public interface IApplicationDbContext
   
   DbSet<TicketHistory> TicketHistories { get; }
   
+  DbSet<UserGroup> UserGroups { get; }
+  
   DatabaseFacade Database { get; }
   
   Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

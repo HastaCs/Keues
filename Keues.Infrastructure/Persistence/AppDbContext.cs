@@ -4,12 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Keues.Infrastructure.Persistence;
 
-public class AppDbContext:DbContext,IApplicationDbContext
+public class AppDbContext : DbContext, IApplicationDbContext
 {
   public AppDbContext(DbContextOptions<AppDbContext> options)
     : base(options)
   {
   }
+
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
     base.OnModelCreating(modelBuilder);
@@ -18,35 +19,36 @@ public class AppDbContext:DbContext,IApplicationDbContext
       .HasQueryFilter(x => x.RemovedAt == null);
     modelBuilder.Entity<Location>()
       .HasQueryFilter(x => x.RemovedAt == null);
-   
+
     modelBuilder.Entity<Counter>()
       .HasQueryFilter(x => x.RemovedAt == null);
     modelBuilder.Entity<Flow>()
-      .HasQueryFilter(x=>x.RemovedAt==null);
+      .HasQueryFilter(x => x.RemovedAt == null);
 
     modelBuilder.Entity<Ticket>()
       .HasQueryFilter(t => t.Queue.RemovedAt == null && t.Flow.RemovedAt == null);
-    
+
     modelBuilder.Entity<User>()
       .HasQueryFilter(u => u.RemovedAt == null);
-    
-   
+
+    modelBuilder.Entity<UserGroup>()
+      .HasQueryFilter(ug => ug.RemovedAt == null);
   }
-  
+
   public DbSet<Ticket> Tickets => Set<Ticket>();
 
   public DbSet<Queue> Queues => Set<Queue>();
 
   public DbSet<Counter> Counters => Set<Counter>();
-  
+
   public DbSet<Location> Locations => Set<Location>();
 
   public DbSet<User> Users => Set<User>();
   public DbSet<Flow> Flows => Set<Flow>();
-  
+
   public DbSet<Device> Devices => Set<Device>();
-  
+
+  public DbSet<UserGroup> UserGroups => Set<UserGroup>();
+
   public DbSet<TicketHistory> TicketHistories => Set<TicketHistory>();
-  
- 
 }
