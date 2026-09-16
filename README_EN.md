@@ -202,7 +202,7 @@ OpenAPI available at `http://localhost:5125/openapi/v1.json` during development.
 dotnet test Keues.Tests
 ```
 
-The suite covers the use cases (numbering, priority, aging, weight, authentication) and the full API with real HTTP integration. Over 130 tests.
+The suite covers the use cases (numbering, priority, aging, weight, authentication) and the full API with real HTTP integration.
 
 ---
 

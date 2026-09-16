@@ -10,6 +10,7 @@ import { MonitorDevicesPanel } from './features/devices/MonitorDevicesPanel';
 import { TicketsPanel } from './features/tickets/TicketsPanel';
 import { QueuesPanel } from './features/queues/QueuePanel';
 import { UsersPanel } from './features/users/UsersPanel';
+import { UserGroupsPanel } from './features/userGroups/UserGroupsPanel';
 import { AppShellLayout } from './layout/AppShellLayout';
 import { HomePage } from './pages/Home.page';
 import Login from './components/Login/Login';
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
           {
             path: 'users',
             element: <UsersPanel />,
+          },
+          {
+            path: 'groups',
+            element: <UserGroupsPanel />,
           },
           {
             path: 'ticketTypes',

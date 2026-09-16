@@ -29,7 +29,9 @@ import {
   IconSettings,
   IconSun,
   IconTicket,
+  IconUser,
   IconUsers,
+  IconUsersGroup,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -47,7 +49,9 @@ type WorkspaceModule =
   | 'dashboard'
   | 'tickets'
   | 'counters'
+  | 'usersMenu'
   | 'users'
+  | 'groups'
   | 'ticketTypes'
   | 'flows'
   | 'devices'
@@ -70,7 +74,15 @@ interface LocationState {
 
 const navigationItems: NavigationItem[] = [
   { id: 'dashboard', label: 'sidebar.dashboard', icon: IconLayoutDashboard },
-  { id: 'users', label: 'sidebar.users', icon: IconUsers },
+  {
+    id: 'usersMenu',
+    label: 'sidebar.users',
+    icon: IconUsers,
+    children: [
+      { id: 'users', label: 'sidebar.usersList', icon: IconUser },
+      { id: 'groups', label: 'sidebar.groups', icon: IconUsersGroup },
+    ],
+  },
   { id: 'tickets', label: 'sidebar.tickets', icon: IconTicket },
   { id: 'counters', label: 'sidebar.counters', icon: IconArmchair },
   { id: 'ticketTypes', label: 'sidebar.ticketTypes', icon: IconCategory },
