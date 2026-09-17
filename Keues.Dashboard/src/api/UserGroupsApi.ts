@@ -33,6 +33,7 @@ export const userGroupsApi = {
         name: input.name,
         color: input.color,
         locationId: input.locationId,
+        userIds: input.userIds,
       },
     });
   },

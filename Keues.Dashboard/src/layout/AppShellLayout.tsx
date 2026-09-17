@@ -211,12 +211,23 @@ export function AppShellLayout() {
   const modulePath = (item: NavigationItem) =>
     item.id === 'dashboard' ? `/locations/${locationId}` : `/locations/${locationId}/${item.id}`;
 
-  const isActive = (item: NavigationItem) => {
-    if (item.children) {
-      return item.children.some((child) => pathname === modulePath(child));
+  const isModuleActive = (item: NavigationItem) => {
+    const base = modulePath(item);
+
+    // El dashboard es prefijo de todos los módulos, así que debe coincidir exacto.
+    if (item.id === 'dashboard') {
+      return pathname === base;
     }
 
-    return pathname === modulePath(item);
+    return pathname === base || pathname.startsWith(`${base}/`);
+  };
+
+  const isActive = (item: NavigationItem) => {
+    if (item.children) {
+      return item.children.some(isModuleActive);
+    }
+
+    return isModuleActive(item);
   };
 
   return (
@@ -327,7 +338,7 @@ export function AppShellLayout() {
                                 component={Link}
                                 to={modulePath(child)}
                                 label={t(child.label)}
-                                active={pathname === modulePath(child)}
+                                active={isModuleActive(child)}
                                 leftSection={<ChildIcon size={16} stroke={2.2} />}
                                 variant="light"
                               />
@@ -343,7 +354,7 @@ export function AppShellLayout() {
                         component={Link}
                         to={modulePath(item)}
                         label={t(item.label)}
-                        active={pathname === modulePath(item)}
+                        active={isModuleActive(item)}
                         leftSection={<NavigationIcon size={18} stroke={2.2} />}
                         variant="light"
                       />

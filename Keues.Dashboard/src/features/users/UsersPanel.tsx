@@ -5,22 +5,20 @@ import {
   Badge,
   Box,
   Button,
-  Card,
-  Divider,
   Group,
   Loader,
   Modal,
   Pagination,
   Paper,
   Select,
-  SimpleGrid,
   Stack,
   Switch,
+  Table,
   Text,
   TextInput,
   Tooltip,
 } from '@mantine/core';
-import { IconMail, IconSearch, IconTrash } from '@tabler/icons-react';
+import { IconSearch, IconTrash } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -29,12 +27,11 @@ import { usersApi } from '@/api/UsersApi';
 import type { CreateUserInput, User } from '@/api/interfaces/User/Users';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { useActiveLocation } from '@/features/locations/LocationContext';
-import styles from '@/styles/hover-card.module.css';
 import { UserFormModal } from './UserFormModal';
 
 type SortOrder = 'asc' | 'desc';
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 20;
 
 const HIDE_INACTIVE_STORAGE_KEY = 'keues.users.hideInactive';
 
@@ -347,81 +344,86 @@ export function UsersPanel() {
           </Paper>
         ) : (
           <>
-            <SimpleGrid cols={{ base: 1, sm: 2, md: 3, xl: 4 }} spacing="md">
-              {users.map((user) => (
-                <Card
-                  key={user.id}
-                  withBorder
-                  radius="lg"
-                  p="md"
-                  className={styles.hoverCard}
-                  onClick={() => void openEditModal(user)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <Group align="flex-start" justify="space-between" wrap="nowrap" gap="sm">
-                    <Group gap="sm" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
-                      <Avatar size={40} radius="xl" color="blue">
-                        {getInitials(user.name)}
-                      </Avatar>
+            <Paper withBorder radius="md" p="sm" style={{ overflowX: 'auto' }}>
+              <Table highlightOnHover>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>{t('users.name')}</Table.Th>
+                    <Table.Th>{t('users.email')}</Table.Th>
+                    <Table.Th>{t('users.status')}</Table.Th>
+                    <Table.Th>{t('users.createdAt')}</Table.Th>
+                    <Table.Th>{t('users.actions')}</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {users.map((user) => (
+                    <Table.Tr
+                      key={user.id}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => void openEditModal(user)}
+                    >
+                      <Table.Td>
+                        <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
+                          <Avatar size={28} radius="xl" color="blue">
+                            {getInitials(user.name)}
+                          </Avatar>
 
-                      <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
-                        <Text fw={700} style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
-                          {user.name}
-                        </Text>
-
-                        <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
-                          <IconMail size={13} color="var(--mantine-color-dimmed)" />
-
-                          <Tooltip label={user.email} withArrow openDelay={300}>
-                            <Text size="xs" c="dimmed" truncate>
-                              {user.email}
-                            </Text>
-                          </Tooltip>
+                          <Text fw={600} truncate>
+                            {user.name}
+                          </Text>
                         </Group>
-                      </Stack>
-                    </Group>
+                      </Table.Td>
 
-                    <Tooltip label={t('common.delete')}>
-                      <ActionIcon
-                        variant="light"
-                        color="red"
-                        size="md"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setDeletingUser(user);
-                        }}
-                      >
-                        <IconTrash size={16} />
-                      </ActionIcon>
-                    </Tooltip>
-                  </Group>
+                      <Table.Td>
+                        <Text size="sm" c="dimmed" truncate>
+                          {user.email}
+                        </Text>
+                      </Table.Td>
 
-                  <Divider mt="sm" />
+                      <Table.Td>
+                        <Group gap="xs" wrap="nowrap">
+                          <Box onClick={(event) => event.stopPropagation()}>
+                            <Switch
+                              size="sm"
+                              checked={user.enabled}
+                              onChange={(event) =>
+                                void toggleEnabled(user, event.currentTarget.checked)
+                              }
+                            />
+                          </Box>
 
-                  <Group justify="space-between" align="center" mt="sm" wrap="nowrap">
-                    <Group gap="xs" wrap="nowrap">
-                      <Box onClick={(event) => event.stopPropagation()}>
-                        <Switch
-                          size="sm"
-                          checked={user.enabled}
-                          onChange={(event) =>
-                            void toggleEnabled(user, event.currentTarget.checked)
-                          }
-                        />
-                      </Box>
+                          <Badge color={user.enabled ? 'green' : 'gray'} variant="light">
+                            {user.enabled ? t('users.enabled') : t('users.disabled')}
+                          </Badge>
+                        </Group>
+                      </Table.Td>
 
-                      <Badge color={user.enabled ? 'green' : 'gray'} variant="light">
-                        {user.enabled ? t('users.enabled') : t('users.disabled')}
-                      </Badge>
-                    </Group>
+                      <Table.Td>
+                        <Text size="sm" c="dimmed">
+                          {formatDate(user.createdAt)}
+                        </Text>
+                      </Table.Td>
 
-                    <Text size="xs" c="dimmed">
-                      {formatDate(user.createdAt)}
-                    </Text>
-                  </Group>
-                </Card>
-              ))}
-            </SimpleGrid>
+                      <Table.Td>
+                        <Tooltip label={t('common.delete')}>
+                          <ActionIcon
+                            variant="light"
+                            color="red"
+                            size="md"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeletingUser(user);
+                            }}
+                          >
+                            <IconTrash size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </Paper>
 
             <Group justify="space-between" align="center" wrap="wrap" gap="sm">
               <Text size="sm" c="dimmed">
@@ -437,7 +439,10 @@ export function UsersPanel() {
                 <Select
                   value={String(pageSize)}
                   onChange={(value) => setPageSize(Number(value) || PAGE_SIZE)}
-                  data={[12, 24, 48].map((size) => ({ value: String(size), label: `${size}` }))}
+                  data={[10, 20, 50, 100].map((size) => ({
+                    value: String(size),
+                    label: `${size}`,
+                  }))}
                   aria-label={t('users.pageSize')}
                   allowDeselect={false}
                   style={{ width: 90 }}

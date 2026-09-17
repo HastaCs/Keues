@@ -11,6 +11,7 @@ import { TicketsPanel } from './features/tickets/TicketsPanel';
 import { QueuesPanel } from './features/queues/QueuePanel';
 import { UsersPanel } from './features/users/UsersPanel';
 import { UserGroupsPanel } from './features/userGroups/UserGroupsPanel';
+import { UserGroupFormPage } from './features/userGroups/UserGroupFormPage';
 import { AppShellLayout } from './layout/AppShellLayout';
 import { HomePage } from './pages/Home.page';
 import Login from './components/Login/Login';
@@ -60,6 +61,14 @@ const router = createBrowserRouter([
           {
             path: 'groups',
             element: <UserGroupsPanel />,
+          },
+          {
+            path: 'groups/new',
+            element: <UserGroupFormPage />,
+          },
+          {
+            path: 'groups/:groupId',
+            element: <UserGroupFormPage />,
           },
           {
             path: 'ticketTypes',

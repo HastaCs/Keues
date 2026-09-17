@@ -3,29 +3,44 @@ import {
   Alert,
   Button,
   Card,
+  Divider,
   Group,
   Loader,
   Modal,
   Paper,
+  SegmentedControl,
   Select,
   SimpleGrid,
   Stack,
+  Table,
   Text,
   TextInput,
   ThemeIcon,
   Tooltip,
 } from '@mantine/core';
-import { IconSearch, IconTrash, IconUsersGroup } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  IconArrowsSort,
+  IconChevronDown,
+  IconChevronUp,
+  IconLayoutGrid,
+  IconSearch,
+  IconTable,
+  IconTrash,
+  IconUsers,
+  IconUsersGroup,
+} from '@tabler/icons-react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { ApiError } from '@/api/httpClient';
 import { userGroupsApi } from '@/api/UserGroupsApi';
-import type { CreateUserGroupInput, UserGroup } from '@/api/interfaces/UserGroup/UserGroups';
+import type { UserGroup } from '@/api/interfaces/UserGroup/UserGroups';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { useActiveLocation } from '@/features/locations/LocationContext';
 import styles from '@/styles/hover-card.module.css';
-import { UserGroupFormModal } from './UserGroupFormModal';
+
+type UserGroupView = 'cards' | 'table';
 
 type UserGroupSortField = 'createdAt' | 'name';
 
@@ -35,6 +50,7 @@ interface UserGroupSort {
 }
 
 const SORT_STORAGE_KEY = 'keues.userGroups.sort';
+const VIEW_STORAGE_KEY = 'keues.userGroups.view';
 
 const DEFAULT_SORT: UserGroupSort = { field: 'createdAt', direction: 'desc' };
 
@@ -67,6 +83,10 @@ function persistSort(sort: UserGroupSort) {
   window.localStorage.setItem(SORT_STORAGE_KEY, `${sort.field}:${sort.direction}`);
 }
 
+function getStoredView(): UserGroupView {
+  return window.localStorage.getItem(VIEW_STORAGE_KEY) === 'table' ? 'table' : 'cards';
+}
+
 function sortGroups(items: UserGroup[], sort: UserGroupSort): UserGroup[] {
   const sorted = [...items].sort((left, right) => {
     if (sort.field === 'createdAt') {
@@ -91,19 +111,91 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '-';
+  }
+
+  return date.toLocaleDateString();
+}
+
+function SortableTh({
+  field,
+  sort,
+  onSort,
+  children,
+}: {
+  field: UserGroupSortField;
+  sort: UserGroupSort;
+  onSort: (field: UserGroupSortField) => void;
+  children: ReactNode;
+}) {
+  const active = sort.field === field;
+
+  return (
+    <Table.Th>
+      <Group
+        gap={4}
+        wrap="nowrap"
+        onClick={() => onSort(field)}
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+      >
+        {children}
+        {active ? (
+          sort.direction === 'asc' ? (
+            <IconChevronUp size={14} />
+          ) : (
+            <IconChevronDown size={14} />
+          )
+        ) : (
+          <IconArrowsSort size={14} style={{ opacity: 0.35 }} />
+        )}
+      </Group>
+    </Table.Th>
+  );
+}
+
+function UsersCount({ group }: { group: UserGroup }) {
+  const { t } = useTranslation();
+
+  return (
+    <Group gap={6} wrap="nowrap">
+      <IconUsers size={14} color="var(--mantine-color-dimmed)" />
+
+      <Tooltip
+        disabled={group.userIds.length === 0}
+        withArrow
+        openDelay={200}
+        label={
+          <Stack gap={2}>
+            {group.userIds.map((user) => (
+              <Text key={user.id} size="xs">
+                {user.name}
+              </Text>
+            ))}
+          </Stack>
+        }
+      >
+        <Text size="xs" c="dimmed">
+          {t('groups.userCount', { count: group.userIds.length })}
+        </Text>
+      </Tooltip>
+    </Group>
+  );
+}
+
 export function UserGroupsPanel() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const location = useActiveLocation();
 
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [view, setView] = useState<UserGroupView>(getStoredView);
   const [sort, setSort] = useState<UserGroupSort>(getStoredSort);
-  const [formOpened, setFormOpened] = useState(false);
-  const [editingGroup, setEditingGroup] = useState<UserGroup | undefined>(undefined);
   const [deletingGroup, setDeletingGroup] = useState<UserGroup | undefined>(undefined);
   const [deleting, setDeleting] = useState(false);
 
@@ -138,6 +230,12 @@ export function UserGroupsPanel() {
     return sortGroups(matches, sort);
   }, [groups, search, sort]);
 
+  function handleViewChange(value: string) {
+    const next = value as UserGroupView;
+    setView(next);
+    window.localStorage.setItem(VIEW_STORAGE_KEY, next);
+  }
+
   function handleSortChange(value: string | null) {
     const next: UserGroupSort =
       value === 'name:asc'
@@ -150,37 +248,28 @@ export function UserGroupsPanel() {
     persistSort(next);
   }
 
-  function openCreateModal() {
-    setEditingGroup(undefined);
-    setFormError(null);
-    setFormOpened(true);
+  function handleSortToggle(field: UserGroupSortField) {
+    setSort((previous) => {
+      const next: UserGroupSort =
+        previous.field === field
+          ? { field, direction: previous.direction === 'asc' ? 'desc' : 'asc' }
+          : { field, direction: 'asc' };
+
+      persistSort(next);
+
+      return next;
+    });
   }
 
-  function openEditModal(group: UserGroup) {
-    setEditingGroup(group);
-    setFormError(null);
-    setFormOpened(true);
+  function openCreatePage() {
+    if (location) {
+      navigate(`/locations/${location.id}/groups/new`);
+    }
   }
 
-  async function handleSubmitGroup(payload: CreateUserGroupInput) {
-    setSaving(true);
-    setFormError(null);
-
-    try {
-      if (editingGroup) {
-        await userGroupsApi.update({ id: editingGroup.id, ...payload });
-      } else {
-        await userGroupsApi.create(payload);
-      }
-
-      setFormOpened(false);
-      setEditingGroup(undefined);
-      setFormError(null);
-      await refreshGroups();
-    } catch (requestError) {
-      setFormError(getErrorMessage(requestError, t('errors.unexpected')));
-    } finally {
-      setSaving(false);
+  function openEditPage(group: UserGroup) {
+    if (location) {
+      navigate(`/locations/${location.id}/groups/${group.id}`);
     }
   }
 
@@ -239,25 +328,12 @@ export function UserGroupsPanel() {
         </Stack>
       </Modal>
 
-      <UserGroupFormModal
-        opened={formOpened}
-        loading={saving}
-        error={formError}
-        initialGroup={editingGroup}
-        locationId={location.id}
-        onClose={() => {
-          setFormOpened(false);
-          setFormError(null);
-        }}
-        onSubmit={handleSubmitGroup}
-      />
-
       <Stack gap="lg">
         <PageHeader
           label={t('groups.title')}
           title={location.name}
           description={t('groups.subtitle')}
-          actions={<Button onClick={openCreateModal}>{t('groups.newGroup')}</Button>}
+          actions={<Button onClick={openCreatePage}>{t('groups.newGroup')}</Button>}
         />
 
         {error ? (
@@ -275,17 +351,44 @@ export function UserGroupsPanel() {
             style={{ maxWidth: 420, width: '100%' }}
           />
 
-          <Select
-            value={`${sort.field}:${sort.direction}`}
-            onChange={handleSortChange}
-            data={[
-              { value: 'createdAt:desc', label: t('groups.sortCreated') },
-              { value: 'name:asc', label: t('groups.sortAZ') },
-              { value: 'name:desc', label: t('groups.sortZA') },
-            ]}
-            allowDeselect={false}
-            style={{ minWidth: 220 }}
-          />
+          <Group gap="sm" align="flex-end">
+            <SegmentedControl
+              value={view}
+              onChange={handleViewChange}
+              data={[
+                {
+                  value: 'cards',
+                  label: (
+                    <Group gap={6} wrap="nowrap">
+                      <IconLayoutGrid size={14} />
+                      {t('groups.viewCards')}
+                    </Group>
+                  ),
+                },
+                {
+                  value: 'table',
+                  label: (
+                    <Group gap={6} wrap="nowrap">
+                      <IconTable size={14} />
+                      {t('groups.viewTable')}
+                    </Group>
+                  ),
+                },
+              ]}
+            />
+
+            <Select
+              value={`${sort.field}:${sort.direction}`}
+              onChange={handleSortChange}
+              data={[
+                { value: 'createdAt:desc', label: t('groups.sortCreated') },
+                { value: 'name:asc', label: t('groups.sortAZ') },
+                { value: 'name:desc', label: t('groups.sortZA') },
+              ]}
+              allowDeselect={false}
+              style={{ minWidth: 220 }}
+            />
+          </Group>
         </Group>
 
         {loading ? (
@@ -301,7 +404,7 @@ export function UserGroupsPanel() {
               </Text>
             </Stack>
           </Paper>
-        ) : (
+        ) : view === 'cards' ? (
           <SimpleGrid cols={{ base: 1, sm: 2, md: 3, xl: 4 }} spacing="md">
             {filteredGroups.map((group) => (
               <Card
@@ -310,7 +413,7 @@ export function UserGroupsPanel() {
                 radius="lg"
                 p="md"
                 className={styles.hoverCard}
-                onClick={() => openEditModal(group)}
+                onClick={() => openEditPage(group)}
                 style={{
                   borderLeft: `6px solid var(--mantine-color-${group.color}-6)`,
                   cursor: 'pointer',
@@ -341,9 +444,79 @@ export function UserGroupsPanel() {
                     </ActionIcon>
                   </Tooltip>
                 </Group>
+
+                <Divider mt="sm" />
+
+                <Group mt="sm">
+                  <UsersCount group={group} />
+                </Group>
               </Card>
             ))}
           </SimpleGrid>
+        ) : (
+          <Paper withBorder radius="md" p="sm" style={{ overflowX: 'auto' }}>
+            <Table highlightOnHover>
+              <Table.Thead>
+                <Table.Tr>
+                  <SortableTh field="name" sort={sort} onSort={handleSortToggle}>
+                    {t('groups.name')}
+                  </SortableTh>
+                  <Table.Th>{t('groups.users')}</Table.Th>
+                  <SortableTh field="createdAt" sort={sort} onSort={handleSortToggle}>
+                    {t('groups.createdAt')}
+                  </SortableTh>
+                  <Table.Th>{t('groups.actions')}</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {filteredGroups.map((group) => (
+                  <Table.Tr
+                    key={group.id}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => openEditPage(group)}
+                  >
+                    <Table.Td>
+                      <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
+                        <ThemeIcon size={28} radius="xl" color={group.color} variant="light">
+                          <IconUsersGroup size={14} />
+                        </ThemeIcon>
+
+                        <Text fw={600} truncate>
+                          {group.name}
+                        </Text>
+                      </Group>
+                    </Table.Td>
+
+                    <Table.Td>
+                      <UsersCount group={group} />
+                    </Table.Td>
+
+                    <Table.Td>
+                      <Text size="sm" c="dimmed">
+                        {formatDate(group.createdAt)}
+                      </Text>
+                    </Table.Td>
+
+                    <Table.Td>
+                      <Tooltip label={t('common.delete')}>
+                        <ActionIcon
+                          variant="light"
+                          color="red"
+                          size="md"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setDeletingGroup(group);
+                          }}
+                        >
+                          <IconTrash size={16} />
+                        </ActionIcon>
+                      </Tooltip>
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </Paper>
         )}
       </Stack>
     </>
