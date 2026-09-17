@@ -16,6 +16,8 @@ public class CreateUserGroupHandler
     public async Task<UserGroupBaseResult> Handle(CreateUserGroupCommand command)
     {
         var exists= await _context.UserGroups.AnyAsync(ug => ug.Name.ToLower() == command.Name.ToLower() && ug.LocationId == command.LocationId);
+        //Solo usuarios de esa location
+        var users= await _context.Users.Where(u => command.UserIds.Contains(u.Id) && u.LocationId==command.LocationId && u.Enabled).ToListAsync();
         if(exists)
         {
             throw new Exception("User group with the same name already exists in this location");
@@ -25,12 +27,14 @@ public class CreateUserGroupHandler
             Name = command.Name,
             Color = command.Color,
             LocationId = command.LocationId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Users = users
         };
 
         _context.UserGroups.Add(userGroup);
         await _context.SaveChangesAsync();
 
-        return new UserGroupBaseResult(userGroup.Id, userGroup.Name, userGroup.Color, userGroup.LocationId,userGroup.CreatedAt);
+        return new UserGroupBaseResult(userGroup.Id, userGroup.Name, userGroup.Color, userGroup.LocationId,userGroup.CreatedAt,
+            users.Select(u => new UserBasic { Id = u.Id, Name = u.Name })); 
     }
 }

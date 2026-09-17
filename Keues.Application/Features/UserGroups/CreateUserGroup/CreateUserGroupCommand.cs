@@ -1,3 +1,3 @@
 namespace Keues.Application.Features.UserGroups.CreateUserGroup;
 
-public record CreateUserGroupCommand(string Name, string Color, Guid LocationId);
+public record CreateUserGroupCommand(string Name, string Color, Guid LocationId,List<Guid> UserIds) ;
