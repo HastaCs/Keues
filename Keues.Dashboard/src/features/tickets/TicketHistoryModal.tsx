@@ -1,10 +1,20 @@
-import { Alert, Loader, Modal, Stack, Text, Timeline, type MantineColor } from '@mantine/core';
+import {
+  Alert,
+  Group,
+  Loader,
+  Modal,
+  Stack,
+  Text,
+  Timeline,
+  type MantineColor,
+} from '@mantine/core';
 import {
   IconArrowsExchange,
   IconBell,
   IconCheck,
   IconHistory,
   IconTicket,
+  IconUser,
   IconX,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
@@ -143,6 +153,14 @@ export function TicketHistoryModal({ ticket, opened, onClose }: TicketHistoryMod
                     {formatDate(entry.createdAt)}
                   </Text>
                   {entry.counterName ? <Text size="sm">{entry.counterName}</Text> : null}
+                  {entry.user ? (
+                    <Group gap={4} wrap="nowrap">
+                      <IconUser size={14} />
+                      <Text size="sm">
+                        {t('tickets.historyUser')}: {entry.user.name}
+                      </Text>
+                    </Group>
+                  ) : null}
                 </Stack>
               </Timeline.Item>
             );

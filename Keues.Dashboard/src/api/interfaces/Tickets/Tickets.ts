@@ -19,6 +19,11 @@ export interface TicketCounter {
   name: string;
 }
 
+export interface TicketUser {
+  id: string;
+  name: string;
+}
+
 export interface Ticket {
   id: TicketId;
   code: string;
@@ -37,6 +42,7 @@ export interface TicketHistory {
   createdAt: string;
   counterName: string | null;
   queueName: string | null;
+  user: TicketUser | null;
 }
 
 export interface ListTicketsParams {
