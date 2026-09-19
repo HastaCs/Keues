@@ -32,6 +32,8 @@ import {
   IconTable,
   IconTicket,
   IconTrash,
+  IconUser,
+  IconUsersGroup,
 } from '@tabler/icons-react';
 import { countersApi } from '@/api/CountersApi';
 import { queuesApi } from '@/api/QueuesApi';
@@ -535,6 +537,24 @@ export function CountersPanel() {
                     </Group>
                   )}
                 </Group>
+
+                <Group gap="lg" wrap="nowrap" align="center" mt="xs">
+                  <Group gap={6} wrap="nowrap" align="center">
+                    <IconUsersGroup size={14} stroke={1.5} style={{ flexShrink: 0 }} />
+
+                    <Badge size="xs" variant="light" color="grape">
+                      {counter.authorizedUserGroups.length}
+                    </Badge>
+                  </Group>
+
+                  <Group gap={6} wrap="nowrap" align="center">
+                    <IconUser size={14} stroke={1.5} style={{ flexShrink: 0 }} />
+
+                    <Badge size="xs" variant="light" color="cyan">
+                      {counter.authorizedUsers.length}
+                    </Badge>
+                  </Group>
+                </Group>
               </Card>
             ))}
           </SimpleGrid>
@@ -551,6 +571,8 @@ export function CountersPanel() {
                   </SortableTh>
                   <Table.Th>{t('counters.description')}</Table.Th>
                   <Table.Th>{t('counters.queues')}</Table.Th>
+                  <Table.Th>{t('counters.authorizedGroups')}</Table.Th>
+                  <Table.Th>{t('counters.authorizedUsers')}</Table.Th>
                   <SortableTh field="createdAt" sort={sort} onSort={handleSort}>
                     {t('counters.createdAt')}
                   </SortableTh>
@@ -607,6 +629,16 @@ export function CountersPanel() {
                           })}
                         </Group>
                       )}
+                    </Table.Td>
+                    <Table.Td>
+                      <Badge size="xs" variant="light" color="grape">
+                        {counter.authorizedUserGroups.length}
+                      </Badge>
+                    </Table.Td>
+                    <Table.Td>
+                      <Badge size="xs" variant="light" color="cyan">
+                        {counter.authorizedUsers.length}
+                      </Badge>
                     </Table.Td>
                     <Table.Td>
                       <Text size="sm" c="dimmed">

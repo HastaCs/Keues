@@ -165,6 +165,8 @@ const resources = {
         noQueues: 'Ninguno',
         queueTypeCount_one: '{{count}} tipo',
         queueTypeCount_other: '{{count}} tipos',
+        authorizedGroups: 'Grupos autorizados',
+        authorizedUsers: 'Usuarios autorizados',
         deleteTitle: 'Eliminar puesto',
         deleteDescription: 'Esta accion eliminara el puesto {{code}}.',
       },
@@ -416,6 +418,22 @@ const resources = {
         createAction: 'Crear puesto',
         editAction: 'Guardar cambios',
         color: 'Color',
+        tabGeneral: 'General',
+        tabQueues: 'Colas',
+        tabGroups: 'Grupos',
+        tabUsers: 'Usuarios',
+        authorizedGroups: 'Grupos autorizados',
+        noGroups: 'No hay grupos en esta ubicación',
+        noGroupsMeansAll:
+          'Si no seleccionas ningún grupo, cualquier usuario podrá usar este puesto.',
+        authorizedUsers: 'Usuarios autorizados',
+        authorizedUsersHelp: 'Marca los usuarios que podrán usar este puesto.',
+        onlyAuthorizedUsers: 'Ver solo los autorizados',
+        coveredByGroup: '{{group}}',
+        coveredByGroupTooltip: 'Ya autorizado por el grupo {{group}}. No necesitas marcarlo aquí.',
+        searchUsersPlaceholder: 'Buscar usuarios...',
+        noActiveUsers: 'No hay usuarios activos en esta ubicación',
+        noUsersFound: 'No se encontraron usuarios',
       },
       ticketTypeForm: {
         createTitle: 'Nueva cola',
@@ -433,6 +451,9 @@ const resources = {
         maxValueInvalid: 'El valor maximo debe ser un entero mayor o igual a 0 (0 = sin limite)',
         createAction: 'Crear cola',
         editAction: 'Guardar cambios',
+        tabGeneral: 'General',
+        tabRules: 'Reglas',
+        tabCounters: 'Puestos permitidos',
       },
       locationForm: {
         createTitle: 'Nueva ubicacion',
@@ -449,6 +470,10 @@ const resources = {
       users: {
         title: 'Usuarios de la location activa',
         subtitle: 'Gestiona los usuarios asociados a esta ubicación.',
+        optionalTitle: 'El uso de usuarios es opcional',
+        optionalDescription:
+          'Los usuarios y sus contraseñas son opcionales, pensados para un modo de uso más avanzado. Si no existe ningún usuario, cualquier persona puede usar los puestos y llamar tickets sin identificarse.',
+        optionalDismiss: 'Ocultar este aviso',
         newUser: 'Nuevo usuario',
         searchPlaceholder: 'Buscar usuarios...',
         sortAZ: 'Ordenar: Nombre A-Z',
@@ -544,6 +569,8 @@ const resources = {
           'La cantidad de niveles de prioridad que el ticket puede subir como máximo.',
         color: 'Color',
         allowedCounters: 'Puestos permitidos',
+        noCountersMeansAll:
+          'La cola solo puede ser llamada por los puestos que marques. Sin ningún puesto, no podrá llamarse.',
         resetAt: 'Hora de reseteo',
         resetAtHelp:
           'Actívalo para resetear la cola automáticamente a esa hora cada día: la numeración volverá a 1 y todos los tickets en espera o siendo atendidos pasarán a cancelados. Desactivado, la cola no se resetea.',
@@ -720,6 +747,8 @@ const resources = {
         noQueues: 'None',
         queueTypeCount_one: '{{count}} type',
         queueTypeCount_other: '{{count}} types',
+        authorizedGroups: 'Authorized groups',
+        authorizedUsers: 'Authorized users',
         deleteTitle: 'Delete counter',
         deleteDescription: 'This action will delete counter {{code}}.',
       },
@@ -970,6 +999,22 @@ const resources = {
         createAction: 'Create counter',
         editAction: 'Save changes',
         color: 'Color',
+        tabGeneral: 'General',
+        tabQueues: 'Queues',
+        tabGroups: 'Groups',
+        tabUsers: 'Users',
+        authorizedGroups: 'Authorized groups',
+        noGroups: 'No groups in this location',
+        noGroupsMeansAll: 'If you do not select any group, any user can use this counter.',
+        authorizedUsers: 'Authorized users',
+        authorizedUsersHelp: 'Mark the users who can use this counter.',
+        onlyAuthorizedUsers: 'Show only authorized',
+        coveredByGroup: '{{group}}',
+        coveredByGroupTooltip:
+          'Already authorized by group {{group}}. You do not need to mark it here.',
+        searchUsersPlaceholder: 'Search users...',
+        noActiveUsers: 'No active users in this location',
+        noUsersFound: 'No users found',
       },
       ticketTypeForm: {
         createTitle: 'New queue',
@@ -987,6 +1032,9 @@ const resources = {
         maxValueInvalid: 'Max value must be an integer greater than or equal to 0 (0 = no limit)',
         createAction: 'Create queue',
         editAction: 'Save changes',
+        tabGeneral: 'General',
+        tabRules: 'Rules',
+        tabCounters: 'Allowed counters',
       },
       locationForm: {
         createTitle: 'New location',
@@ -1003,6 +1051,10 @@ const resources = {
       users: {
         title: 'Users for active location',
         subtitle: 'Manage the users associated with this location.',
+        optionalTitle: 'Using users is optional',
+        optionalDescription:
+          'Users and their passwords are optional, intended for a more advanced way of working. If no user exists, anyone can use the counters and call tickets without identifying themselves.',
+        optionalDismiss: 'Hide this notice',
         newUser: 'New user',
         searchPlaceholder: 'Search users...',
         sortAZ: 'Sort: Name A-Z',
@@ -1097,6 +1149,8 @@ const resources = {
         maxAgingBonusHelp: 'The maximum number of priority levels the ticket can rise.',
         color: 'Color',
         allowedCounters: 'Allowed counters',
+        noCountersMeansAll:
+          'The queue can only be called by the counters you select. With no counters, it cannot be called.',
         resetAt: 'Reset time',
         resetAtHelp:
           'Enable to automatically reset the queue at that time each day: numbering will restart at 1 and all waiting or in-progress tickets will be canceled. Disabled means the queue is not reset.',

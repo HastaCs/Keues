@@ -3,6 +3,14 @@ import type { QueueId } from '@/api/interfaces/Queue/Queues';
 
 export type CounterId = string;
 
+export interface CounterAuthorizedUserGroup {
+  id: string;
+}
+
+export interface CounterAuthorizedUser {
+  id: string;
+}
+
 export interface Counter {
   id: CounterId;
   code: string;
@@ -12,6 +20,8 @@ export interface Counter {
   locationId: LocationId;
   queues: QueueId[] | null;
   createdAt: string;
+  authorizedUsers: CounterAuthorizedUser[];
+  authorizedUserGroups: CounterAuthorizedUserGroup[];
 }
 
 export interface CreateCounterInput {
@@ -21,6 +31,8 @@ export interface CreateCounterInput {
   color: string;
   locationId: LocationId;
   queues: QueueId[];
+  authorizedUsers: string[];
+  authorizedUserGroups: string[];
 }
 
 export interface UpdateCounterInput extends CreateCounterInput {

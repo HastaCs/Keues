@@ -35,8 +35,14 @@ const PAGE_SIZE = 20;
 
 const HIDE_INACTIVE_STORAGE_KEY = 'keues.users.hideInactive';
 
+const OPTIONAL_NOTICE_STORAGE_KEY = 'keues.users.optionalNoticeDismissed';
+
 function getStoredHideInactive(): boolean {
   return window.localStorage.getItem(HIDE_INACTIVE_STORAGE_KEY) === 'true';
+}
+
+function getStoredOptionalNoticeDismissed(): boolean {
+  return window.localStorage.getItem(OPTIONAL_NOTICE_STORAGE_KEY) === 'true';
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -86,6 +92,9 @@ export function UsersPanel() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [hideInactive, setHideInactive] = useState(getStoredHideInactive);
+  const [optionalNoticeDismissed, setOptionalNoticeDismissed] = useState(
+    getStoredOptionalNoticeDismissed
+  );
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [pagination, setPagination] = useState<{ total: number; totalPages: number }>({
@@ -295,6 +304,21 @@ export function UsersPanel() {
             {error}
           </Alert>
         ) : null}
+
+        {optionalNoticeDismissed ? null : (
+          <Alert
+            color="blue"
+            title={t('users.optionalTitle')}
+            withCloseButton
+            closeButtonLabel={t('users.optionalDismiss')}
+            onClose={() => {
+              setOptionalNoticeDismissed(true);
+              window.localStorage.setItem(OPTIONAL_NOTICE_STORAGE_KEY, 'true');
+            }}
+          >
+            {t('users.optionalDescription')}
+          </Alert>
+        )}
 
         <Group align="flex-end" justify="space-between" wrap="wrap">
           <TextInput

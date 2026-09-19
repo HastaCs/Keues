@@ -26,8 +26,6 @@ import {
   IconChevronUp,
   IconDeviceTv,
   IconEdit,
-  IconHash,
-  IconHourglass,
   IconLayoutGrid,
   IconListNumbers,
   IconScale,
@@ -35,6 +33,7 @@ import {
   IconTable,
   IconTicket,
   IconTrash,
+  IconAlertTriangle,
   IconUsers,
 } from '@tabler/icons-react';
 
@@ -161,10 +160,6 @@ function SortableTh({
       </Group>
     </Table.Th>
   );
-}
-
-function getDisplayExample(displayCode: string) {
-  return `${displayCode}001`;
 }
 
 interface CounterMeta {
@@ -513,73 +508,29 @@ export function QueuesPanel() {
                   {ticketType.description || t('ticketTypes.noDescription')}
                 </Text>
 
-                <Group gap="lg" wrap="wrap" mt="sm">
-                  <Group gap={6} wrap="nowrap">
-                    <IconTicket size={14} stroke={1.5} color="var(--mantine-color-dimmed)" />
+                <Group gap={4} wrap="nowrap" mt="sm">
+                  <Tooltip label={t('queueForm.priority')} withArrow>
+                    <Badge
+                      size="sm"
+                      variant="light"
+                      color="blue"
+                      leftSection={<IconListNumbers size={12} />}
+                    >
+                      {ticketType.priority}
+                    </Badge>
+                  </Tooltip>
 
-                    <Text size="xs" c="dimmed">
-                      {t('ticketTypes.exampleTicket')}
-                    </Text>
-
-                    <Text size="sm" fw={600} ff="monospace">
-                      {getDisplayExample(ticketType.code)}
-                    </Text>
-                  </Group>
-
-                  <Group gap={6} wrap="nowrap">
-                    <IconHash size={14} stroke={1.5} color="var(--mantine-color-dimmed)" />
-
-                    <Text size="xs" c="dimmed">
-                      {t('ticketTypes.maxValue')}
-                    </Text>
-
-                    <Text size="sm" fw={600}>
-                      {ticketType.maxValue ?? t('ticketTypes.noMaxValue')}
-                    </Text>
-                  </Group>
+                  <Tooltip label={t('queueForm.weight')} withArrow>
+                    <Badge
+                      size="sm"
+                      variant="light"
+                      color="grape"
+                      leftSection={<IconScale size={12} />}
+                    >
+                      {ticketType.weight}
+                    </Badge>
+                  </Tooltip>
                 </Group>
-
-                <Paper bg="var(--mantine-color-gray-light)" radius="md" p="xs" mt="xs">
-                  <Group gap="lg" wrap="wrap">
-                    <Group gap={6} wrap="nowrap">
-                      <IconListNumbers size={14} stroke={1.5} color="var(--mantine-color-dimmed)" />
-
-                      <Text size="xs" c="dimmed">
-                        {t('queueForm.priority')}
-                      </Text>
-
-                      <Text size="sm" fw={600}>
-                        {ticketType.priority}
-                      </Text>
-                    </Group>
-
-                    <Group gap={6} wrap="nowrap">
-                      <IconScale size={14} stroke={1.5} color="var(--mantine-color-dimmed)" />
-
-                      <Text size="xs" c="dimmed">
-                        {t('queueForm.weight')}
-                      </Text>
-
-                      <Text size="sm" fw={600}>
-                        {ticketType.weight}
-                      </Text>
-                    </Group>
-
-                    <Group gap={6} wrap="nowrap">
-                      <IconHourglass size={14} stroke={1.5} color="var(--mantine-color-dimmed)" />
-
-                      <Text size="xs" c="dimmed">
-                        {t('ticketTypes.aging')}
-                      </Text>
-
-                      <Text size="sm" fw={600}>
-                        {ticketType.agingIntervalMinutes === 0
-                          ? t('ticketTypes.disabled')
-                          : `${ticketType.agingIntervalMinutes} min`}
-                      </Text>
-                    </Group>
-                  </Group>
-                </Paper>
 
                 <Divider mt="sm" />
 
@@ -587,9 +538,16 @@ export function QueuesPanel() {
                   <IconUsers size={14} stroke={1.5} style={{ flexShrink: 0 }} />
 
                   {ticketType.counters.length === 0 ? (
-                    <Text size="xs" c="dimmed">
-                      {t('ticketTypes.noCounters')}
-                    </Text>
+                    <Group gap={4} wrap="nowrap">
+                      <IconAlertTriangle
+                        size={14}
+                        color="var(--mantine-color-yellow-6)"
+                        style={{ flexShrink: 0 }}
+                      />
+                      <Text size="xs" c="dimmed">
+                        {t('ticketTypes.noCounters')}
+                      </Text>
+                    </Group>
                   ) : (
                     <Group gap={4} wrap="wrap">
                       {ticketType.counters.map((counterId) => {
@@ -672,9 +630,16 @@ export function QueuesPanel() {
                     </Table.Td>
                     <Table.Td>
                       {ticketType.counters.length === 0 ? (
-                        <Text size="xs" c="dimmed">
-                          {t('ticketTypes.noCounters')}
-                        </Text>
+                        <Group gap={4} wrap="nowrap">
+                          <IconAlertTriangle
+                            size={14}
+                            color="var(--mantine-color-yellow-6)"
+                            style={{ flexShrink: 0 }}
+                          />
+                          <Text size="xs" c="dimmed">
+                            {t('ticketTypes.noCounters')}
+                          </Text>
+                        </Group>
                       ) : (
                         <Group gap={4} wrap="wrap">
                           {ticketType.counters.map((counterId) => {
