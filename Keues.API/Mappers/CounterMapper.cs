@@ -59,9 +59,9 @@ public static class CounterMapper
   }
   
   
-  public static AttendTicketCommand ToCommand(this AttendTicketRequest request,Guid counterId)
+  public static AttendTicketCommand ToCommand(this AttendTicketRequest request,Guid counterId,Guid? userId)
   {
-    return new AttendTicketCommand(counterId, request.TicketId);
+    return new AttendTicketCommand(counterId, request.TicketId, userId);
   }
   
   public static GetAllCountersCommand ToCommand(this GetAllCountersRequest request)

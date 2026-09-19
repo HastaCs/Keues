@@ -237,7 +237,7 @@ public class CounterUseCasesTests : IDisposable
       var result = await callHandler.Handle(new CallNextTicketCommand(counter.Id));
       Assert.NotNull(result);
       calledQueues.Add(result.QueueId);
-      await attendHandler.Handle(new AttendTicketCommand(counter.Id, result.TicketId));
+      await attendHandler.Handle(new AttendTicketCommand(counter.Id, result.TicketId,null));
     }
 
     Assert.Contains(qA.Id, calledQueues);
@@ -267,7 +267,7 @@ public class CounterUseCasesTests : IDisposable
     var ticket = await Seed.TicketAsync(context, queue.Id, flow.Id);
     var handler = new AttendTicketHandler(context);
 
-    await handler.Handle(new AttendTicketCommand(counter.Id, ticket.Id));
+    await handler.Handle(new AttendTicketCommand(counter.Id, ticket.Id,null));
 
     var reloaded = await context.Tickets.FindAsync(ticket.Id);
     Assert.Equal(TicketStatus.Attended, reloaded!.Status);
@@ -291,7 +291,7 @@ public class CounterUseCasesTests : IDisposable
     var ticketId = missingTicket ? Guid.NewGuid() : ticket.Id;
 
     await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new AttendTicketCommand(counterId, ticketId)));
+      handler.Handle(new AttendTicketCommand(counterId, ticketId,null)));
   }
 
   [Fact]

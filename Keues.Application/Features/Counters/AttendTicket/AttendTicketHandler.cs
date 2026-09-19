@@ -15,12 +15,13 @@ public class AttendTicketHandler
 
   public async Task Handle(AttendTicketCommand request)
   {
-    var counter=await _context.Counters.FindAsync(request.CounterId);
+    var counter = await _context.Counters.FindAsync(request.CounterId);
     if (counter == null)
     {
       throw new Exception($"Counter {request.CounterId} not found");
     }
-    var ticket=await _context.Tickets.FindAsync(request.TicketId);
+
+    var ticket = await _context.Tickets.FindAsync(request.TicketId);
     if (ticket == null)
     {
       throw new Exception($"Ticket {request.TicketId} not found");
@@ -33,11 +34,11 @@ public class AttendTicketHandler
       TicketId = ticket.Id,
       Event = KeuesEventsType.Ticket.Attended,
       CreatedAt = DateTime.UtcNow,
-      CounterId = request.CounterId
+      CounterId = request.CounterId,
+      UserId = request.UserId
     };
-   await _context.TicketHistories.AddAsync(history);
-    
-   var result= await _context.SaveChangesAsync();
-  
+    await _context.TicketHistories.AddAsync(history);
+
+    await _context.SaveChangesAsync();
   }
 }

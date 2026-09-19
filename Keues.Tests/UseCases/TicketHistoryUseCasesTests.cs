@@ -127,11 +127,47 @@ public class TicketHistoryUseCasesTests : IDisposable
     var ticket = await Seed.TicketAsync(context, queue.Id, flow.Id);
     var handler = new AttendTicketHandler(context);
 
-    await handler.Handle(new AttendTicketCommand(counter.Id, ticket.Id));
+    await handler.Handle(new AttendTicketCommand(counter.Id, ticket.Id,null));
 
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
     Assert.Equal(KeuesEventsType.Ticket.Attended, history.Event);
     Assert.Equal(counter.Id, history.CounterId);
+  }
+
+  [Fact]
+  public async Task AttendTicket_records_the_user_who_attended()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var flow = await Seed.FlowAsync(context, location.Id);
+    var queue = await Seed.QueueAsync(context, location.Id);
+    var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
+    var ticket = await Seed.TicketAsync(context, queue.Id, flow.Id);
+    var user = await Seed.UserAsync(context, location.Id, name: "Ana", email: "ana@keues.dev");
+    var handler = new AttendTicketHandler(context);
+
+    await handler.Handle(new AttendTicketCommand(counter.Id, ticket.Id, user.Id));
+
+    var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
+    Assert.Equal(KeuesEventsType.Ticket.Attended, history.Event);
+    Assert.Equal(user.Id, history.UserId);
+  }
+
+  [Fact]
+  public async Task AttendTicket_records_a_null_user_when_not_provided()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var flow = await Seed.FlowAsync(context, location.Id);
+    var queue = await Seed.QueueAsync(context, location.Id);
+    var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
+    var ticket = await Seed.TicketAsync(context, queue.Id, flow.Id);
+    var handler = new AttendTicketHandler(context);
+
+    await handler.Handle(new AttendTicketCommand(counter.Id, ticket.Id, null));
+
+    var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
+    Assert.Null(history.UserId);
   }
 
   [Fact]

@@ -251,7 +251,7 @@ namespace Keues.API.Controllers
             new ErrorResponse("User does not have access to this counter."));
 
         
-        var command = request.ToCommand(id);
+        var command = request.ToCommand(id,userId);
         await _counterUseCases.AttendTicket.Handle(command);
 
         var counter = await _counterUseCases.Get.Handle(new GetCounterCommand(id));
