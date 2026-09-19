@@ -24,7 +24,8 @@ public class CancelTicketHandler
       TicketId = ticket.Id,
       Event = KeuesEventsType.Ticket.Canceled,
       CreatedAt = DateTime.UtcNow,
-      CounterId = request.CounterId
+      CounterId = request.CounterId,
+      UserId = request.UserId
     };
     await _context.TicketHistories.AddAsync(history);
     await _context.SaveChangesAsync();

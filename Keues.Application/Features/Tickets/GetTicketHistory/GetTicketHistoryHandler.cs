@@ -14,7 +14,7 @@ public class GetTicketHistoryHandler
 
   public async Task<IEnumerable<GetTicketHistoryResponse>> Handle(GetTicketRequest request)
   {
-    var history = await _context.TicketHistories.Include(x => x.Counter).Include(x => x.Queue)
+    var history = await _context.TicketHistories.Include(y=>y.User).Include(x => x.Counter).Include(x => x.Queue)
       .Where(x => x.TicketId == request.TicketId)
       .OrderBy(x => x.CreatedAt)
       .Select(x => new GetTicketHistoryResponse()
@@ -23,7 +23,8 @@ public class GetTicketHistoryHandler
         Event = x.Event,
         CreatedAt = x.CreatedAt,
         CounterName = x.Counter.Name,
-        QueueName = x.Queue.Name
+        QueueName = x.Queue.Name,
+        UserName = x.User.Name
       })
       .ToListAsync();
 

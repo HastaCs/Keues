@@ -121,7 +121,7 @@ public class CounterUseCasesTests : IDisposable
     var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
     var handler = new CallNextTicketHandler(context);
 
-    var result = await handler.Handle(new CallNextTicketCommand(counter.Id));
+    var result = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
 
     Assert.Null(result);
   }
@@ -138,7 +138,7 @@ public class CounterUseCasesTests : IDisposable
     var t2 = await Seed.TicketAsync(context, queue.Id, flow.Id);
     var handler = new CallNextTicketHandler(context);
 
-    var result = await handler.Handle(new CallNextTicketCommand(counter.Id));
+    var result = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
 
     Assert.NotNull(result);
     Assert.Equal(t1.Id, result.TicketId);
@@ -161,8 +161,8 @@ public class CounterUseCasesTests : IDisposable
     await Seed.TicketAsync(context, queue.Id, flow.Id);
     var handler = new CallNextTicketHandler(context);
 
-    var first = await handler.Handle(new CallNextTicketCommand(counter.Id));
-    var second = await handler.Handle(new CallNextTicketCommand(counter.Id));
+    var first = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
+    var second = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
 
     Assert.Equal(first!.TicketId, second!.TicketId);
   }
@@ -180,7 +180,7 @@ public class CounterUseCasesTests : IDisposable
     await Seed.TicketAsync(context, low.Id, flow.Id);
     var handler = new CallNextTicketHandler(context);
 
-    var result = await handler.Handle(new CallNextTicketCommand(counter.Id));
+    var result = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
 
     Assert.NotNull(result);
     Assert.Equal(high.Id, result.QueueId);
@@ -206,7 +206,7 @@ public class CounterUseCasesTests : IDisposable
     await Seed.TicketAsync(context, fresh.Id, flow.Id);
     var handler = new CallNextTicketHandler(context);
 
-    var result = await handler.Handle(new CallNextTicketCommand(counter.Id));
+    var result = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
 
     Assert.NotNull(result);
     Assert.Equal(aging.Id, result.QueueId);
@@ -234,7 +234,7 @@ public class CounterUseCasesTests : IDisposable
     var calledQueues = new HashSet<Guid>();
     for (var i = 0; i < 30; i++)
     {
-      var result = await callHandler.Handle(new CallNextTicketCommand(counter.Id));
+      var result = await callHandler.Handle(new CallNextTicketCommand(counter.Id, null));
       Assert.NotNull(result);
       calledQueues.Add(result.QueueId);
       await attendHandler.Handle(new AttendTicketCommand(counter.Id, result.TicketId,null));
@@ -251,7 +251,7 @@ public class CounterUseCasesTests : IDisposable
     var handler = new CallNextTicketHandler(context);
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new CallNextTicketCommand(Guid.NewGuid())));
+      handler.Handle(new CallNextTicketCommand(Guid.NewGuid(), null)));
 
     Assert.Equal("Counter not found", ex.Message);
   }

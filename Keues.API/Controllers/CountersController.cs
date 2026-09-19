@@ -203,7 +203,7 @@ namespace Keues.API.Controllers
           return StatusCode(StatusCodes.Status403Forbidden,
             new ErrorResponse("User does not have access to this counter."));
 
-        var ticket = await _counterUseCases.CallNextTicket.Handle(new CallNextTicketCommand(id));
+        var ticket = await _counterUseCases.CallNextTicket.Handle(new CallNextTicketCommand(id,userId));
         if (ticket == null)
         {
           return new JsonResult(null);
@@ -292,7 +292,7 @@ namespace Keues.API.Controllers
         var ticket = await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(request.TicketId));
         if (ticket == null)
           throw new Exception($"No ticket found for {request.TicketId}");
-        await _counterUseCases.CancelTicket.Handle(new CancelTicketCommand(request.TicketId, id));
+        await _counterUseCases.CancelTicket.Handle(new CancelTicketCommand(request.TicketId, id,userId));
 
         var group = $"locationId:{ticket.LocationId}:typeDevice:Monitor:flowId:{ticket.FlowId}";
         await _hubContext.Clients.Group(group).SendAsync("TicketCancelled", new { ticketId = ticket.Id });
@@ -380,11 +380,13 @@ namespace Keues.API.Controllers
     {
       try
       {
+        
+        var userId = User.GetUserId();
         var ticket = await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(request.TicketId));
         if (ticket == null)
           throw new Exception($"No ticket found for {request.TicketId}");
 
-        await _counterUseCases.TransferTicket.Handle(new TransferTicketCommand(id, request.TicketId, request.QueueId));
+        await _counterUseCases.TransferTicket.Handle(new TransferTicketCommand(id, request.TicketId, request.QueueId, userId));
         //Para que no haga falta actualizar los monitores le mando la señal de cancelado, para uqe desaparezca
         var group = $"locationId:{ticket.LocationId}:typeDevice:Monitor:flowId:{ticket.FlowId}";
         await _hubContext.Clients.Group(group).SendAsync("TicketCancelled", new { ticketId = ticket.Id });

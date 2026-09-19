@@ -9,4 +9,6 @@ public class GetTicketHistoryResponse
   
   public string QueueName { get; set; }
   
+  public string? UserName { get; set; }
+  
 }

@@ -24,7 +24,7 @@ public class TransferTicketUseCasesTests : IDisposable
     var ticket = await Seed.TicketAsync(context, sourceQueue.Id, flow.Id);
     var handler = new TransferTicketHandler(context);
 
-    await handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id));
+    await handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id, null));
 
     var reloaded = await context.Tickets.Include(t => t.Queue).FirstAsync(t => t.Id == ticket.Id);
     Assert.Equal(destQueue.Id, reloaded.QueueId);
@@ -48,7 +48,7 @@ public class TransferTicketUseCasesTests : IDisposable
     await context.SaveChangesAsync();
     var handler = new TransferTicketHandler(context);
 
-    await handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id));
+    await handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id, null));
 
     var reloaded = await context.Tickets.Include(t => t.Queue).FirstAsync(t => t.Id == ticket.Id);
     Assert.Equal(destQueue.Id, reloaded.QueueId);
@@ -68,7 +68,7 @@ public class TransferTicketUseCasesTests : IDisposable
     var missingCounterId = Guid.NewGuid();
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new TransferTicketCommand(missingCounterId, ticket.Id, queue.Id)));
+      handler.Handle(new TransferTicketCommand(missingCounterId, ticket.Id, queue.Id, null)));
 
     Assert.Equal($"Counter with Id {missingCounterId} not found.", ex.Message);
   }
@@ -84,7 +84,7 @@ public class TransferTicketUseCasesTests : IDisposable
     var missingTicketId = Guid.NewGuid();
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new TransferTicketCommand(counter.Id, missingTicketId, queue.Id)));
+      handler.Handle(new TransferTicketCommand(counter.Id, missingTicketId, queue.Id, null)));
 
     Assert.Equal($"Ticket with Id {missingTicketId} not found.", ex.Message);
   }
@@ -102,7 +102,7 @@ public class TransferTicketUseCasesTests : IDisposable
     var missingQueueId = Guid.NewGuid();
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, missingQueueId)));
+      handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, missingQueueId, null)));
 
     Assert.Equal($"Queue with Id {missingQueueId} not found.", ex.Message);
   }
@@ -121,7 +121,7 @@ public class TransferTicketUseCasesTests : IDisposable
     var handler = new TransferTicketHandler(context);
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id)));
+      handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id, null)));
 
     Assert.Equal("Queue Cola F is not in the same location as the ticket's queue.", ex.Message);
   }

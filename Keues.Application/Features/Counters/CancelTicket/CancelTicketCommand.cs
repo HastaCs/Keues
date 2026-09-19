@@ -1,3 +1,3 @@
 namespace Keues.Application.Features.Counters.CancelTicket;
 
-public record CancelTicketCommand(Guid TicketId,Guid CounterId);
+public record CancelTicketCommand(Guid TicketId,Guid CounterId,Guid? UserId);

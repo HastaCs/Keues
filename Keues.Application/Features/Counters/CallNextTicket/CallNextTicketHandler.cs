@@ -60,6 +60,7 @@ public class CallNextTicketHandler
             CounterId = counter.Id,
             CreatedAt = DateTime.UtcNow,
             Event = KeuesEventsType.Ticket.Called,
+            UserId = command.UserId
           };
           await _context.TicketHistories.AddAsync(history);
           await _context.SaveChangesAsync();
@@ -156,6 +157,7 @@ public class CallNextTicketHandler
           CounterId = counter.Id,
           CreatedAt = DateTime.UtcNow,
           Event = KeuesEventsType.Ticket.Called,
+          UserId = command.UserId
         };
         await _context.TicketHistories.AddAsync(historyT);
         await _context.SaveChangesAsync();

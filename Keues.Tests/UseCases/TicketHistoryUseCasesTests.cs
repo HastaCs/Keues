@@ -88,12 +88,53 @@ public class TicketHistoryUseCasesTests : IDisposable
     await Seed.TicketAsync(context, queue.Id, flow.Id);
     var handler = new CallNextTicketHandler(context);
 
-    var result = await handler.Handle(new CallNextTicketCommand(counter.Id));
+    var result = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
 
     Assert.NotNull(result);
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == result.TicketId);
     Assert.Equal(KeuesEventsType.Ticket.Called, history.Event);
     Assert.Equal(counter.Id, history.CounterId);
+  }
+
+  [Fact]
+  public async Task CallNextTicket_records_the_user_who_called()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var flow = await Seed.FlowAsync(context, location.Id);
+    var queue = await Seed.QueueAsync(context, location.Id);
+    var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
+    await Seed.TicketAsync(context, queue.Id, flow.Id);
+    var user = await Seed.UserAsync(context, location.Id, name: "Ana", email: "ana@keues.dev");
+    var handler = new CallNextTicketHandler(context);
+
+    var result = await handler.Handle(new CallNextTicketCommand(counter.Id, user.Id));
+
+    var history = await context.TicketHistories.SingleAsync(h => h.TicketId == result!.TicketId);
+    Assert.Equal(KeuesEventsType.Ticket.Called, history.Event);
+    Assert.Equal(user.Id, history.UserId);
+  }
+
+  [Fact]
+  public async Task CallNextTicket_recall_records_the_user()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var flow = await Seed.FlowAsync(context, location.Id);
+    var queue = await Seed.QueueAsync(context, location.Id);
+    var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
+    await Seed.TicketAsync(context, queue.Id, flow.Id);
+    var user = await Seed.UserAsync(context, location.Id, name: "Ana", email: "ana@keues.dev");
+    var handler = new CallNextTicketHandler(context);
+
+    var first = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
+    var second = await handler.Handle(new CallNextTicketCommand(counter.Id, user.Id));
+
+    Assert.Equal(first!.TicketId, second!.TicketId);
+    var histories = await context.TicketHistories
+      .Where(h => h.TicketId == second.TicketId)
+      .ToListAsync();
+    Assert.Contains(histories, h => h.UserId == user.Id);
   }
 
   [Fact]
@@ -105,7 +146,7 @@ public class TicketHistoryUseCasesTests : IDisposable
     var queue = await Seed.QueueAsync(context, location.Id, code: "P", name: "Pescadería");
     var counter = await Seed.CounterAsync(context, location.Id, code: "C1", name: "Caja 1", queues: [queue]);
     await Seed.TicketAsync(context, queue.Id, flow.Id);
-    await new CallNextTicketHandler(context).Handle(new CallNextTicketCommand(counter.Id));
+    await new CallNextTicketHandler(context).Handle(new CallNextTicketCommand(counter.Id, null));
     var handler = new GetTicketHistoryHandler(context);
 
     var history = await context.TicketHistories.SingleAsync();
@@ -181,11 +222,30 @@ public class TicketHistoryUseCasesTests : IDisposable
     var ticket = await Seed.TicketAsync(context, queue.Id, flow.Id);
     var handler = new CancelTicketHandler(context);
 
-    await handler.Handle(new CancelTicketCommand(ticket.Id, counter.Id));
+    await handler.Handle(new CancelTicketCommand(ticket.Id, counter.Id, null));
 
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
     Assert.Equal(KeuesEventsType.Ticket.Canceled, history.Event);
     Assert.Equal(counter.Id, history.CounterId);
+  }
+
+  [Fact]
+  public async Task CancelTicket_records_the_user_who_cancelled()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var flow = await Seed.FlowAsync(context, location.Id);
+    var queue = await Seed.QueueAsync(context, location.Id);
+    var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
+    var ticket = await Seed.TicketAsync(context, queue.Id, flow.Id);
+    var user = await Seed.UserAsync(context, location.Id, name: "Ana", email: "ana@keues.dev");
+    var handler = new CancelTicketHandler(context);
+
+    await handler.Handle(new CancelTicketCommand(ticket.Id, counter.Id, user.Id));
+
+    var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
+    Assert.Equal(KeuesEventsType.Ticket.Canceled, history.Event);
+    Assert.Equal(user.Id, history.UserId);
   }
 
   [Fact]
@@ -200,11 +260,31 @@ public class TicketHistoryUseCasesTests : IDisposable
     var ticket = await Seed.TicketAsync(context, sourceQueue.Id, flow.Id);
     var handler = new TransferTicketHandler(context);
 
-    await handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id));
+    await handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id, null));
 
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
     Assert.Equal(KeuesEventsType.Ticket.Transferred, history.Event);
     Assert.Equal(counter.Id, history.CounterId);
+  }
+
+  [Fact]
+  public async Task TransferTicket_records_the_user_who_transferred()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var flow = await Seed.FlowAsync(context, location.Id);
+    var sourceQueue = await Seed.QueueAsync(context, location.Id, code: "P");
+    var destQueue = await Seed.QueueAsync(context, location.Id, code: "F");
+    var counter = await Seed.CounterAsync(context, location.Id, queues: [sourceQueue]);
+    var ticket = await Seed.TicketAsync(context, sourceQueue.Id, flow.Id);
+    var user = await Seed.UserAsync(context, location.Id, name: "Ana", email: "ana@keues.dev");
+    var handler = new TransferTicketHandler(context);
+
+    await handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id, user.Id));
+
+    var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
+    Assert.Equal(KeuesEventsType.Ticket.Transferred, history.Event);
+    Assert.Equal(user.Id, history.UserId);
   }
 
   [Fact]
@@ -219,7 +299,7 @@ public class TicketHistoryUseCasesTests : IDisposable
     var callHandler = new CallNextTicketHandler(context);
 
     var ticketId = (await createHandler.Handle(new CreateNewTicketCommand(queue.Id, flow.Id))).Id;
-    await callHandler.Handle(new CallNextTicketCommand(counter.Id));
+    await callHandler.Handle(new CallNextTicketCommand(counter.Id, null));
     var handler = new GetTicketHistoryHandler(context);
 
     var result = await handler.Handle(new GetTicketRequest(ticketId));
