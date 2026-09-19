@@ -18,4 +18,8 @@ public class TicketHistory
   //Queue destination for transfers
   public Guid? QueueId { get; set; }
   public Queue? Queue { get; set; }
+  
+  //User who performed the action
+  public Guid? UserId { get; set; }
+  public User? User { get; set; }
 }
