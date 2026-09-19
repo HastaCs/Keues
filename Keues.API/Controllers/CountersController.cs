@@ -1,5 +1,6 @@
 using System.Configuration;
 using System.Security.Claims;
+using Keues.API.Common;
 using Keues.API.Hubs;
 using Keues.API.Mappers;
 using Keues.API.Requests.Counters;
@@ -64,7 +65,7 @@ namespace Keues.API.Controllers
     {
       try
       {
-        var createCommand = request.ToCommand(); 
+        var createCommand = request.ToCommand();
         var counter = await _counterUseCases.Create.Handle(createCommand);
         var counterResponse = counter.ToResponse();
         return Ok(counterResponse);
@@ -91,7 +92,7 @@ namespace Keues.API.Controllers
     {
       try
       {
-        var command =request.ToCommand(id);
+        var command = request.ToCommand(id);
         var counter = await _counterUseCases.Update.Handle(command);
         var counterResponse = counter.ToResponse();
         return Ok(counterResponse);
@@ -162,7 +163,7 @@ namespace Keues.API.Controllers
     {
       try
       {
-        var command=query.ToCommand();
+        var command = query.ToCommand();
         var counters = await _counterUseCases.GetAll.Handle(command);
         var response = counters.Select(c => c.ToResponse());
         return Ok(new DataResponse<IEnumerable<CounterResponse>>(response));
@@ -189,10 +190,19 @@ namespace Keues.API.Controllers
     [HttpPost("{id:guid}/call-next-ticket")]
     [ProducesResponseType(typeof(CallNextTicketResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CallNextTicket(Guid id, CallNextTicketRequest request)
     {
       try
       {
+        //Usuario que llama, puede ser null
+        Guid? userId = User.GetUserId();
+        var hasAccess = await _counterUseCases.CheckAccess.Handle(new CheckAccessQuery(id, userId));
+
+        if (!hasAccess)
+          return StatusCode(StatusCodes.Status403Forbidden,
+            new ErrorResponse("User does not have access to this counter."));
+
         var ticket = await _counterUseCases.CallNextTicket.Handle(new CallNextTicketCommand(id));
         if (ticket == null)
         {
@@ -233,9 +243,17 @@ namespace Keues.API.Controllers
     {
       try
       {
+        Guid? userId = User.GetUserId();
+        var hasAccess = await _counterUseCases.CheckAccess.Handle(new CheckAccessQuery(id, userId));
+
+        if (!hasAccess)
+          return StatusCode(StatusCodes.Status403Forbidden,
+            new ErrorResponse("User does not have access to this counter."));
+
+        
         var command = request.ToCommand(id);
         await _counterUseCases.AttendTicket.Handle(command);
-        
+
         var counter = await _counterUseCases.Get.Handle(new GetCounterCommand(id));
         var group = $"locationId:{counter.LocationId}:typeDevice:Monitor:flowId:{request.FlowId}";
         await _hubContext.Clients.Group(group).SendAsync("TicketAttended", new { ticketId = request.TicketId });
@@ -262,6 +280,15 @@ namespace Keues.API.Controllers
     {
       try
       {
+        
+        Guid? userId = User.GetUserId();
+        var hasAccess = await _counterUseCases.CheckAccess.Handle(new CheckAccessQuery(id, userId));
+
+        if (!hasAccess)
+          return StatusCode(StatusCodes.Status403Forbidden,
+            new ErrorResponse("User does not have access to this counter."));
+
+        
         var ticket = await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(request.TicketId));
         if (ticket == null)
           throw new Exception($"No ticket found for {request.TicketId}");
@@ -292,15 +319,11 @@ namespace Keues.API.Controllers
     {
       try
       {
-        var counter = await _counterUseCases.Get.Handle(new GetCounterCommand(request.CounterId));
-        if (counter == null)
-          throw new Exception($"No counter found for {request.CounterId}");
-        //TODO una clase o algo para no escribir esto tan hardcoded.. "ticketcalled" , "locaitonId:type:.".. etc
-
-        //El codigo de la queue, para ponerla delante del numero
-
+        
         var queues = await _counterUseCases.GetQueues.Handle(new GetQueuesQuery(request.CounterId));
         var code = queues.FirstOrDefault()?.Code;
+       
+        var counter = await _counterUseCases.Get.Handle(new GetCounterCommand(request.CounterId));
         var ticketCalled = new TicketCalled(null, $"{code}{request.Code}", counter.Code);
 
         var group = $"locationId:{request.LocationId}:typeDevice:Monitor:flowId:{request.FlowId}";
@@ -357,8 +380,8 @@ namespace Keues.API.Controllers
     {
       try
       {
-        var ticket=await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(request.TicketId));
-        if(ticket == null)
+        var ticket = await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(request.TicketId));
+        if (ticket == null)
           throw new Exception($"No ticket found for {request.TicketId}");
 
         await _counterUseCases.TransferTicket.Handle(new TransferTicketCommand(id, request.TicketId, request.QueueId));
@@ -372,7 +395,7 @@ namespace Keues.API.Controllers
         return BadRequest(new ErrorResponse(e.Message));
       }
     }
-    
+
     /// <summary>
     /// Check if the user has access to the counter. Returns 200 if access is granted, 403 if not.
     /// </summary>
@@ -384,12 +407,8 @@ namespace Keues.API.Controllers
     {
       try
       {
-        // El claim "sub" del JWT llega aquí como ClaimTypes.NameIdentifier por el
-        // mapeo por defecto (heredado de WIF) que hace .NET al validar el token.
-        var value = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        Guid? userGuid = Guid.TryParse(value, out var userId) ? userId : null; // null si anónimo / sin token
-        var hasAccess = await _counterUseCases.CheckAccess.Handle(new CheckAccessQuery(id, userGuid));
+        Guid? userId = User.GetUserId();
+        var hasAccess = await _counterUseCases.CheckAccess.Handle(new CheckAccessQuery(id, userId));
         return hasAccess ? Ok() : Forbid();
       }
       catch (Exception e)

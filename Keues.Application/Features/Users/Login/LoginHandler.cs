@@ -17,7 +17,7 @@ public class LoginHandler
   public async Task<LoginResponse> Handle(LoginCommand request)
   {
     var mail = request.Email.ToLower();
-    var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == mail );
+    var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == mail && x.Enabled );
     if (user == null)
     {
       throw new Exception($"Invalid credentials");

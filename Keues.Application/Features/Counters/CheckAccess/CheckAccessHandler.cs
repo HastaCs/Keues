@@ -17,14 +17,14 @@ public class CheckAccessHandler
     var counterId = request.CounterId;
     var userId = request.UserId;
 
-    var access = await _context.Counters
+  var access = await _context.Counters
       .Where(c => c.Id == counterId)
       .Select(c => new
       {
         HasRestrictions = c.AuthorizedUsers.Any() || c.AuthorizedUserGroups.Any(),
         IsAuthorized = userId != null &&
-          (c.AuthorizedUsers.Any(u => u.Id == userId) ||
-           c.AuthorizedUserGroups.Any(g => g.Users.Any(u => u.Id == userId)))
+          (c.AuthorizedUsers.Any(u => u.Id == userId && u.Enabled) ||
+           c.AuthorizedUserGroups.Any(g => g.Users.Any(u => u.Id == userId && u.Enabled)))
       })
       .FirstOrDefaultAsync();
 
