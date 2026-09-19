@@ -154,7 +154,16 @@ builder.Services
     {
       OnMessageReceived = context =>
       {
-        context.Token = context.Request.Cookies["access_token"];
+        var header = context.Request.Headers.Authorization.FirstOrDefault();
+        if (!string.IsNullOrEmpty(header) &&
+            header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+          context.Token = header["Bearer ".Length..].Trim();
+        }
+        else
+        {
+          context.Token = context.Request.Cookies["access_token"];
+        }
         return Task.CompletedTask;
       }
     };
@@ -184,7 +193,6 @@ else
   app.UseStaticFiles();
 }
 
-app.UseAuthorization();
 app.MapControllers();
 app.MapHub<DeviceHub>("/devices");
 

@@ -1,4 +1,5 @@
 using System.Configuration;
+using System.Security.Claims;
 using Keues.API.Hubs;
 using Keues.API.Mappers;
 using Keues.API.Requests.Counters;
@@ -9,6 +10,7 @@ using Keues.Application.Features.Counters;
 using Keues.Application.Features.Counters.AttendTicket;
 using Keues.Application.Features.Counters.CallNextTicket;
 using Keues.Application.Features.Counters.CancelTicket;
+using Keues.Application.Features.Counters.CheckAccess;
 using Keues.Application.Features.Counters.CreateCounter;
 using Keues.Application.Features.Counters.DeleteCounter;
 using Keues.Application.Features.Counters.GetAllCounters;
@@ -364,6 +366,31 @@ namespace Keues.API.Controllers
         var group = $"locationId:{ticket.LocationId}:typeDevice:Monitor:flowId:{ticket.FlowId}";
         await _hubContext.Clients.Group(group).SendAsync("TicketCancelled", new { ticketId = ticket.Id });
         return Ok();
+      }
+      catch (Exception e)
+      {
+        return BadRequest(new ErrorResponse(e.Message));
+      }
+    }
+    
+    /// <summary>
+    /// Check if the user has access to the counter. Returns 200 if access is granted, 403 if not.
+    /// </summary>
+    /// <param name="id">Identifier of the counter.</param>
+    [HttpPost("{id:guid}/check-access")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> CheckAccess(Guid id)
+    {
+      try
+      {
+        // El claim "sub" del JWT llega aquí como ClaimTypes.NameIdentifier por el
+        // mapeo por defecto (heredado de WIF) que hace .NET al validar el token.
+        var value = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        Guid? userGuid = Guid.TryParse(value, out var userId) ? userId : null; // null si anónimo / sin token
+        var hasAccess = await _counterUseCases.CheckAccess.Handle(new CheckAccessQuery(id, userGuid));
+        return hasAccess ? Ok() : Forbid();
       }
       catch (Exception e)
       {

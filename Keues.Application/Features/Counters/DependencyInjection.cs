@@ -1,6 +1,7 @@
 using Keues.Application.Features.Counters.AttendTicket;
 using Keues.Application.Features.Counters.CallNextTicket;
 using Keues.Application.Features.Counters.CancelTicket;
+using Keues.Application.Features.Counters.CheckAccess;
 using Keues.Application.Features.Counters.CreateCounter;
 using Keues.Application.Features.Counters.DeleteCounter;
 using Keues.Application.Features.Counters.GetAllCounters;
@@ -28,6 +29,7 @@ public static class DependencyInjection
     services.AddScoped<CancelTicketHandler>();
     services.AddScoped<GetQueuesHandle>();
     services.AddScoped<CounterUseCases>();
+    services.AddScoped<CheckAccessHandler>();
     services.AddScoped<TransferTicketHandler>();
     
     return services;

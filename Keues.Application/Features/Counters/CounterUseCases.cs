@@ -2,6 +2,7 @@
 using Keues.Application.Features.Counters.AttendTicket;
 using Keues.Application.Features.Counters.CallNextTicket;
 using Keues.Application.Features.Counters.CancelTicket;
+using Keues.Application.Features.Counters.CheckAccess;
 using Keues.Application.Features.Counters.CreateCounter;
 using Keues.Application.Features.Counters.DeleteCounter;
 using Keues.Application.Features.Counters.GetAllCounters;
@@ -13,7 +14,8 @@ using Keues.Application.Features.Counters.UpdateCounter;
 namespace Keues.Application.Features.Counters;
 
 public class CounterUseCases(CreateCounterHandler create,UpdateCounterHandler update, DeleteCounterHandler delete, GetCounterHandler get, GetAllCountersHandler getAll,
-  CallNextTicketHandler callNextTicket, AttendTicketHandler attendTicket,CancelTicketHandler cancelTicket,GetQueuesHandle getQueuesHandle,TransferTicketHandler transferTicketHandler)
+  CallNextTicketHandler callNextTicket, AttendTicketHandler attendTicket,CancelTicketHandler cancelTicket,GetQueuesHandle getQueuesHandle,TransferTicketHandler transferTicketHandler,
+  CheckAccessHandler checkAccessHandler)
 {
   public CreateCounterHandler Create { get; } = create;
   public UpdateCounterHandler Update { get; } = update;
@@ -27,4 +29,6 @@ public class CounterUseCases(CreateCounterHandler create,UpdateCounterHandler up
   public  GetQueuesHandle GetQueues { get; } = getQueuesHandle;
   
   public  TransferTicketHandler TransferTicket { get; } = transferTicketHandler;
+  
+  public CheckAccessHandler CheckAccess { get; } = checkAccessHandler;
 }
