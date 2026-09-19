@@ -1,5 +1,8 @@
 namespace Keues.Application.Features.Tickets.GetTicketHistory;
 
+
+
+public record UserMin(Guid Id, string Name);
 public class GetTicketHistoryResponse
 {
   public Guid Id { get; set; }
@@ -9,6 +12,6 @@ public class GetTicketHistoryResponse
   
   public string QueueName { get; set; }
   
-  public string? UserName { get; set; }
+  public UserMin? User { get; set; }
   
 }

@@ -24,7 +24,7 @@ public class GetTicketHistoryHandler
         CreatedAt = x.CreatedAt,
         CounterName = x.Counter.Name,
         QueueName = x.Queue.Name,
-        UserName = x.User.Name
+     User = x.User != null ? new UserMin(x.User.Id, x.User.Name) : null
       })
       .ToListAsync();
 

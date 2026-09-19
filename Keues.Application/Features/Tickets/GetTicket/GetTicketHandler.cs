@@ -17,6 +17,7 @@ public class GetTicketHandler
       .Include(x => x.Queue)
       .Include(x => x.Counter)
       .Include(x => x.Flow)
+      
       .FirstOrDefaultAsync(x => x.Id == request.Id);
 
     if (ticket == null)
@@ -34,7 +35,8 @@ public class GetTicketHandler
       Code = ticket.Code,
       Flow= new FlowMin { Id = ticket.FlowId, Name = ticket.Flow.Name },
       FlowId = ticket.FlowId,
-      LocationId = ticket.Flow.LocationId
+      LocationId = ticket.Flow.LocationId,
+      
     };
     
   }
