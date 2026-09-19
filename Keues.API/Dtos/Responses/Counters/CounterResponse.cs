@@ -10,4 +10,17 @@ public class CounterResponse
   public IEnumerable<Guid> Queues { get; init; }
   public Guid LocationId { get; init; }
   public DateTime CreatedAt { get; init; }
+
+  public IEnumerable<BasicUserResponse> AuthorizedUsers { get; init; }
+  public IEnumerable<BasicUserGroupResponse> AuthorizedUserGroups { get; init; }
+}
+
+public class BasicUserResponse
+{
+  public Guid Id { get; init; }
+}
+
+public class BasicUserGroupResponse
+{
+  public Guid Id { get; init; }
 }

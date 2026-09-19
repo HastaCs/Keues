@@ -16,7 +16,7 @@ public class UpdateCounterHandler
   public async Task<CounterBaseResult> Handle(UpdateCounterCommand command)
   {
     var counter = await _context.Counters
-      .Include(c => c.Queues)
+      .Include(c => c.Queues).Include(c => c.AuthorizedUsers).Include(c => c.AuthorizedUserGroups)
       .FirstOrDefaultAsync(c => c.Id == command.Id);
     if (counter == null)
     {
@@ -29,12 +29,12 @@ public class UpdateCounterHandler
     counter.LocationId = command.LocationId;
     counter.Color = command.Color;
     //  counter.Queues.Clear();
-    var toRemove = counter.Queues.ToList();
+   /* var toRemove = counter.Queues.ToList();
 
     foreach (var queue in toRemove)
     {
       counter.Queues.Remove(queue);
-    }
+    }*/
 
     // await _context.SaveChangesAsync();
     if (command.Queues != null)
@@ -42,13 +42,38 @@ public class UpdateCounterHandler
       var queues = await _context.Queues
         .Where(q => command.Queues.Contains(q.Id))
         .ToListAsync();
+      counter.Queues= queues;
+      /*
       foreach (var queue in queues)
       {
         counter.Queues.Add(queue);
+      }*/
+    }
+
+    if (command.AuthorizedUsers != null)
+    {
+      var users = await _context.Users
+        .Where(u => command.AuthorizedUsers.Contains(u.Id) && u.LocationId == command.LocationId)
+        .ToListAsync();
+      counter.AuthorizedUsers.Clear();
+      foreach (var user in users)
+      {
+        counter.AuthorizedUsers.Add(user);
       }
+    }
+    
+    if(command.AuthorizedUserGroups != null)
+    {
+      var userGroups = await _context.UserGroups
+        .Where(ug => command.AuthorizedUserGroups.Contains(ug.Id) && ug.LocationId == command.LocationId)
+        .ToListAsync();
+      counter.AuthorizedUserGroups = userGroups;
     }
 
     await _context.SaveChangesAsync();
-    return new CounterBaseResult(counter.Id, counter.Name, counter.Code, counter.Description, counter.Color, counter.Queues.Select(q => q.Id),counter.LocationId,counter.CreatedAt!.Value);
+    var authorizedUsers = counter.AuthorizedUsers.Select(u => u.Id);
+    var authorizedUserGroups = counter.AuthorizedUserGroups.Select(ug => ug.Id);
+    return new CounterBaseResult(counter.Id, counter.Name, counter.Code, counter.Description, counter.Color, counter.Queues.Select(q => q.Id),counter.LocationId,counter.CreatedAt!.Value,
+      authorizedUsers, authorizedUserGroups);
   }
 }

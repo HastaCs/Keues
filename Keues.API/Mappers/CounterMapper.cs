@@ -19,7 +19,9 @@ public static class CounterMapper
       Name = request.Name,
       Description = request.Description,
       LocationId = request.LocationId,
-      Queues = request.Queues
+      Queues = request.Queues,
+      AuthorizedUsers = request.AuthorizedUsers,
+      AuthorizedUserGroups = request.AuthorizedUserGroups
     };
   }
   
@@ -34,7 +36,9 @@ public static class CounterMapper
       Color = command.Color,
       Queues = command.Queues,
       LocationId = command.LocationId,
-      CreatedAt = command.CreatedAt
+      CreatedAt = command.CreatedAt,
+      AuthorizedUsers = command.AuthorizedUsers.Select(u => new BasicUserResponse { Id = u }),
+      AuthorizedUserGroups = command.AuthorizedUserGroups.Select(g => new BasicUserGroupResponse { Id = g })
     };
   }
   
@@ -48,7 +52,9 @@ public static class CounterMapper
       Name = request.Name,
       Description = request.Description,
       LocationId = request.LocationId,
-      Queues = request.Queues
+      Queues = request.Queues,
+      AuthorizedUsers = request.AuthorizedUsers,
+      AuthorizedUserGroups = request.AuthorizedUserGroups
     };
   }
   

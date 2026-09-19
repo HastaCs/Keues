@@ -27,4 +27,6 @@ public class User
   public Boolean Enabled { get; set; } = true;
   
  public ICollection<UserGroup> UserGroups { get; set; } = new List<UserGroup>();
+ 
+ public ICollection<Counter> AuthorizedCounters { get; set; } = new List<Counter>();
 }

@@ -3,6 +3,7 @@ using System;
 using Keues.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Keues.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260918161344_AddAuthorizedUsersAndGroupsToCounters")]
+    partial class AddAuthorizedUsersAndGroupsToCounters
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
@@ -30,36 +33,6 @@ namespace Keues.Infrastructure.Migrations
                     b.HasIndex("QueuesId");
 
                     b.ToTable("CounterQueue");
-                });
-
-            modelBuilder.Entity("CounterUser", b =>
-                {
-                    b.Property<Guid>("AuthorizedCountersId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("AuthorizedUsersId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("AuthorizedCountersId", "AuthorizedUsersId");
-
-                    b.HasIndex("AuthorizedUsersId");
-
-                    b.ToTable("CounterUser");
-                });
-
-            modelBuilder.Entity("CounterUserGroup", b =>
-                {
-                    b.Property<Guid>("AuthorizedCountersId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("AuthorizedUserGroupsId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("AuthorizedCountersId", "AuthorizedUserGroupsId");
-
-                    b.HasIndex("AuthorizedUserGroupsId");
-
-                    b.ToTable("CounterUserGroup");
                 });
 
             modelBuilder.Entity("Keues.Domain.Entities.Counter", b =>
@@ -339,6 +312,9 @@ namespace Keues.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("CounterId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -368,6 +344,8 @@ namespace Keues.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CounterId");
+
                     b.HasIndex("LocationId");
 
                     b.ToTable("Users");
@@ -381,6 +359,9 @@ namespace Keues.Infrastructure.Migrations
 
                     b.Property<string>("Color")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CounterId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -397,6 +378,8 @@ namespace Keues.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CounterId");
 
                     b.HasIndex("LocationId");
 
@@ -429,36 +412,6 @@ namespace Keues.Infrastructure.Migrations
                     b.HasOne("Keues.Domain.Entities.Queue", null)
                         .WithMany()
                         .HasForeignKey("QueuesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("CounterUser", b =>
-                {
-                    b.HasOne("Keues.Domain.Entities.Counter", null)
-                        .WithMany()
-                        .HasForeignKey("AuthorizedCountersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Keues.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("AuthorizedUsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("CounterUserGroup", b =>
-                {
-                    b.HasOne("Keues.Domain.Entities.Counter", null)
-                        .WithMany()
-                        .HasForeignKey("AuthorizedCountersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Keues.Domain.Entities.UserGroup", null)
-                        .WithMany()
-                        .HasForeignKey("AuthorizedUserGroupsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -557,6 +510,10 @@ namespace Keues.Infrastructure.Migrations
 
             modelBuilder.Entity("Keues.Domain.Entities.User", b =>
                 {
+                    b.HasOne("Keues.Domain.Entities.Counter", null)
+                        .WithMany("AuthorizedUsers")
+                        .HasForeignKey("CounterId");
+
                     b.HasOne("Keues.Domain.Entities.Location", "Location")
                         .WithMany("Users")
                         .HasForeignKey("LocationId");
@@ -566,6 +523,10 @@ namespace Keues.Infrastructure.Migrations
 
             modelBuilder.Entity("Keues.Domain.Entities.UserGroup", b =>
                 {
+                    b.HasOne("Keues.Domain.Entities.Counter", null)
+                        .WithMany("AuthorizedUserGroups")
+                        .HasForeignKey("CounterId");
+
                     b.HasOne("Keues.Domain.Entities.Location", "Location")
                         .WithMany("UserGroups")
                         .HasForeignKey("LocationId")
@@ -588,6 +549,13 @@ namespace Keues.Infrastructure.Migrations
                         .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Keues.Domain.Entities.Counter", b =>
+                {
+                    b.Navigation("AuthorizedUserGroups");
+
+                    b.Navigation("AuthorizedUsers");
                 });
 
             modelBuilder.Entity("Keues.Domain.Entities.Location", b =>

@@ -100,6 +100,24 @@ public static class Seed
     return user;
   }
 
+  public static async Task<UserGroup> UserGroupAsync(
+    AppDbContext context,
+    Guid locationId,
+    string name = "Grupo",
+    string color = "blue")
+  {
+    var group = new UserGroup
+    {
+      Name = name,
+      Color = color,
+      LocationId = locationId,
+      CreatedAt = DateTime.UtcNow
+    };
+    context.UserGroups.Add(group);
+    await context.SaveChangesAsync();
+    return group;
+  }
+
   public static async Task<Ticket> TicketAsync(
     AppDbContext context,
     Guid queueId,

@@ -27,13 +27,14 @@ public class UpdateQueueHandler
     queue.Priority=command.Priority;
     queue.AgingIntervalMinutes=command.AgingIntervalMinutes;
     queue.Weight=command.Weight;
-    queue.Counters.Clear();
+    //queue.Counters.Clear();
     queue.ResetAt=command.ResetAt;
     if (command.Counters != null)
     {
-      var counters = await _context.Counters.Where(c => command.Counters.Contains(c.Id)).ToListAsync();
-      foreach (var counter in counters)
-        queue.Counters.Add(counter);
+      var counters = await _context.Counters.Where(c =>c.LocationId== command.LocationId && command.Counters.Contains(c.Id)).ToListAsync();
+      queue.Counters=counters;
+      //foreach (var counter in counters)
+      //  queue.Counters.Add(counter);
     }
 
     await _context.SaveChangesAsync();

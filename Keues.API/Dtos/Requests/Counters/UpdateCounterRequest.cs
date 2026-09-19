@@ -12,4 +12,14 @@ public class UpdateCounterRequest
   /// Colas a las que tiene acceso este counter
   /// </summary>
   public IEnumerable<Guid>? Queues { get; set; }
+  
+  /// <summary>
+  /// Usuarios autorizados para este counter
+  /// </summary>
+  public IEnumerable<Guid>? AuthorizedUsers { get; set; }
+  
+  /// <summary>
+  /// Grupos de usuarios autorizados para este counter
+  /// </summary>
+  public IEnumerable<Guid>? AuthorizedUserGroups { get; set; }
 }

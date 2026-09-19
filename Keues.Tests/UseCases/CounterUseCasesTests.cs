@@ -7,8 +7,10 @@ using Keues.Application.Features.Counters.DeleteCounter;
 using Keues.Application.Features.Counters.GetAllCounters;
 using Keues.Application.Features.Counters.GetCounter;
 using Keues.Application.Features.Counters.UpdateCounter;
+using Keues.Application.Features.UserGroups.DeleteUserGroup;
 using Keues.Domain.Enums;
 using Keues.Tests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Keues.Tests.UseCases;
@@ -290,6 +292,341 @@ public class CounterUseCasesTests : IDisposable
 
     await Assert.ThrowsAsync<Exception>(() =>
       handler.Handle(new AttendTicketCommand(counterId, ticketId)));
+  }
+
+  [Fact]
+  public async Task Create_persists_authorized_users_and_groups()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var ana = await Seed.UserAsync(context, location.Id, name: "Ana", email: "ana@keues.dev");
+    var luis = await Seed.UserAsync(context, location.Id, name: "Luis", email: "luis@keues.dev");
+    var reception = await Seed.UserGroupAsync(context, location.Id, name: "Recepcion");
+    var fruit = await Seed.UserGroupAsync(context, location.Id, name: "Fruteria");
+    var handler = new CreateCounterHandler(context);
+
+    var response = await handler.Handle(new CreateCounterCommand
+    {
+      Name = "Caja",
+      Code = "C1",
+      Color = "green",
+      Description = "",
+      LocationId = location.Id,
+      AuthorizedUsers = [ana.Id, luis.Id],
+      AuthorizedUserGroups = [reception.Id, fruit.Id]
+    });
+
+    Assert.Equal(2, response.AuthorizedUsers.Count());
+    Assert.Contains(ana.Id, response.AuthorizedUsers);
+    Assert.Contains(luis.Id, response.AuthorizedUsers);
+    Assert.Equal(2, response.AuthorizedUserGroups.Count());
+    Assert.Contains(reception.Id, response.AuthorizedUserGroups);
+    Assert.Contains(fruit.Id, response.AuthorizedUserGroups);
+
+    var stored = await context.Counters
+      .Include(c => c.AuthorizedUsers)
+      .Include(c => c.AuthorizedUserGroups)
+      .FirstAsync(c => c.Id == response.Id);
+    Assert.Equal(2, stored.AuthorizedUsers.Count);
+    Assert.Equal(2, stored.AuthorizedUserGroups.Count);
+  }
+
+  [Fact]
+  public async Task Create_ignores_authorized_users_and_groups_from_another_location()
+  {
+    await using var context = _db.CreateContext();
+    var locationA = await Seed.LocationAsync(context, "A");
+    var locationB = await Seed.LocationAsync(context, "B");
+    var foreignUser = await Seed.UserAsync(context, locationB.Id, name: "Ajeno", email: "ajeno@keues.dev");
+    var foreignGroup = await Seed.UserGroupAsync(context, locationB.Id, name: "Grupo ajeno");
+    var handler = new CreateCounterHandler(context);
+
+    var response = await handler.Handle(new CreateCounterCommand
+    {
+      Name = "Caja",
+      Code = "C1",
+      Color = "green",
+      Description = "",
+      LocationId = locationA.Id,
+      AuthorizedUsers = [foreignUser.Id],
+      AuthorizedUserGroups = [foreignGroup.Id]
+    });
+
+    Assert.Empty(response.AuthorizedUsers);
+    Assert.Empty(response.AuthorizedUserGroups);
+  }
+
+  [Fact]
+  public async Task GetAll_returns_authorized_users_and_groups()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var ana = await Seed.UserAsync(context, location.Id, name: "Ana", email: "ana@keues.dev");
+    var group = await Seed.UserGroupAsync(context, location.Id, name: "Recepcion");
+    await new CreateCounterHandler(context).Handle(new CreateCounterCommand
+    {
+      Name = "Caja",
+      Code = "C1",
+      Color = "green",
+      Description = "",
+      LocationId = location.Id,
+      AuthorizedUsers = [ana.Id],
+      AuthorizedUserGroups = [group.Id]
+    });
+
+    var response = await new GetAllCountersHandler(context)
+      .Handle(new GetAllCountersCommand { LocationId = location.Id });
+
+    var counter = Assert.Single(response);
+    Assert.Contains(ana.Id, counter.AuthorizedUsers);
+    Assert.Contains(group.Id, counter.AuthorizedUserGroups);
+  }
+
+  [Fact]
+  public async Task Update_replaces_authorized_users_and_groups()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var ana = await Seed.UserAsync(context, location.Id, name: "Ana", email: "ana@keues.dev");
+    var luis = await Seed.UserAsync(context, location.Id, name: "Luis", email: "luis@keues.dev");
+    var reception = await Seed.UserGroupAsync(context, location.Id, name: "Recepcion");
+    var fruit = await Seed.UserGroupAsync(context, location.Id, name: "Fruteria");
+    var created = await new CreateCounterHandler(context).Handle(new CreateCounterCommand
+    {
+      Name = "Caja",
+      Code = "C1",
+      Color = "green",
+      Description = "",
+      LocationId = location.Id,
+      AuthorizedUsers = [ana.Id],
+      AuthorizedUserGroups = [reception.Id]
+    });
+    var handler = new UpdateCounterHandler(context);
+
+    var response = await handler.Handle(new UpdateCounterCommand
+    {
+      Id = created.Id,
+      Name = "Caja",
+      Code = "C1",
+      Color = "green",
+      Description = "",
+      LocationId = location.Id,
+      AuthorizedUsers = [luis.Id],
+      AuthorizedUserGroups = [fruit.Id]
+    });
+
+    Assert.Equal([luis.Id], response.AuthorizedUsers);
+    Assert.Equal([fruit.Id], response.AuthorizedUserGroups);
+  }
+
+  [Fact]
+  public async Task Update_in_a_fresh_context_keeps_existing_and_adds_new_authorized_items()
+  {
+    Guid counterId;
+    Guid locationId;
+    Guid anaId;
+    Guid luisId;
+    Guid receptionId;
+    Guid fruitId;
+
+    await using (var context = _db.CreateContext())
+    {
+      var location = await Seed.LocationAsync(context);
+      var ana = await Seed.UserAsync(context, location.Id, name: "Ana", email: "ana@keues.dev");
+      var luis = await Seed.UserAsync(context, location.Id, name: "Luis", email: "luis@keues.dev");
+      var reception = await Seed.UserGroupAsync(context, location.Id, name: "Recepcion");
+      var fruit = await Seed.UserGroupAsync(context, location.Id, name: "Fruteria");
+      var created = await new CreateCounterHandler(context).Handle(new CreateCounterCommand
+      {
+        Name = "Caja",
+        Code = "C1",
+        Color = "green",
+        Description = "",
+        LocationId = location.Id,
+        AuthorizedUsers = [ana.Id],
+        AuthorizedUserGroups = [reception.Id]
+      });
+
+      counterId = created.Id;
+      locationId = location.Id;
+      anaId = ana.Id;
+      luisId = luis.Id;
+      receptionId = reception.Id;
+      fruitId = fruit.Id;
+    }
+
+    await using (var freshContext = _db.CreateContext())
+    {
+      var handler = new UpdateCounterHandler(freshContext);
+
+      var response = await handler.Handle(new UpdateCounterCommand
+      {
+        Id = counterId,
+        Name = "Caja",
+        Code = "C1",
+        Color = "green",
+        Description = "",
+        LocationId = locationId,
+        AuthorizedUsers = [anaId, luisId],
+        AuthorizedUserGroups = [receptionId, fruitId]
+      });
+
+      Assert.Equal(2, response.AuthorizedUsers.Count());
+      Assert.Contains(anaId, response.AuthorizedUsers);
+      Assert.Contains(luisId, response.AuthorizedUsers);
+      Assert.Equal(2, response.AuthorizedUserGroups.Count());
+      Assert.Contains(receptionId, response.AuthorizedUserGroups);
+      Assert.Contains(fruitId, response.AuthorizedUserGroups);
+    }
+  }
+
+  [Fact]
+  public async Task Update_with_empty_lists_clears_authorized_items()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var ana = await Seed.UserAsync(context, location.Id, name: "Ana", email: "ana@keues.dev");
+    var reception = await Seed.UserGroupAsync(context, location.Id, name: "Recepcion");
+    var created = await new CreateCounterHandler(context).Handle(new CreateCounterCommand
+    {
+      Name = "Caja",
+      Code = "C1",
+      Color = "green",
+      Description = "",
+      LocationId = location.Id,
+      AuthorizedUsers = [ana.Id],
+      AuthorizedUserGroups = [reception.Id]
+    });
+    var handler = new UpdateCounterHandler(context);
+
+    var response = await handler.Handle(new UpdateCounterCommand
+    {
+      Id = created.Id,
+      Name = "Caja",
+      Code = "C1",
+      Color = "green",
+      Description = "",
+      LocationId = location.Id,
+      AuthorizedUsers = [],
+      AuthorizedUserGroups = []
+    });
+
+    Assert.Empty(response.AuthorizedUsers);
+    Assert.Empty(response.AuthorizedUserGroups);
+  }
+
+  [Fact]
+  public async Task Update_with_null_leaves_authorized_items_unchanged()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var ana = await Seed.UserAsync(context, location.Id, name: "Ana", email: "ana@keues.dev");
+    var reception = await Seed.UserGroupAsync(context, location.Id, name: "Recepcion");
+    var created = await new CreateCounterHandler(context).Handle(new CreateCounterCommand
+    {
+      Name = "Caja",
+      Code = "C1",
+      Color = "green",
+      Description = "",
+      LocationId = location.Id,
+      AuthorizedUsers = [ana.Id],
+      AuthorizedUserGroups = [reception.Id]
+    });
+    var handler = new UpdateCounterHandler(context);
+
+    var response = await handler.Handle(new UpdateCounterCommand
+    {
+      Id = created.Id,
+      Name = "Caja renombrada",
+      Code = "C1",
+      Color = "green",
+      Description = "",
+      LocationId = location.Id,
+      AuthorizedUsers = null,
+      AuthorizedUserGroups = null
+    });
+
+    Assert.Equal("Caja renombrada", response.Name);
+    Assert.Contains(ana.Id, response.AuthorizedUsers);
+    Assert.Contains(reception.Id, response.AuthorizedUserGroups);
+  }
+
+  [Fact]
+  public async Task Get_excludes_a_soft_deleted_authorized_group()
+  {
+    Guid counterId;
+    Guid groupId;
+
+    await using (var context = _db.CreateContext())
+    {
+      var location = await Seed.LocationAsync(context);
+      var group = await Seed.UserGroupAsync(context, location.Id, name: "Temporal");
+      var created = await new CreateCounterHandler(context).Handle(new CreateCounterCommand
+      {
+        Name = "Caja",
+        Code = "C1",
+        Color = "green",
+        Description = "",
+        LocationId = location.Id,
+        AuthorizedUserGroups = [group.Id]
+      });
+      Assert.Single(created.AuthorizedUserGroups);
+
+      counterId = created.Id;
+      groupId = group.Id;
+    }
+
+    await using (var context = _db.CreateContext())
+    {
+      await new DeleteUserGroupHandler(context).Handle(new DeleteUserGroupCommand(groupId));
+    }
+
+    await using (var context = _db.CreateContext())
+    {
+      var response = await new GetCounterHandler(context).Handle(new GetCounterCommand(counterId));
+
+      Assert.Empty(response.AuthorizedUserGroups);
+    }
+  }
+
+  [Fact]
+  public async Task Get_excludes_a_soft_deleted_authorized_user()
+  {
+    Guid counterId;
+    Guid userId;
+
+    await using (var context = _db.CreateContext())
+    {
+      var location = await Seed.LocationAsync(context);
+      var user = await Seed.UserAsync(context, location.Id, name: "Ana", email: "ana@keues.dev");
+      var created = await new CreateCounterHandler(context).Handle(new CreateCounterCommand
+      {
+        Name = "Caja",
+        Code = "C1",
+        Color = "green",
+        Description = "",
+        LocationId = location.Id,
+        AuthorizedUsers = [user.Id]
+      });
+      Assert.Single(created.AuthorizedUsers);
+
+      counterId = created.Id;
+      userId = user.Id;
+    }
+
+    await using (var context = _db.CreateContext())
+    {
+      var user = await context.Users.FirstAsync(u => u.Id == userId);
+      user.RemovedAt = DateTime.UtcNow;
+      await context.SaveChangesAsync();
+    }
+
+    await using (var context = _db.CreateContext())
+    {
+      var response = await new GetCounterHandler(context).Handle(new GetCounterCommand(counterId));
+
+      Assert.Empty(response.AuthorizedUsers);
+    }
   }
 
   
