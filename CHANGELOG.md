@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://github.com/HastaCs/Keues/compare/v1.4.0...v1.5.0) (2026-09-19)
+
+
+### 🚀 Features
+
+* Add automatic reset to Queues ([85be317](https://github.com/HastaCs/Keues/commit/85be317999b3649239e2bddd5c7df7ec01a2022e)), closes [#13](https://github.com/HastaCs/Keues/issues/13)
+* Add ResetAt and LastResetAt properties to Queue entity and implement QueueResetBackgroundService ([1d5820f](https://github.com/HastaCs/Keues/commit/1d5820fce86175749169cba53f9563b082832977))
+* Add Used to TicketHistory for tracking user actions ([67872e8](https://github.com/HastaCs/Keues/commit/67872e806490a8706ec787882345b7f60099fcac))
+* Add user identification and counter access permissions ([187c818](https://github.com/HastaCs/Keues/commit/187c8181c2944b976b62cb55aa7047c8574585b1))
+* enhance counters and queues management ([68bbb1a](https://github.com/HastaCs/Keues/commit/68bbb1aa339eae298d9485a5352196f8040e53a8))
+* Restrict access to Counter, Device, Flow, Location, and Queue endpoints to Admin role ([71b9208](https://github.com/HastaCs/Keues/commit/71b9208a285a3047075545e66aa77bd71207e553))
+
 ## [1.4.0](https://github.com/HastaCs/Keues/compare/v1.3.0...v1.4.0) (2026-09-06)
 
 
