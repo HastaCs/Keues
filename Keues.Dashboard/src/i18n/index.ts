@@ -144,6 +144,7 @@ const resources = {
       },
       counters: {
         title: 'Puestos de la location activa',
+        heading: 'Puestos',
         subtitle: 'Gestiona los counters asociados a esta location.',
         newCounter: 'Nuevo puesto',
         searchPlaceholder: 'Buscar puestos...',
@@ -172,6 +173,7 @@ const resources = {
       },
       tickets: {
         title: 'Tickets de la location activa',
+        heading: 'Tickets',
         subtitle: 'Consulta los tickets creados y su estado actual.',
         searchPlaceholder: 'Buscar por codigo, cola o puesto...',
         statusAll: 'Todos los estados',
@@ -212,6 +214,7 @@ const resources = {
       },
       ticketTypes: {
         title: 'Colas de la location activa',
+        heading: 'Colas',
         subtitle: 'Gestiona las colas asociadas a esta location.',
         newTicketType: 'Nueva cola',
         searchPlaceholder: 'Buscar colas...',
@@ -246,6 +249,7 @@ const resources = {
       },
       deviceTicketMachines: {
         title: 'Máquinas de turnos de la location activa',
+        heading: 'Máquinas de turnos',
         subtitle: 'Gestiona las máquinas expendedoras de esta ubicación.',
         device_one: '{{count}} máquina',
         device_other: '{{count}} máquinas',
@@ -270,6 +274,7 @@ const resources = {
       },
       counterDevices: {
         title: 'Puestos conectados de la location activa',
+        heading: 'Puestos conectados',
         subtitle: 'Dispositivos de puesto registrados en esta ubicación.',
         device_one: '{{count}} puesto',
         device_other: '{{count}} puestos',
@@ -294,6 +299,7 @@ const resources = {
       },
       monitorDevices: {
         title: 'Monitores conectados de la location activa',
+        heading: 'Monitores conectados',
         subtitle: 'Dispositivos monitor registrados en esta ubicación.',
         device_one: '{{count}} monitor',
         device_other: '{{count}} monitores',
@@ -318,6 +324,7 @@ const resources = {
       },
       flows: {
         title: 'Flujos de la location activa',
+        heading: 'Flujos',
         subtitle: 'Construye menus jerarquicos y tickets hoja de forma visual.',
         flowSelector: 'Flujo activo',
         activeFlow: 'Activo',
@@ -470,6 +477,7 @@ const resources = {
       },
       users: {
         title: 'Usuarios de la location activa',
+        heading: 'Usuarios',
         subtitle: 'Gestiona los usuarios asociados a esta ubicación.',
         optionalTitle: 'El uso de usuarios es opcional',
         optionalDescription:
@@ -515,6 +523,7 @@ const resources = {
       },
       groups: {
         title: 'Grupos de la location activa',
+        heading: 'Grupos',
         subtitle: 'Gestiona los grupos de usuarios asociados a esta ubicación.',
         newGroup: 'Nuevo grupo',
         searchPlaceholder: 'Buscar grupos...',
@@ -727,6 +736,7 @@ const resources = {
       },
       counters: {
         title: 'Counters for active location',
+        heading: 'Counters',
         subtitle: 'Manage counters associated with this location.',
         newCounter: 'New counter',
         searchPlaceholder: 'Search counters...',
@@ -755,6 +765,7 @@ const resources = {
       },
       tickets: {
         title: 'Tickets for active location',
+        heading: 'Tickets',
         subtitle: 'Check created tickets and their current status.',
         searchPlaceholder: 'Search by code, queue or counter...',
         statusAll: 'All statuses',
@@ -795,6 +806,7 @@ const resources = {
       },
       ticketTypes: {
         title: 'Queues for active location',
+        heading: 'Queues',
         subtitle: 'Manage queues associated with this location.',
         newTicketType: 'New queue',
         searchPlaceholder: 'Search queues...',
@@ -829,6 +841,7 @@ const resources = {
       },
       deviceTicketMachines: {
         title: 'Ticket machines for active location',
+        heading: 'Ticket machines',
         subtitle: 'Manage the ticket machines for this location.',
         device_one: '{{count}} machine',
         device_other: '{{count}} machines',
@@ -853,6 +866,7 @@ const resources = {
       },
       counterDevices: {
         title: 'Connected counters for active location',
+        heading: 'Connected counters',
         subtitle: 'Counter devices registered in this location.',
         device_one: '{{count}} counter',
         device_other: '{{count}} counters',
@@ -877,6 +891,7 @@ const resources = {
       },
       monitorDevices: {
         title: 'Connected monitors for active location',
+        heading: 'Connected monitors',
         subtitle: 'Monitor devices registered in this location.',
         device_one: '{{count}} monitor',
         device_other: '{{count}} monitors',
@@ -901,6 +916,7 @@ const resources = {
       },
       flows: {
         title: 'Flows for active location',
+        heading: 'Flows',
         subtitle: 'Build hierarchical menus and leaf ticket actions visually.',
         flowSelector: 'Active flow',
         activeFlow: 'Active',
@@ -1052,6 +1068,7 @@ const resources = {
       },
       users: {
         title: 'Users for active location',
+        heading: 'Users',
         subtitle: 'Manage the users associated with this location.',
         optionalTitle: 'Using users is optional',
         optionalDescription:
@@ -1097,6 +1114,7 @@ const resources = {
       },
       groups: {
         title: 'Groups for active location',
+        heading: 'Groups',
         subtitle: 'Manage the user groups associated with this location.',
         newGroup: 'New group',
         searchPlaceholder: 'Search groups...',

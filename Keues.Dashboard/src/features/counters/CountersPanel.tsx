@@ -46,6 +46,7 @@ import styles from '@/styles/hover-card.module.css';
 import { CounterFormModal } from './CounterFormModal';
 import { Counter, CreateCounterInput } from '@/api/interfaces/Counter/Counters';
 import { useActiveLocation } from '@/features/locations/LocationContext';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -346,10 +347,13 @@ export function CountersPanel() {
 
       <Stack gap="lg">
         <PageHeader
-          label={t('counters.title')}
-          title={location.name}
-          description={t('counters.subtitle')}
-          actions={<Button onClick={openCreateModal}>{t('counters.newCounter')}</Button>}
+          label={location.name}
+          title={t('counters.heading')}
+          actions={
+            counters.length > 0 ? (
+              <Button onClick={openCreateModal}>{t('counters.newCounter')}</Button>
+            ) : undefined
+          }
         />
 
         {error && (
@@ -439,15 +443,15 @@ export function CountersPanel() {
             <Loader />
           </Group>
         ) : filteredCounters.length === 0 ? (
-          <Paper withBorder radius="md" p="xl">
-            <Stack align="center">
-              <Text fw={600}>{t('counters.emptyTitle')}</Text>
-
-              <Text c="dimmed" ta="center">
-                {t('counters.emptyDescription')}
-              </Text>
-            </Stack>
-          </Paper>
+          <EmptyState
+            title={t('counters.emptyTitle')}
+            description={t('counters.emptyDescription')}
+            action={
+              counters.length === 0 ? (
+                <Button onClick={openCreateModal}>{t('counters.newCounter')}</Button>
+              ) : undefined
+            }
+          />
         ) : view === 'cards' ? (
           <SimpleGrid
             cols={{

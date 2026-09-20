@@ -40,6 +40,7 @@ import { FlowIconKey, FlowMenuItem, Flow, MenuNodeType } from '@/api/interfaces/
 import { flowsApi } from '@/api/FlowsApi';
 import { queuesApi } from '@/api/QueuesApi';
 import { useActiveLocation } from '@/features/locations/LocationContext';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 
 interface IconOption {
@@ -748,12 +749,14 @@ export function FlowsPanel() {
 
       <Stack gap="lg">
         <PageHeader
-          label={t('flows.title')}
-          title={location.name}
+          label={location.name}
+          title={t('flows.heading')}
           actions={
-            <Button onClick={openCreateFlowModal} leftSection={<IconPlus size={14} />}>
-              {t('flows.newFlow')}
-            </Button>
+            flows.length > 0 ? (
+              <Button onClick={openCreateFlowModal} leftSection={<IconPlus size={14} />}>
+                {t('flows.newFlow')}
+              </Button>
+            ) : undefined
           }
         />
 
@@ -822,9 +825,20 @@ export function FlowsPanel() {
         ) : null}
 
         {!activeFlow ? (
-          <Paper withBorder radius="md" p="xl">
-            <Text>{flows.length === 0 ? t('flows.emptyFlows') : t('flows.selectFlowToEdit')}</Text>
-          </Paper>
+          flows.length === 0 ? (
+            <EmptyState
+              title={t('flows.emptyFlows')}
+              action={
+                <Button onClick={openCreateFlowModal} leftSection={<IconPlus size={14} />}>
+                  {t('flows.newFlow')}
+                </Button>
+              }
+            />
+          ) : (
+            <Paper withBorder radius="md" p="xl">
+              <Text>{t('flows.selectFlowToEdit')}</Text>
+            </Paper>
+          )
         ) : (
           <>
             <Group justify="space-between" align="center">

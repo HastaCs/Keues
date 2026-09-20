@@ -282,9 +282,9 @@ export function LocationDashboard() {
   return (
     <Stack gap="lg">
       <PageHeader
-        label={t('dashboard.title')}
-        title={location.name}
-        description={location.description || t('counters.noDescription')}
+        label={location.name}
+        title={t('sidebar.dashboard')}
+        description={location.description}
       />
 
       {error && (

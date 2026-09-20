@@ -177,9 +177,8 @@ export function DevicesPanel({ ns, deviceType, icon: DeviceIcon }: DevicesPanelP
       </Modal>
 
       <PageHeader
-        label={t(`${ns}.title`)}
-        title={location.name}
-        description={t(`${ns}.subtitle`)}
+        label={location.name}
+        title={t(`${ns}.heading`)}
         actions={
           !loading && !error ? (
             <Group gap="sm">

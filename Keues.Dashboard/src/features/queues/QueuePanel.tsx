@@ -46,6 +46,7 @@ import { countersApi } from '@/api/CountersApi';
 import { Queue, QueueInput } from '@/api/interfaces/Queue/Queues';
 import { useActiveLocation } from '@/features/locations/LocationContext';
 import { QueueFormModal } from './QueueFormModal';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 
 import styles from '@/styles/hover-card.module.css';
@@ -348,10 +349,13 @@ export function QueuesPanel() {
 
       <Stack gap="lg">
         <PageHeader
-          label={t('ticketTypes.title')}
-          title={location.name}
-          description={t('ticketTypes.subtitle')}
-          actions={<Button onClick={openCreateModal}>{t('ticketTypes.newTicketType')}</Button>}
+          label={location.name}
+          title={t('ticketTypes.heading')}
+          actions={
+            queues.length > 0 ? (
+              <Button onClick={openCreateModal}>{t('ticketTypes.newTicketType')}</Button>
+            ) : undefined
+          }
         />
 
         {error && <Alert color="red">{error}</Alert>}
@@ -432,15 +436,15 @@ export function QueuesPanel() {
             <Loader />
           </Group>
         ) : filteredTicketTypes.length === 0 ? (
-          <Paper withBorder radius="md" p="xl">
-            <Stack align="center">
-              <Text fw={600}>{t('ticketTypes.emptyTitle')}</Text>
-
-              <Text c="dimmed" ta="center">
-                {t('ticketTypes.emptyDescription')}
-              </Text>
-            </Stack>
-          </Paper>
+          <EmptyState
+            title={t('ticketTypes.emptyTitle')}
+            description={t('ticketTypes.emptyDescription')}
+            action={
+              queues.length === 0 ? (
+                <Button onClick={openCreateModal}>{t('ticketTypes.newTicketType')}</Button>
+              ) : undefined
+            }
+          />
         ) : view === 'cards' ? (
           <SimpleGrid
             cols={{

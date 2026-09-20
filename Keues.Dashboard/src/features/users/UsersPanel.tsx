@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { ApiError } from '@/api/httpClient';
 import { usersApi } from '@/api/UsersApi';
 import type { CreateUserInput, User } from '@/api/interfaces/User/Users';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { useActiveLocation } from '@/features/locations/LocationContext';
 import { UserFormModal } from './UserFormModal';
@@ -293,10 +294,13 @@ export function UsersPanel() {
 
       <Stack gap="lg">
         <PageHeader
-          label={t('users.title')}
-          title={location.name}
-          description={t('users.subtitle')}
-          actions={<Button onClick={openCreateModal}>{t('users.newUser')}</Button>}
+          label={location.name}
+          title={t('users.heading')}
+          actions={
+            users.length > 0 ? (
+              <Button onClick={openCreateModal}>{t('users.newUser')}</Button>
+            ) : undefined
+          }
         />
 
         {error ? (
@@ -358,14 +362,11 @@ export function UsersPanel() {
             <Loader />
           </Group>
         ) : users.length === 0 ? (
-          <Paper withBorder radius="md" p="xl">
-            <Stack align="center" gap={6}>
-              <Text fw={600}>{t('users.emptyTitle')}</Text>
-              <Text c="dimmed" ta="center">
-                {t('users.emptyDescription')}
-              </Text>
-            </Stack>
-          </Paper>
+          <EmptyState
+            title={t('users.emptyTitle')}
+            description={t('users.emptyDescription')}
+            action={<Button onClick={openCreateModal}>{t('users.newUser')}</Button>}
+          />
         ) : (
           <>
             <Paper withBorder radius="md" p="sm" style={{ overflowX: 'auto' }}>

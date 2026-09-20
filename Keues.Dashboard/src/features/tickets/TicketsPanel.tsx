@@ -226,11 +226,7 @@ export function TicketsPanel() {
 
   return (
     <Stack gap="lg">
-      <PageHeader
-        label={t('tickets.title')}
-        title={location.name}
-        description={t('tickets.subtitle')}
-      />
+      <PageHeader label={location.name} title={t('tickets.heading')} />
 
       {error && (
         <Alert color="red" title={t('errors.requestFailed')}>

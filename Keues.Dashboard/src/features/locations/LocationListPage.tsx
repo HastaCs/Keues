@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ApiError } from '@/api/httpClient';
 import { locationsApi } from '@/api/LocationsApi';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import cardHoverClasses from '@/styles/card-hover.module.css';
 import { LocationFormModal } from './LocationFormModal';
@@ -183,8 +184,11 @@ export function LocationListPage() {
       <Stack gap="lg">
         <PageHeader
           title={t('locations.pickOne')}
-          description={t('locations.subtitle')}
-          actions={<Button onClick={openCreateModal}>{t('locations.newLocation')}</Button>}
+          actions={
+            locations.length > 0 ? (
+              <Button onClick={openCreateModal}>{t('locations.newLocation')}</Button>
+            ) : undefined
+          }
         />
 
         {error ? (
@@ -219,14 +223,15 @@ export function LocationListPage() {
             <Loader />
           </Center>
         ) : filteredLocations.length === 0 ? (
-          <Paper withBorder radius="md" p="xl">
-            <Stack align="center" gap={6}>
-              <Text fw={600}>{t('locations.emptyTitle')}</Text>
-              <Text c="dimmed" ta="center">
-                {t('locations.emptyDescription')}
-              </Text>
-            </Stack>
-          </Paper>
+          <EmptyState
+            title={t('locations.emptyTitle')}
+            description={t('locations.emptyDescription')}
+            action={
+              locations.length === 0 ? (
+                <Button onClick={openCreateModal}>{t('locations.newLocation')}</Button>
+              ) : undefined
+            }
+          />
         ) : (
           <SimpleGrid cols={{ base: 1, md: 2, xl: 3 }} spacing="md" verticalSpacing="md">
             {filteredLocations.map((location) => {

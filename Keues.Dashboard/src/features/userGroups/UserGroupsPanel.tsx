@@ -36,6 +36,7 @@ import { useNavigate } from 'react-router-dom';
 import { ApiError } from '@/api/httpClient';
 import { userGroupsApi } from '@/api/UserGroupsApi';
 import type { UserGroup } from '@/api/interfaces/UserGroup/UserGroups';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { useActiveLocation } from '@/features/locations/LocationContext';
 import styles from '@/styles/hover-card.module.css';
@@ -330,10 +331,13 @@ export function UserGroupsPanel() {
 
       <Stack gap="lg">
         <PageHeader
-          label={t('groups.title')}
-          title={location.name}
-          description={t('groups.subtitle')}
-          actions={<Button onClick={openCreatePage}>{t('groups.newGroup')}</Button>}
+          label={location.name}
+          title={t('groups.heading')}
+          actions={
+            groups.length > 0 ? (
+              <Button onClick={openCreatePage}>{t('groups.newGroup')}</Button>
+            ) : undefined
+          }
         />
 
         {error ? (
@@ -396,14 +400,15 @@ export function UserGroupsPanel() {
             <Loader />
           </Group>
         ) : filteredGroups.length === 0 ? (
-          <Paper withBorder radius="md" p="xl">
-            <Stack align="center" gap={6}>
-              <Text fw={600}>{t('groups.emptyTitle')}</Text>
-              <Text c="dimmed" ta="center">
-                {t('groups.emptyDescription')}
-              </Text>
-            </Stack>
-          </Paper>
+          <EmptyState
+            title={t('groups.emptyTitle')}
+            description={t('groups.emptyDescription')}
+            action={
+              groups.length === 0 ? (
+                <Button onClick={openCreatePage}>{t('groups.newGroup')}</Button>
+              ) : undefined
+            }
+          />
         ) : view === 'cards' ? (
           <SimpleGrid cols={{ base: 1, sm: 2, md: 3, xl: 4 }} spacing="md">
             {filteredGroups.map((group) => (
