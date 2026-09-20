@@ -1,10 +1,12 @@
 import {
   Alert,
+  Avatar,
   Group,
   Loader,
   Modal,
   Stack,
   Text,
+  ThemeIcon,
   Timeline,
   type MantineColor,
 } from '@mantine/core';
@@ -12,9 +14,10 @@ import {
   IconArrowsExchange,
   IconBell,
   IconCheck,
+  IconClock,
+  IconDoorEnter,
   IconHistory,
   IconTicket,
-  IconUser,
   IconX,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
@@ -61,6 +64,20 @@ function getErrorMessage(error: unknown, fallback: string): string {
   }
 
   return fallback;
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+
+  if (parts.length === 0) {
+    return '?';
+  }
+
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+
+  return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
 }
 
 function formatDate(value: string): string {
@@ -142,23 +159,49 @@ export function TicketHistoryModal({ ticket, opened, onClose }: TicketHistoryMod
                 key={entry.id}
                 color={meta.color}
                 title={
-                  entry.queueName
-                    ? `${t(meta.labelKey)} → ${entry.queueName}`
-                    : t(meta.labelKey)
+                  entry.queueName ? `${t(meta.labelKey)} → ${entry.queueName}` : t(meta.labelKey)
                 }
                 bullet={<EventIcon size={14} />}
               >
-                <Stack gap={2}>
-                  <Text size="sm" c="dimmed">
-                    {formatDate(entry.createdAt)}
-                  </Text>
-                  {entry.counterName ? <Text size="sm">{entry.counterName}</Text> : null}
-                  {entry.user ? (
-                    <Group gap={4} wrap="nowrap">
-                      <IconUser size={14} />
-                      <Text size="sm">
-                        {t('tickets.historyUser')}: {entry.user.name}
-                      </Text>
+                <Stack gap={8} mt={4}>
+                  <Group gap={6} wrap="nowrap" c="dimmed">
+                    <IconClock size={14} />
+                    <Text size="xs">{formatDate(entry.createdAt)}</Text>
+                  </Group>
+
+                  {entry.user || entry.counterName ? (
+                    <Group gap="xl" wrap="wrap">
+                      {entry.user ? (
+                        <Group gap={8} wrap="nowrap">
+                          <Avatar size={30} radius="xl" color={meta.color}>
+                            {getInitials(entry.user.name)}
+                          </Avatar>
+                          <Stack gap={0}>
+                            <Text size="10px" c="dimmed" tt="uppercase" fw={600} lh={1.2}>
+                              {t('tickets.historyUser')}
+                            </Text>
+                            <Text size="sm" fw={600} lh={1.3}>
+                              {entry.user.name}
+                            </Text>
+                          </Stack>
+                        </Group>
+                      ) : null}
+
+                      {entry.counterName ? (
+                        <Group gap={8} wrap="nowrap">
+                          <ThemeIcon size={30} radius="xl" variant="light" color="gray">
+                            <IconDoorEnter size={16} />
+                          </ThemeIcon>
+                          <Stack gap={0}>
+                            <Text size="10px" c="dimmed" tt="uppercase" fw={600} lh={1.2}>
+                              {t('tickets.counter')}
+                            </Text>
+                            <Text size="sm" fw={600} lh={1.3}>
+                              {entry.counterName}
+                            </Text>
+                          </Stack>
+                        </Group>
+                      ) : null}
                     </Group>
                   ) : null}
                 </Stack>
