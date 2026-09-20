@@ -1,8 +1,8 @@
 # ---------- Build del Dashboard (vite) ----------
-FROM node:22-alpine AS dashboard
+FROM node:24-alpine AS dashboard
 WORKDIR /src
 COPY Keues.Dashboard/package.json Keues.Dashboard/pnpm-lock.yaml Keues.Dashboard/pnpm-workspace.yaml ./
-RUN corepack enable && corepack prepare pnpm@11.13.1 --activate
+RUN corepack enable && corepack prepare pnpm@11.21.0 --activate
 RUN pnpm install --frozen-lockfile
 COPY Keues.Dashboard/ .
 RUN pnpm build
