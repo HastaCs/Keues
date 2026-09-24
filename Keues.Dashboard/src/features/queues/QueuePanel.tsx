@@ -39,6 +39,7 @@ import {
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import { ApiError } from '@/api/httpClient';
 import { queuesApi } from '@/api/QueuesApi';
@@ -173,6 +174,8 @@ export function QueuesPanel() {
 
   const location = useActiveLocation();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [queues, setQueues] = useState<Queue[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -228,6 +231,25 @@ export function QueuesPanel() {
   useEffect(() => {
     void refreshQueues();
   }, [refreshQueues]);
+
+  useEffect(() => {
+    const openId = searchParams.get('open');
+    if (!openId || queues.length === 0) {
+      return;
+    }
+
+    const match = queues.find((queue) => queue.id === openId);
+    if (!match) {
+      return;
+    }
+
+    setEditingQueue(match);
+    setFormOpened(true);
+
+    const next = new URLSearchParams(searchParams);
+    next.delete('open');
+    setSearchParams(next, { replace: true });
+  }, [queues, searchParams, setSearchParams]);
 
   const filteredTicketTypes = useMemo(() => {
     const query = search.trim().toLowerCase();

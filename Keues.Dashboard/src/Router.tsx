@@ -1,3 +1,5 @@
+import { Center, Loader } from '@mantine/core';
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { AuthGuard, LoginGuard, RegisterAdminGuard } from './auth/Guards';
 import { CountersPanel } from './features/counters/CountersPanel';
@@ -17,6 +19,12 @@ import { HomePage } from './pages/Home.page';
 import Login from './components/Login/Login';
 import RegisterAdmin from './components/RegisterAdmin/RegisterAdmin';
 import ResetPassword from './components/ResetPassword/ResetPassword';
+
+const LocationMapPanel = lazy(() =>
+  import('./features/map/LocationMapPanel').then((module) => ({
+    default: module.LocationMapPanel,
+  }))
+);
 
 const router = createBrowserRouter([
   {
@@ -77,6 +85,20 @@ const router = createBrowserRouter([
           {
             path: 'flows',
             element: <FlowsPanel />,
+          },
+          {
+            path: 'map',
+            element: (
+              <Suspense
+                fallback={
+                  <Center py={80}>
+                    <Loader />
+                  </Center>
+                }
+              >
+                <LocationMapPanel />
+              </Suspense>
+            ),
           },
 
           {

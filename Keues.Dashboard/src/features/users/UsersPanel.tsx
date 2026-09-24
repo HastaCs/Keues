@@ -21,6 +21,7 @@ import {
 import { IconSearch, IconTrash } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import { ApiError } from '@/api/httpClient';
 import { usersApi } from '@/api/UsersApi';
@@ -84,6 +85,7 @@ function getInitials(name: string): string {
 export function UsersPanel() {
   const { t } = useTranslation();
   const location = useActiveLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -166,6 +168,26 @@ export function UsersPanel() {
       cancelled = true;
     };
   }, [location, debouncedSearch, page, pageSize, sortOrder, hideInactive, reloadKey, t]);
+
+  useEffect(() => {
+    const openId = searchParams.get('open');
+    if (!openId || users.length === 0) {
+      return;
+    }
+
+    const match = users.find((user) => user.id === openId);
+    if (!match) {
+      return;
+    }
+
+    setEditingUser(match);
+    setFormError(null);
+    setFormOpened(true);
+
+    const next = new URLSearchParams(searchParams);
+    next.delete('open');
+    setSearchParams(next, { replace: true });
+  }, [users, searchParams, setSearchParams]);
 
   function openCreateModal() {
     setEditingUser(undefined);

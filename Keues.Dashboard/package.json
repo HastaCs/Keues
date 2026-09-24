@@ -24,6 +24,7 @@
     "@mantine/hooks": "9.4.1",
     "@mantine/notifications": "^9.4.1",
     "@tabler/icons-react": "^3.44.0",
+    "@xyflow/react": "^12.11.6",
     "i18next": "^26.3.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

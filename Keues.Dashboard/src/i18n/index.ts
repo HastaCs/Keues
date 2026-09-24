@@ -83,6 +83,7 @@ const resources = {
         deviceCounters: 'Puestos',
         deviceMonitors: 'Monitores',
         deviceTicketMachines: 'Máquinas de turnos',
+        map: 'Ver sistema',
       },
       dashboard: {
         title: 'Dashboard de la ubicación activa',
@@ -411,6 +412,66 @@ const resources = {
         deleteNodeDescription:
           'Se eliminara el nodo {{name}} y todo su subarbol. Esta accion no se puede deshacer.',
       },
+      map: {
+        heading: 'Mapa del sistema',
+        subtitle: {
+          machines: 'Árbol de máquinas de turnos con sus menús y tickets.',
+          counters: '',
+        },
+        tabs: {
+          machines: 'Máquinas y tickets',
+          counters: 'Puestos',
+        },
+        filterCounters: 'Puestos visibles',
+        filterCountersPlaceholder: 'Selecciona puestos...',
+        selectAll: 'Todos',
+        selectNone: 'Ninguno',
+        dragHint: 'Arrastra los nodos con el ratón para reorganizarlos a tu gusto.',
+        refresh: 'Refrescar',
+        issuesButton: 'Incidencias',
+        issuesTitle: 'Incidencias de configuración',
+        issuesHint:
+          'Lista de problemas de configuración detectados: colas sin puesto, puestos sin cola, tickets sin cola, enlaces desincronizados o usuarios/grupos que ya no existen.',
+        issuesDescription:
+          'Problemas de configuración detectados en esta vista. Pulsa «Localizar» para ir al nodo afectado.',
+        noIssuesTitle: 'Sin incidencias',
+        noIssuesDescription: 'Toda la configuración está correctamente conectada.',
+        locate: 'Localizar',
+        emptyTitle: 'No hay nada que mostrar',
+        emptyDescription: 'Configura flujos, colas, puestos o dispositivos para verlos aquí.',
+        omitted:
+          '{{users}} usuarios y {{groups}} grupos no están autorizados en ningún puesto y no se muestran.',
+        disabled: 'Desactivado',
+        kinds: {
+          flow: 'Máquina',
+          menu: 'Menú',
+          ticket: 'Ticket',
+          queue: 'Cola',
+          counter: 'Puesto',
+          group: 'Grupo',
+          user: 'Usuario',
+        },
+        edges: {
+          flow: 'Máquina → Menú/Ticket',
+          link: '→ Cola',
+          person: 'Puesto → Persona',
+          membership: 'Grupo → Usuario',
+        },
+        severity: {
+          error: 'Error',
+          warning: 'Aviso',
+        },
+        issues: {
+          queueWithoutCounter: 'Cola sin ningún puesto que pueda llamarla.',
+          counterWithoutQueue: 'Puesto sin ninguna cola que pueda llamar.',
+          flowWithoutTickets: 'Máquina sin menús ni tickets.',
+          missingQueueReference: 'El ticket apunta a una cola que ya no existe.',
+          mismatchedLinks:
+            'La relación entre cola y puesto no está sincronizada en ambos sentidos.',
+          ghostUser: 'Hay un usuario autorizado que ya no existe en la ubicación.',
+          ghostGroup: 'Hay un grupo autorizado que ya no existe en la ubicación.',
+        },
+      },
       counterForm: {
         createTitle: 'Nuevo puesto',
         editTitle: 'Editar puesto',
@@ -678,6 +739,7 @@ const resources = {
         deviceCounters: 'Counters',
         deviceMonitors: 'Monitors',
         deviceTicketMachines: 'Ticket machines',
+        map: 'View system',
       },
       dashboard: {
         title: 'Dashboard for active location',
@@ -1001,6 +1063,65 @@ const resources = {
         deleteNodeTitle: 'Delete node',
         deleteNodeDescription:
           'This will delete node {{name}} and its entire subtree. This action cannot be undone.',
+      },
+      map: {
+        heading: 'System map',
+        subtitle: {
+          machines: 'Tree of ticket machines with their menus and tickets.',
+          counters: '',
+        },
+        tabs: {
+          machines: 'Machines & tickets',
+          counters: 'Counters',
+        },
+        filterCounters: 'Visible counters',
+        filterCountersPlaceholder: 'Select counters...',
+        selectAll: 'All',
+        selectNone: 'None',
+        dragHint: 'Drag the nodes with the mouse to rearrange them as you like.',
+        refresh: 'Refresh',
+        issuesButton: 'Issues',
+        issuesTitle: 'Configuration issues',
+        issuesHint:
+          'List of detected configuration problems: queues without a counter, counters without queues, tickets without a queue, out-of-sync links, or users/groups that no longer exist.',
+        issuesDescription:
+          'Configuration problems detected in this view. Press “Locate” to jump to the affected node.',
+        noIssuesTitle: 'No issues',
+        noIssuesDescription: 'The whole configuration is correctly connected.',
+        locate: 'Locate',
+        emptyTitle: 'Nothing to display',
+        emptyDescription: 'Configure flows, queues, counters or devices to see them here.',
+        omitted:
+          '{{users}} users and {{groups}} groups are not authorized on any counter and are hidden.',
+        disabled: 'Deactivated',
+        kinds: {
+          flow: 'Machine',
+          menu: 'Menu',
+          ticket: 'Ticket',
+          queue: 'Queue',
+          counter: 'Counter',
+          group: 'Group',
+          user: 'User',
+        },
+        edges: {
+          flow: 'Machine → Menu/Ticket',
+          link: '→ Queue',
+          person: 'Counter → Person',
+          membership: 'Group → User',
+        },
+        severity: {
+          error: 'Error',
+          warning: 'Warning',
+        },
+        issues: {
+          queueWithoutCounter: 'Queue without any counter that can call it.',
+          counterWithoutQueue: 'Counter without any queue it can call.',
+          flowWithoutTickets: 'Machine without menus or tickets.',
+          missingQueueReference: 'The ticket points to a queue that no longer exists.',
+          mismatchedLinks: 'The queue-counter relationship is not synced in both directions.',
+          ghostUser: 'An authorized user no longer exists in the location.',
+          ghostGroup: 'An authorized group no longer exists in the location.',
+        },
       },
       counterForm: {
         createTitle: 'New counter',

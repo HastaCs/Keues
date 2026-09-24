@@ -39,6 +39,7 @@ import { countersApi } from '@/api/CountersApi';
 import { queuesApi } from '@/api/QueuesApi';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { ApiError } from '@/api/httpClient';
 
 import styles from '@/styles/hover-card.module.css';
@@ -166,6 +167,8 @@ export function CountersPanel() {
 
   const location = useActiveLocation();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [counters, setCounters] = useState<Counter[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -218,6 +221,25 @@ export function CountersPanel() {
   useEffect(() => {
     void refreshCounters();
   }, [refreshCounters]);
+
+  useEffect(() => {
+    const openId = searchParams.get('open');
+    if (!openId || counters.length === 0) {
+      return;
+    }
+
+    const match = counters.find((counter) => counter.id === openId);
+    if (!match) {
+      return;
+    }
+
+    setEditingCounter(match);
+    setFormOpened(true);
+
+    const next = new URLSearchParams(searchParams);
+    next.delete('open');
+    setSearchParams(next, { replace: true });
+  }, [counters, searchParams, setSearchParams]);
 
   const filteredCounters = useMemo(() => {
     const query = search.trim().toLowerCase();

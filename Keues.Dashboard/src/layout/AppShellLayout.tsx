@@ -27,6 +27,7 @@ import {
   IconMoon,
   IconPlugConnected,
   IconSettings,
+  IconSitemap,
   IconSun,
   IconTicket,
   IconUser,
@@ -54,6 +55,7 @@ type WorkspaceModule =
   | 'groups'
   | 'ticketTypes'
   | 'flows'
+  | 'map'
   | 'devices'
   | 'deviceCounters'
   | 'deviceTicketMachines'
@@ -102,6 +104,7 @@ const navigationItems: NavigationItem[] = [
       { id: 'deviceMonitors', label: 'sidebar.deviceMonitors', icon: IconDeviceTv },
     ],
   },
+  { id: 'map', label: 'sidebar.map', icon: IconSitemap },
 ];
 
 export function AppShellLayout() {

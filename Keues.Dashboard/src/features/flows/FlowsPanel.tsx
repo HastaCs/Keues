@@ -22,6 +22,7 @@ import {
 import {
   IconArrowDown,
   IconArrowLeft,
+  IconCategory,
   IconDeviceFloppy,
   IconDeviceTv,
   IconEdit,
@@ -213,6 +214,11 @@ export function FlowsPanel() {
 
     return new Map(activeFlow.menuItems.map((item) => [item.id, item]));
   }, [activeFlow]);
+
+  const queueNameById = useMemo(
+    () => new Map(QueueOptions.map((option) => [option.value, option.label])),
+    [QueueOptions]
+  );
 
   useEffect(() => {
     if (treeData.length === 0) {
@@ -984,6 +990,9 @@ export function FlowsPanel() {
                             }
 
                             const itemEmoji = getNodeEmoji(item.icon);
+                            const queueName = item.queueId
+                              ? queueNameById.get(item.queueId)
+                              : undefined;
 
                             return (
                               <div {...elementProps}>
@@ -1001,6 +1010,16 @@ export function FlowsPanel() {
                                       ? t('flows.nodeMenu')
                                       : t('flows.nodeTicket')}
                                   </Badge>
+                                  {item.nodeType === 'ticket' && queueName ? (
+                                    <Badge
+                                      size="xs"
+                                      variant="light"
+                                      color="blue"
+                                      leftSection={<IconCategory size={10} />}
+                                    >
+                                      {queueName}
+                                    </Badge>
+                                  ) : null}
                                 </Group>
                               </div>
                             );
