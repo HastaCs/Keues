@@ -1,7 +1,6 @@
 import '@xyflow/react/dist/style.css';
 import {
   Alert,
-  Badge,
   Button,
   Group,
   Loader,
@@ -40,50 +39,13 @@ import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { useActiveLocation } from '@/features/locations/LocationContext';
 import { buildCounterGraph, buildFlowGraph, type MapSourceData } from './graphBuilder';
 import { IssuesDrawer } from './IssuesDrawer';
-import { MapLegend } from './MapLegend';
 import { MapNode } from './MapNode';
-import type { MapGraph, MapGraphNode, MapNodeKind, MapView } from './types';
+import type { MapGraph, MapGraphNode, MapView } from './types';
 
 const nodeTypes = { mapNode: MapNode };
 
 const USERS_PAGE_LIMIT = 100;
 const USERS_MAX_PAGES = 100;
-
-const BADGE_COLOR: Record<MapNodeKind, string> = {
-  flow: 'cyan',
-  menu: 'orange',
-  ticket: 'blue',
-  queue: 'blue',
-  counter: 'teal',
-  group: 'grape',
-  user: 'indigo',
-};
-
-const VIEW_STATS: Record<MapView, MapNodeKind[]> = {
-  machines: ['flow', 'menu', 'ticket'],
-  counters: ['counter', 'queue', 'group', 'user'],
-};
-
-function statValue(graph: MapGraph, kind: MapNodeKind): number {
-  switch (kind) {
-    case 'flow':
-      return graph.stats.flows;
-    case 'menu':
-      return graph.stats.menus;
-    case 'ticket':
-      return graph.stats.tickets;
-    case 'queue':
-      return graph.stats.queues;
-    case 'counter':
-      return graph.stats.counters;
-    case 'group':
-      return graph.stats.groups;
-    case 'user':
-      return graph.stats.users;
-    default:
-      return 0;
-  }
-}
 
 async function fetchAllUsers(locationId: string): Promise<User[]> {
   const all: User[] = [];
@@ -188,6 +150,7 @@ export function LocationMapPanel() {
   const [error, setError] = useState<string | null>(null);
   const [issuesOpened, setIssuesOpened] = useState(false);
   const [selectedCounters, setSelectedCounters] = useState<string[] | null>(null);
+  const [selectedFlows, setSelectedFlows] = useState<string[] | null>(null);
   const [instance, setInstance] = useState<ReactFlowInstance<MapGraphNode, Edge> | null>(null);
 
   const allCounterIds = useMemo(
@@ -202,6 +165,14 @@ export function LocationMapPanel() {
         value: counter.id,
         label: `${counter.code} · ${counter.name}`,
       })),
+    [source]
+  );
+
+  const allFlowIds = useMemo(() => source?.flows.map((flow) => flow.id) ?? [], [source]);
+  const activeFlowIds = selectedFlows ?? allFlowIds;
+
+  const flowOptions = useMemo(
+    () => (source?.flows ?? []).map((flow) => ({ value: flow.id, label: flow.name })),
     [source]
   );
 
@@ -246,9 +217,9 @@ export function LocationMapPanel() {
     }
 
     return view === 'machines'
-      ? buildFlowGraph(source)
+      ? buildFlowGraph(source, activeFlowIds)
       : buildCounterGraph(source, activeCounterIds);
-  }, [source, view, activeCounterIds]);
+  }, [source, view, activeCounterIds, activeFlowIds]);
 
   function focusNode(nodeId: string) {
     void instance?.fitView({
@@ -264,7 +235,7 @@ export function LocationMapPanel() {
   }
 
   return (
-    <Stack gap="lg">
+    <Stack gap="md">
       <PageHeader
         label={location.name}
         title={t('map.heading')}
@@ -306,74 +277,93 @@ export function LocationMapPanel() {
         </Tabs.List>
       </Tabs>
 
-      {view === 'counters' && source ? (
-        <Group align="flex-end" gap="sm" wrap="wrap">
-          <MultiSelect
-            label={t('map.filterCounters')}
-            placeholder={t('map.filterCountersPlaceholder')}
-            data={counterOptions}
-            value={activeCounterIds}
-            onChange={setSelectedCounters}
-            searchable
-            clearable
-            style={{ minWidth: 300, maxWidth: 520, flex: 1 }}
-          />
-
-          <Button variant="default" onClick={() => setSelectedCounters(allCounterIds)}>
-            {t('map.selectAll')}
-          </Button>
-
-          <Button variant="default" onClick={() => setSelectedCounters([])}>
-            {t('map.selectNone')}
-          </Button>
-        </Group>
-      ) : null}
-
       {error ? <Alert color="red">{error}</Alert> : null}
 
       {loading && !graph ? (
         <Group justify="center" py="xl">
           <Loader />
         </Group>
-      ) : graph && graph.nodes.length === 0 ? (
-        <EmptyState title={t('map.emptyTitle')} description={t('map.emptyDescription')} />
       ) : graph ? (
         <>
-          <Group justify="space-between" align="center" wrap="wrap" gap="md">
-            <Group gap="xs" wrap="wrap">
-              {VIEW_STATS[view].map((kind) => (
-                <Badge key={kind} variant="light" color={BADGE_COLOR[kind]}>
-                  {t(`map.kinds.${kind}`)}: {statValue(graph, kind)}
-                </Badge>
-              ))}
-            </Group>
+          <Group align="stretch" gap="md" wrap="wrap">
+            <Stack gap="sm" style={{ flex: '1 1 520px', minWidth: 0 }}>
+              <Paper
+                withBorder
+                radius="md"
+                style={{ height: 'calc(100vh - 220px)', minHeight: 520 }}
+              >
+                {graph.nodes.length === 0 ? (
+                  <Group justify="center" align="center" h="100%">
+                    <EmptyState
+                      title={t('map.emptyTitle')}
+                      description={t('map.emptyDescription')}
+                    />
+                  </Group>
+                ) : (
+                  <MapCanvas
+                    key={view}
+                    graph={graph}
+                    colorMode={colorScheme === 'dark' ? 'dark' : 'light'}
+                    onInit={setInstance}
+                  />
+                )}
+              </Paper>
+            </Stack>
 
-            <Text size="xs" c="dimmed">
-              {t('map.dragHint')}
-            </Text>
+            {source ? (
+              <Paper withBorder radius="md" p="md" style={{ flex: '0 0 300px' }}>
+                <Stack gap="sm">
+                  <Text fw={700} size="sm">
+                    {view === 'machines' ? t('map.filterFlows') : t('map.filterCounters')}
+                  </Text>
+
+                  {view === 'machines' ? (
+                    <MultiSelect
+                      placeholder={t('map.filterFlowsPlaceholder')}
+                      data={flowOptions}
+                      value={activeFlowIds}
+                      onChange={setSelectedFlows}
+                      searchable
+                      clearable
+                    />
+                  ) : (
+                    <MultiSelect
+                      placeholder={t('map.filterCountersPlaceholder')}
+                      data={counterOptions}
+                      value={activeCounterIds}
+                      onChange={setSelectedCounters}
+                      searchable
+                      clearable
+                    />
+                  )}
+
+                  <Group gap="xs" grow>
+                    <Button
+                      size="xs"
+                      variant="default"
+                      onClick={() =>
+                        view === 'machines'
+                          ? setSelectedFlows(allFlowIds)
+                          : setSelectedCounters(allCounterIds)
+                      }
+                    >
+                      {t('map.selectAll')}
+                    </Button>
+
+                    <Button
+                      size="xs"
+                      variant="default"
+                      onClick={() =>
+                        view === 'machines' ? setSelectedFlows([]) : setSelectedCounters([])
+                      }
+                    >
+                      {t('map.selectNone')}
+                    </Button>
+                  </Group>
+                </Stack>
+              </Paper>
+            ) : null}
           </Group>
-
-          {view === 'counters' && (graph.omittedUsers > 0 || graph.omittedGroups > 0) ? (
-            <Alert color="gray" variant="light" icon={<IconAlertTriangle size={16} />}>
-              <Text size="sm">
-                {t('map.omitted', {
-                  users: graph.omittedUsers,
-                  groups: graph.omittedGroups,
-                })}
-              </Text>
-            </Alert>
-          ) : null}
-
-          <MapLegend view={view} />
-
-          <Paper withBorder radius="md" style={{ height: 'calc(100vh - 340px)', minHeight: 520 }}>
-            <MapCanvas
-              key={view}
-              graph={graph}
-              colorMode={colorScheme === 'dark' ? 'dark' : 'light'}
-              onInit={setInstance}
-            />
-          </Paper>
 
           <IssuesDrawer
             opened={issuesOpened}

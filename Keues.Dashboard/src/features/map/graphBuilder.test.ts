@@ -180,6 +180,22 @@ describe('buildFlowGraph', () => {
     expect(graph.nodes.some((node) => node.id === 'item:f1:t1')).toBe(false);
     expect(issueCodes(graph)).toContain('flowWithoutTickets');
   });
+
+  it('only includes the selected flows', () => {
+    const graph = buildFlowGraph(
+      baseSource({
+        flows: [
+          makeFlow({ id: 'f1', menuItems: [makeMenuItem({ id: 't1' })] }),
+          makeFlow({ id: 'f2', menuItems: [makeMenuItem({ id: 't2' })] }),
+        ],
+      }),
+      ['f2']
+    );
+
+    expect(graph.nodes.some((node) => node.id === 'flow:f1')).toBe(false);
+    expect(graph.nodes.some((node) => node.id === 'flow:f2')).toBe(true);
+    expect(graph.stats.flows).toBe(1);
+  });
 });
 
 describe('buildCounterGraph', () => {

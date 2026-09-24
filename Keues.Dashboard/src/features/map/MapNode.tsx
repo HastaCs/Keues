@@ -43,8 +43,35 @@ const KIND_COLOR: Record<MapNodeKind, string> = {
   user: 'indigo',
 };
 
-const TARGET_KINDS: MapNodeKind[] = ['menu', 'ticket', 'queue', 'group', 'user'];
-const SOURCE_KINDS: MapNodeKind[] = ['flow', 'menu', 'ticket', 'counter', 'group'];
+interface HandleSpec {
+  id: string;
+  position: Position;
+}
+
+const KIND_HANDLES: Record<MapNodeKind, { target: HandleSpec[]; source: HandleSpec[] }> = {
+  flow: { target: [], source: [{ id: 'down', position: Position.Bottom }] },
+  menu: {
+    target: [{ id: 'top', position: Position.Top }],
+    source: [{ id: 'down', position: Position.Bottom }],
+  },
+  ticket: {
+    target: [{ id: 'top', position: Position.Top }],
+    source: [{ id: 'down', position: Position.Bottom }],
+  },
+  queue: { target: [{ id: 'top', position: Position.Top }], source: [] },
+  counter: {
+    target: [],
+    source: [
+      { id: 'up', position: Position.Top },
+      { id: 'down', position: Position.Bottom },
+    ],
+  },
+  group: {
+    target: [{ id: 'bottom', position: Position.Bottom }],
+    source: [{ id: 'top', position: Position.Top }],
+  },
+  user: { target: [{ id: 'bottom', position: Position.Bottom }], source: [] },
+};
 
 function getFlowTypeLabelKey(flowType: number): string {
   if (flowType === 1) {
@@ -84,8 +111,7 @@ export function MapNode({ data }: NodeProps<MapGraphNode>) {
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const Icon = KIND_ICON[data.kind];
   const color = data.color ?? KIND_COLOR[data.kind];
-  const showTarget = TARGET_KINDS.includes(data.kind);
-  const showSource = SOURCE_KINDS.includes(data.kind);
+  const handles = KIND_HANDLES[data.kind];
 
   const kindLabel =
     data.kind === 'flow' ? t(getFlowTypeLabelKey(data.flowType ?? 0)) : t(`map.kinds.${data.kind}`);
@@ -179,7 +205,9 @@ export function MapNode({ data }: NodeProps<MapGraphNode>) {
 
   return (
     <div style={{ width: '100%' }}>
-      {showTarget ? <Handle type="target" position={Position.Top} /> : null}
+      {handles.target.map((handle) => (
+        <Handle key={handle.id} id={handle.id} type="target" position={handle.position} />
+      ))}
 
       {shape.clipPath ? (
         <div
@@ -191,7 +219,8 @@ export function MapNode({ data }: NodeProps<MapGraphNode>) {
           style={{
             clipPath: shape.clipPath,
             backgroundColor: colorVar,
-            padding: 2,
+            padding: shape.ring ?? 2,
+            filter: shape.glow ? `drop-shadow(0 0 6px ${colorVar})` : undefined,
             cursor: data.route ? 'pointer' : 'default',
           }}
         >
@@ -224,7 +253,9 @@ export function MapNode({ data }: NodeProps<MapGraphNode>) {
         </Paper>
       )}
 
-      {showSource ? <Handle type="source" position={Position.Bottom} /> : null}
+      {handles.source.map((handle) => (
+        <Handle key={handle.id} id={handle.id} type="source" position={handle.position} />
+      ))}
     </div>
   );
 }

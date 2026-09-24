@@ -5,6 +5,8 @@ export interface NodeShape {
   borderRadius?: number | string;
   dashed?: boolean;
   accentLeft?: boolean;
+  ring?: number;
+  glow?: boolean;
   padding: string;
 }
 
@@ -30,6 +32,8 @@ export const NODE_SHAPES: Record<MapNodeKind, NodeShape> = {
   },
   counter: {
     clipPath: 'polygon(0 18px, 18px 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%)',
+    ring: 4,
+    glow: true,
     padding: '16px 16px 14px',
   },
   group: {

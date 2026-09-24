@@ -41,6 +41,15 @@ const EDGE_STYLE: Record<MapEdgeCategory, { stroke: string; dashed: boolean }> =
   membership: { stroke: 'var(--mantine-color-grape-4)', dashed: true },
 };
 
+const UP_KINDS: MapNodeKind[] = ['user', 'group'];
+
+const EDGE_HANDLES: Record<MapEdgeCategory, { source: string; target: string }> = {
+  flow: { source: 'down', target: 'top' },
+  link: { source: 'down', target: 'top' },
+  person: { source: 'up', target: 'bottom' },
+  membership: { source: 'top', target: 'bottom' },
+};
+
 interface RawEdge {
   source: string;
   target: string;
@@ -229,72 +238,106 @@ function layoutGraph(state: BuilderState): MapGraph {
   const V_GAP = 80;
   const MAX_ROW_WIDTH = 1500;
 
-  interface Subtree {
+  interface Block {
     width: number;
     height: number;
     positions: Map<string, { x: number; y: number }>;
   }
 
-  const layoutSubtree = (nodeId: string): Subtree => {
-    const node = nodeById.get(nodeId);
-    const ownHeight = node ? NODE_HEIGHT[node.data.kind] : NODE_HEIGHT.user;
-    const children = treeChildren.get(nodeId) ?? [];
+  interface Arrangement {
+    width: number;
+    height: number;
+    items: { block: Block; x: number; y: number }[];
+  }
 
-    if (children.length === 0) {
-      return {
-        width: NODE_WIDTH,
-        height: ownHeight,
-        positions: new Map([[nodeId, { x: 0, y: 0 }]]),
-      };
-    }
+  const arrangeRows = (blocks: Block[], align: 'top' | 'bottom'): Arrangement => {
+    const rows: Block[][] = [];
+    let current: Block[] = [];
+    let currentWidth = 0;
 
-    const childLayouts = children.map(layoutSubtree);
-    const rows: { items: Subtree[]; width: number }[] = [];
-    let currentRow: Subtree[] = [];
-    let currentRowWidth = 0;
+    blocks.forEach((block) => {
+      const addition = (current.length > 0 ? H_GAP : 0) + block.width;
 
-    childLayouts.forEach((child) => {
-      const addition = (currentRow.length > 0 ? H_GAP : 0) + child.width;
-
-      if (currentRow.length > 0 && currentRowWidth + addition > MAX_ROW_WIDTH) {
-        rows.push({ items: currentRow, width: currentRowWidth });
-        currentRow = [child];
-        currentRowWidth = child.width;
+      if (current.length > 0 && currentWidth + addition > MAX_ROW_WIDTH) {
+        rows.push(current);
+        current = [block];
+        currentWidth = block.width;
       } else {
-        currentRow.push(child);
-        currentRowWidth += addition;
+        current.push(block);
+        currentWidth += addition;
       }
     });
 
-    if (currentRow.length > 0) {
-      rows.push({ items: currentRow, width: currentRowWidth });
+    if (current.length > 0) {
+      rows.push(current);
     }
 
-    const childrenWidth = rows.reduce((acc, row) => Math.max(acc, row.width), NODE_WIDTH);
-    const width = Math.max(NODE_WIDTH, childrenWidth);
-    const positions = new Map<string, { x: number; y: number }>();
-    positions.set(nodeId, { x: (width - NODE_WIDTH) / 2, y: 0 });
-
-    let y = ownHeight + V_GAP;
-    let bottom = y;
+    const items: Arrangement['items'] = [];
+    let y = 0;
+    let width = 0;
 
     rows.forEach((row) => {
-      let x = (width - row.width) / 2;
-      let rowHeight = 0;
+      const rowWidth = row.reduce(
+        (acc, block, index) => acc + block.width + (index > 0 ? H_GAP : 0),
+        0
+      );
+      const rowHeight = row.reduce((acc, block) => Math.max(acc, block.height), 0);
+      let x = 0;
 
-      row.items.forEach((child) => {
-        child.positions.forEach((position, id) => {
-          positions.set(id, { x: position.x + x, y: position.y + y });
-        });
-        x += child.width + H_GAP;
-        rowHeight = Math.max(rowHeight, child.height);
+      row.forEach((block) => {
+        items.push({ block, x, y: align === 'bottom' ? y + rowHeight - block.height : y });
+        x += block.width + H_GAP;
       });
 
+      width = Math.max(width, rowWidth);
       y += rowHeight + V_GAP;
-      bottom = y - V_GAP;
     });
 
-    return { width, height: bottom, positions };
+    return { width, height: rows.length > 0 ? y - V_GAP : 0, items };
+  };
+
+  const isUpKind = (id: string) => {
+    const kind = nodeById.get(id)?.data.kind;
+    return kind !== undefined && UP_KINDS.includes(kind);
+  };
+
+  const layoutNode = (nodeId: string): Block => {
+    const node = nodeById.get(nodeId);
+    const ownHeight = node ? NODE_HEIGHT[node.data.kind] : NODE_HEIGHT.user;
+    const children = treeChildren.get(nodeId) ?? [];
+    const upChildren = children.filter(isUpKind);
+    const downChildren = children.filter((id) => !isUpKind(id));
+
+    const upArrangement = arrangeRows(upChildren.map(layoutNode), 'bottom');
+    const downArrangement = arrangeRows(downChildren.map(layoutNode), 'top');
+
+    const width = Math.max(NODE_WIDTH, upArrangement.width, downArrangement.width);
+    const positions = new Map<string, { x: number; y: number }>();
+
+    const upOffsetX = (width - upArrangement.width) / 2;
+    upArrangement.items.forEach((item) => {
+      item.block.positions.forEach((position, id) => {
+        positions.set(id, { x: upOffsetX + item.x + position.x, y: item.y + position.y });
+      });
+    });
+
+    const nodeY = upArrangement.height > 0 ? upArrangement.height + V_GAP : 0;
+    positions.set(nodeId, { x: (width - NODE_WIDTH) / 2, y: nodeY });
+
+    const downY = nodeY + ownHeight + V_GAP;
+    const downOffsetX = (width - downArrangement.width) / 2;
+    downArrangement.items.forEach((item) => {
+      item.block.positions.forEach((position, id) => {
+        positions.set(id, {
+          x: downOffsetX + item.x + position.x,
+          y: downY + item.y + position.y,
+        });
+      });
+    });
+
+    const height =
+      nodeY + ownHeight + (downArrangement.height > 0 ? V_GAP + downArrangement.height : 0);
+    return { width, height, positions };
   };
 
   const roots = mainNodes.filter((node) => !parentOf.has(node.id));
@@ -306,23 +349,23 @@ function layoutGraph(state: BuilderState): MapGraph {
   let rowHeight = 0;
 
   roots.forEach((root) => {
-    const subtree = layoutSubtree(root.id);
+    const block = layoutNode(root.id);
 
-    if (cursorX > 0 && cursorX + subtree.width > MAX_BLOCK_ROW_WIDTH) {
+    if (cursorX > 0 && cursorX + block.width > MAX_BLOCK_ROW_WIDTH) {
       cursorX = 0;
       cursorY += rowHeight + BLOCK_GAP_Y;
       rowHeight = 0;
     }
 
-    subtree.positions.forEach((position, nodeId) => {
+    block.positions.forEach((position, nodeId) => {
       const node = nodeById.get(nodeId);
       if (node) {
         node.position = { x: cursorX + position.x, y: cursorY + position.y };
       }
     });
 
-    cursorX += subtree.width + BLOCK_GAP_X;
-    rowHeight = Math.max(rowHeight, subtree.height);
+    cursorX += block.width + BLOCK_GAP_X;
+    rowHeight = Math.max(rowHeight, block.height);
   });
 
   const edges: Edge[] = state.rawEdges.map((edge) => {
@@ -334,6 +377,8 @@ function layoutGraph(state: BuilderState): MapGraph {
       id: key,
       source: edge.source,
       target: edge.target,
+      sourceHandle: EDGE_HANDLES[edge.category].source,
+      targetHandle: EDGE_HANDLES[edge.category].target,
       type: 'smoothstep',
       style: {
         stroke: isProblem ? 'var(--mantine-color-red-6)' : style.stroke,
@@ -363,10 +408,13 @@ function layoutGraph(state: BuilderState): MapGraph {
   };
 }
 
-export function buildFlowGraph(source: MapSourceData): MapGraph {
-  const state = createState(source);
+export function buildFlowGraph(source: MapSourceData, selectedFlowIds?: string[]): MapGraph {
+  const flows = selectedFlowIds
+    ? source.flows.filter((flow) => selectedFlowIds.includes(flow.id))
+    : source.flows;
+  const state = createState({ ...source, flows });
 
-  source.flows.forEach((flow) => {
+  flows.forEach((flow) => {
     const flowId = `flow:${flow.id}`;
     const items = (flow.menuItems ?? []).filter((item) => !item.removedAt);
 
