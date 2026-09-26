@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.6.0](https://github.com/HastaCs/Keues/compare/v1.5.0...v1.6.0) (2026-09-26)
+
+
+### 🚀 Features
+
+* add system overview graph ([b1befc3](https://github.com/HastaCs/Keues/commit/b1befc36bf15d10d2b70f2703a17d7d60c19e738))
+* enhance flow and counter selection i ([dd3c00b](https://github.com/HastaCs/Keues/commit/dd3c00ba8b93fde81864eb0efa44f242b8c84b5f))
+
+
+### 🐛 Bug Fixes
+
+* orden usuarios por acento ([ae56bb4](https://github.com/HastaCs/Keues/commit/ae56bb42dfdcada0bb697779ba5843e3b12e61d8))
+* When flow is empty ([eba0c0f](https://github.com/HastaCs/Keues/commit/eba0c0f50797d6f2afb2023477c0abf817559cab))
+
 ## [1.5.0](https://github.com/HastaCs/Keues/compare/v1.4.0...v1.5.0) (2026-09-20)
 
 
