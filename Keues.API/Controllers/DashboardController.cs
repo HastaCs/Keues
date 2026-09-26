@@ -1,6 +1,7 @@
 using Keues.API.Responses;
 using Keues.Application.Features.Dashboard;
 using Keues.Application.Features.Dashboard.GetDashboardSummary;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,6 +22,7 @@ namespace Keues.API.Controllers
     /// <returns>Dashboard summary.</returns>
     /// <response code="200">Summary obtained.</response>
     /// <response code="400">Validation or business rule error.</response>
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     [ProducesResponseType(typeof(GetDashboardSummaryResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]

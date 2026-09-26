@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Nodes;
 using Keues.API.Common;
 using Keues.API.Hubs;
 using Keues.Application.Common;
@@ -79,6 +80,14 @@ builder.Services.AddOpenApi(options =>
       Description =
         "HttpOnly cookie with the JWT. It is obtained by calling POST /api/users/login or POST /api/users/create-admin."
     });
+    document.AddComponent("bearer", new OpenApiSecurityScheme
+    {
+      Type = SecuritySchemeType.Http,
+      Scheme = "bearer",
+      BearerFormat = "JWT",
+      Description =
+        "JWT sent in the \"Authorization: Bearer <token>\" header. Same token returned in the body by POST /api/users/login and POST /api/users/create-admin; use it for non-browser clients that cannot rely on the HttpOnly cookie."
+    });
     return Task.CompletedTask;
   });
 
@@ -93,9 +102,36 @@ builder.Services.AddOpenApi(options =>
     [
       new OpenApiSecurityRequirement
       {
+        [new OpenApiSecuritySchemeReference("bearer", context.Document, null)] = []
+      },
+      new OpenApiSecurityRequirement
+      {
         [new OpenApiSecuritySchemeReference("access_token", context.Document, null)] = []
       }
     ];
+    return Task.CompletedTask;
+  });
+
+  options.AddSchemaTransformer((schema, context, cancellationToken) =>
+  {
+    var type = context.JsonTypeInfo.Type;
+    if (!type.IsEnum)
+      return Task.CompletedTask;
+
+    var values = Enum.GetValues(type).Cast<object>().ToArray();
+    var names = Enum.GetNames(type);
+
+    schema.Enum = values
+      .Select(value => (JsonNode)JsonValue.Create(Convert.ToInt32(value))!)
+      .ToList();
+
+    schema.Description =
+      $"{type.Name} values: {string.Join(", ", names.Select((name, index) => $"{Convert.ToInt32(values[index])} = {name}"))}.";
+
+    schema.Extensions ??= new Dictionary<string, IOpenApiExtension>();
+    schema.Extensions["x-enum-varnames"] =
+      new JsonNodeExtension(new JsonArray(names.Select(name => (JsonNode)JsonValue.Create(name)!).ToArray()));
+
     return Task.CompletedTask;
   });
 });

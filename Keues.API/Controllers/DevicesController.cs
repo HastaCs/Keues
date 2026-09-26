@@ -32,6 +32,7 @@ namespace Keues.API.Controllers
         /// <returns>List of devices with connection status.</returns>
         /// <response code="200">List of devices.</response>
         /// <response code="400">Validation or business rule error.</response>
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         [ProducesResponseType(typeof(DataResponse<IEnumerable<DeviceResponse>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]

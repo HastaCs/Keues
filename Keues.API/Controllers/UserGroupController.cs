@@ -29,6 +29,7 @@ namespace Keues.API.Controllers
     /// </summary>
     /// <param name="query"></param>
     /// <returns></returns>
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     [ProducesResponseType(typeof(DataResponse<IEnumerable<UserGroupBaseResult>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllUserGroups([FromQuery] GetAllUserGroupsQuery query)
@@ -49,6 +50,7 @@ namespace Keues.API.Controllers
     /// </summary>
     /// <param name="id">The ID of the user group</param>
     /// <returns>The user group with the specified ID</returns>
+    [Authorize(Roles = "Admin")]
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(UserGroupBaseResult), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUserGroupById(Guid id)

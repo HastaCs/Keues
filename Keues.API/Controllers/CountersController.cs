@@ -315,11 +315,18 @@ namespace Keues.API.Controllers
     [HttpPost("{id:guid}/call-manual-ticket")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CallManualTicket([FromBody] CallManualTicketRequest request)
     {
       try
       {
-        
+        Guid? userId = User.GetUserId();
+        var hasAccess = await _counterUseCases.CheckAccess.Handle(new CheckAccessQuery(request.CounterId, userId));
+
+        if (!hasAccess)
+          return StatusCode(StatusCodes.Status403Forbidden,
+            new ErrorResponse("User does not have access to this counter."));
+
         var queues = await _counterUseCases.GetQueues.Handle(new GetQueuesQuery(request.CounterId));
         var code = queues.FirstOrDefault()?.Code;
        
@@ -347,10 +354,18 @@ namespace Keues.API.Controllers
     [HttpPost("{id:guid}/set-free")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> SetFree(Guid id, SetFreeRequest request)
     {
       try
       {
+        Guid? userId = User.GetUserId();
+        var hasAccess = await _counterUseCases.CheckAccess.Handle(new CheckAccessQuery(id, userId));
+
+        if (!hasAccess)
+          return StatusCode(StatusCodes.Status403Forbidden,
+            new ErrorResponse("User does not have access to this counter."));
+
         var counter = await _counterUseCases.Get.Handle(new GetCounterCommand(id));
         if (counter == null)
           throw new Exception($"No counter found for {id}");
@@ -376,12 +391,18 @@ namespace Keues.API.Controllers
     [HttpPost("{id:guid}/transfer-ticket")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> TransferTicket(Guid id, TransferTicketRequest request)
     {
       try
       {
-        
         var userId = User.GetUserId();
+        var hasAccess = await _counterUseCases.CheckAccess.Handle(new CheckAccessQuery(id, userId));
+
+        if (!hasAccess)
+          return StatusCode(StatusCodes.Status403Forbidden,
+            new ErrorResponse("User does not have access to this counter."));
+
         var ticket = await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(request.TicketId));
         if (ticket == null)
           throw new Exception($"No ticket found for {request.TicketId}");

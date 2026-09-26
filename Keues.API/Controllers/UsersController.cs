@@ -24,7 +24,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Keues.API.Controllers
 {
   /// <summary>
-  /// Administrator authentication and retrieval of the current user.
+  /// User authentication and retrieval of the current user.
   /// Authentication is performed using the HttpOnly "access_token" cookie (JWT).
   /// </summary>
   [Route("api/[controller]")]
@@ -63,9 +63,9 @@ namespace Keues.API.Controllers
     }
 
     /// <summary>
-    /// Logs in an administrator. Returns the JWT in the body and sets it in the "access_token" cookie.
+    /// Logs in a user (administrator or regular user). Returns the JWT in the body and sets it in the "access_token" cookie.
     /// </summary>
-    /// <param name="request">Administrator email and password.</param>
+    /// <param name="request">User email and password.</param>
     /// <returns>The session JWT.</returns>
     /// <response code="200">Successful login.</response>
     /// <response code="400">Invalid credentials or another error.</response>
@@ -129,7 +129,7 @@ namespace Keues.API.Controllers
     /// Requests a password reset. If the email exists, sends an email with a recovery link.
     /// Always responds 200 to avoid revealing whether the email is registered.
     /// </summary>
-    /// <param name="request">Administrator email.</param>
+    /// <param name="request">User email.</param>
     /// <response code="200">Request processed.</response>
     [HttpPost("forgot-password")]
     [ProducesResponseType(StatusCodes.Status200OK)]

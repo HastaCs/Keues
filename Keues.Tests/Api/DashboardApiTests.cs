@@ -9,7 +9,7 @@ public class DashboardApiTests : ApiTestBase
   [Fact]
   public async Task Get_returns_the_summary()
   {
-    var client = Factory.CreateTestClient();
+    var client = await CreateAuthenticatedClientAsync();
     var env = new EnvironmentIds(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
     await Factory.WithContextAsync(async context =>
     {
@@ -43,7 +43,7 @@ public class DashboardApiTests : ApiTestBase
   [Fact]
   public async Task Get_unknown_location_returns_400()
   {
-    var client = Factory.CreateTestClient();
+    var client = await CreateAuthenticatedClientAsync();
 
     var response = await client.GetAsync($"/api/dashboard?locationId={Guid.NewGuid()}");
 
@@ -53,7 +53,7 @@ public class DashboardApiTests : ApiTestBase
   [Fact]
   public async Task Get_with_non_guid_location_returns_400()
   {
-    var client = Factory.CreateTestClient();
+    var client = await CreateAuthenticatedClientAsync();
 
     var response = await client.GetAsync("/api/dashboard?locationId=not-a-guid");
 
