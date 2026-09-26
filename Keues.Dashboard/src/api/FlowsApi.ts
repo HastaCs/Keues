@@ -1,10 +1,37 @@
 import { request } from "./httpClient";
 import type { ApiResponse } from "./interfaces/common/ApiResponse";
-import type { FlowInput, UpdateFlowInput, Flow } from "./interfaces/Flow/Flows";
+import type {
+  FlowInput,
+  FlowMenuItem,
+  UpdateFlowInput,
+  Flow,
+} from "./interfaces/Flow/Flows";
 
 import type { LocationId } from "@/api/interfaces/Location/Locations";
 
 const endpoint = "/flows";
+
+function parseMenuItems(flowJson: unknown): FlowMenuItem[] {
+  if (typeof flowJson !== "string" || flowJson.trim() === "") {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(flowJson);
+
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+
+    if (parsed && Array.isArray(parsed.menuItems)) {
+      return parsed.menuItems;
+    }
+
+    return [];
+  } catch {
+    return [];
+  }
+}
 
 export const flowsApi = {
   list(locationId: LocationId) {
@@ -12,7 +39,7 @@ export const flowsApi = {
       ...response,
       data: response.data.map((flow) => ({
         ...flow,
-        menuItems: JSON.parse(flow.flowJson ?? "[]"),
+        menuItems: parseMenuItems(flow.flowJson),
       })),
     }));
   },
@@ -27,7 +54,7 @@ create(flow: FlowInput) {
     body: flow,
   }).then((response) => ({
     ...response,
-    menuItems: JSON.parse(response.flowJson ?? "[]"),
+    menuItems: parseMenuItems(response.flowJson),
   }));
 },
 
@@ -37,7 +64,7 @@ update(flow: UpdateFlowInput) {
     body: flow,
   }).then((response) => ({
     ...response,
-    menuItems: JSON.parse(response.flowJson ?? "[]"),
+    menuItems: parseMenuItems(response.flowJson),
   }));
 },
 
