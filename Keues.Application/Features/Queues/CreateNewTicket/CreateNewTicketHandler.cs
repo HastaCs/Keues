@@ -7,10 +7,12 @@ namespace Keues.Application.Features.Queues.CreateNewTicket;
 public class CreateNewTicketHandler
 {
   private readonly IApplicationDbContext _context;
+  private readonly IKeuesEventPublisher _eventPublisher;
 
-  public CreateNewTicketHandler(IApplicationDbContext context)
+  public CreateNewTicketHandler(IApplicationDbContext context, IKeuesEventPublisher eventPublisher)
   {
     _context = context;
+    _eventPublisher = eventPublisher;
   }
 
   public async Task<CreateNewTicketResponse> Handle(CreateNewTicketCommand request)
@@ -27,12 +29,14 @@ public class CreateNewTicketHandler
     var history = new TicketHistory
     {
       TicketId = ticket.Id,
-      Event = KeuesEventsType.Ticket.Created,
+      Event = HistoryEventTypes.Ticket.Created,
       Counter = null,
       QueueId = queue.Id,
     };
     await _context.TicketHistories.AddAsync(history);
     await _context.SaveChangesAsync();
+
+    await _eventPublisher.Publish(new TicketCreated(ticket.Id), CancellationToken.None);
 
     return new CreateNewTicketResponse(ticket.Id, ticket.Code);
   }

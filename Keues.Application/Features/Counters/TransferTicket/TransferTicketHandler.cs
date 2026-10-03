@@ -48,7 +48,7 @@ public class TransferTicketHandler
       TicketId = ticket.Id,
       CounterId = counter.Id,
       CreatedAt = DateTime.UtcNow,
-      Event = KeuesEventsType.Ticket.Transferred,
+      Event = HistoryEventTypes.Ticket.Transferred,
       QueueId = destinationQueue.Id,
       UserId = command.UserId
     };

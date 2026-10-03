@@ -50,12 +50,12 @@ public class TicketHistoryUseCasesTests : IDisposable
     var location = await Seed.LocationAsync(context);
     var flow = await Seed.FlowAsync(context, location.Id);
     var queue = await Seed.QueueAsync(context, location.Id, code: "P");
-    var handler = new CreateNewTicketHandler(context);
+    var handler = new CreateNewTicketHandler(context, new FakeEventPublisher());
 
     var response = await handler.Handle(new CreateNewTicketCommand(queue.Id, flow.Id));
 
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == response.Id);
-    Assert.Equal(KeuesEventsType.Ticket.Created, history.Event);
+    Assert.Equal(HistoryEventTypes.Ticket.Created, history.Event);
     Assert.Null(history.CounterId);
   }
 
@@ -66,14 +66,14 @@ public class TicketHistoryUseCasesTests : IDisposable
     var location = await Seed.LocationAsync(context);
     var flow = await Seed.FlowAsync(context, location.Id);
     var queue = await Seed.QueueAsync(context, location.Id, code: "P");
-    var ticketId = await new CreateNewTicketHandler(context)
+    var ticketId = await new CreateNewTicketHandler(context, new FakeEventPublisher())
       .Handle(new CreateNewTicketCommand(queue.Id, flow.Id));
     var handler = new GetTicketHistoryHandler(context);
 
     var result = await handler.Handle(new GetTicketRequest(ticketId.Id));
 
     var single = Assert.Single(result);
-    Assert.Equal(KeuesEventsType.Ticket.Created, single.Event);
+    Assert.Equal(HistoryEventTypes.Ticket.Created, single.Event);
     Assert.Null(single.CounterName);
   }
 
@@ -92,7 +92,7 @@ public class TicketHistoryUseCasesTests : IDisposable
 
     Assert.NotNull(result);
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == result.TicketId);
-    Assert.Equal(KeuesEventsType.Ticket.Called, history.Event);
+    Assert.Equal(HistoryEventTypes.Ticket.Called, history.Event);
     Assert.Equal(counter.Id, history.CounterId);
   }
 
@@ -111,7 +111,7 @@ public class TicketHistoryUseCasesTests : IDisposable
     var result = await handler.Handle(new CallNextTicketCommand(counter.Id, user.Id));
 
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == result!.TicketId);
-    Assert.Equal(KeuesEventsType.Ticket.Called, history.Event);
+    Assert.Equal(HistoryEventTypes.Ticket.Called, history.Event);
     Assert.Equal(user.Id, history.UserId);
   }
 
@@ -153,7 +153,7 @@ public class TicketHistoryUseCasesTests : IDisposable
     var result = await handler.Handle(new GetTicketRequest(history.TicketId));
 
     var single = Assert.Single(result);
-    Assert.Equal(KeuesEventsType.Ticket.Called, single.Event);
+    Assert.Equal(HistoryEventTypes.Ticket.Called, single.Event);
     Assert.Equal("Caja 1", single.CounterName);
   }
 
@@ -171,7 +171,7 @@ public class TicketHistoryUseCasesTests : IDisposable
     await handler.Handle(new AttendTicketCommand(counter.Id, ticket.Id,null));
 
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
-    Assert.Equal(KeuesEventsType.Ticket.Attended, history.Event);
+    Assert.Equal(HistoryEventTypes.Ticket.Attended, history.Event);
     Assert.Equal(counter.Id, history.CounterId);
   }
 
@@ -190,7 +190,7 @@ public class TicketHistoryUseCasesTests : IDisposable
     await handler.Handle(new AttendTicketCommand(counter.Id, ticket.Id, user.Id));
 
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
-    Assert.Equal(KeuesEventsType.Ticket.Attended, history.Event);
+    Assert.Equal(HistoryEventTypes.Ticket.Attended, history.Event);
     Assert.Equal(user.Id, history.UserId);
   }
 
@@ -225,7 +225,7 @@ public class TicketHistoryUseCasesTests : IDisposable
     await handler.Handle(new CancelTicketCommand(ticket.Id, counter.Id, null));
 
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
-    Assert.Equal(KeuesEventsType.Ticket.Canceled, history.Event);
+    Assert.Equal(HistoryEventTypes.Ticket.Canceled, history.Event);
     Assert.Equal(counter.Id, history.CounterId);
   }
 
@@ -244,7 +244,7 @@ public class TicketHistoryUseCasesTests : IDisposable
     await handler.Handle(new CancelTicketCommand(ticket.Id, counter.Id, user.Id));
 
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
-    Assert.Equal(KeuesEventsType.Ticket.Canceled, history.Event);
+    Assert.Equal(HistoryEventTypes.Ticket.Canceled, history.Event);
     Assert.Equal(user.Id, history.UserId);
   }
 
@@ -263,7 +263,7 @@ public class TicketHistoryUseCasesTests : IDisposable
     await handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id, null));
 
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
-    Assert.Equal(KeuesEventsType.Ticket.Transferred, history.Event);
+    Assert.Equal(HistoryEventTypes.Ticket.Transferred, history.Event);
     Assert.Equal(counter.Id, history.CounterId);
   }
 
@@ -283,7 +283,7 @@ public class TicketHistoryUseCasesTests : IDisposable
     await handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id, user.Id));
 
     var history = await context.TicketHistories.SingleAsync(h => h.TicketId == ticket.Id);
-    Assert.Equal(KeuesEventsType.Ticket.Transferred, history.Event);
+    Assert.Equal(HistoryEventTypes.Ticket.Transferred, history.Event);
     Assert.Equal(user.Id, history.UserId);
   }
 
@@ -295,7 +295,7 @@ public class TicketHistoryUseCasesTests : IDisposable
     var flow = await Seed.FlowAsync(context, location.Id);
     var queue = await Seed.QueueAsync(context, location.Id, code: "P");
     var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
-    var createHandler = new CreateNewTicketHandler(context);
+    var createHandler = new CreateNewTicketHandler(context, new FakeEventPublisher());
     var callHandler = new CallNextTicketHandler(context);
 
     var ticketId = (await createHandler.Handle(new CreateNewTicketCommand(queue.Id, flow.Id))).Id;
@@ -304,7 +304,7 @@ public class TicketHistoryUseCasesTests : IDisposable
 
     var result = await handler.Handle(new GetTicketRequest(ticketId));
 
-    Assert.Equal([KeuesEventsType.Ticket.Created, KeuesEventsType.Ticket.Called],
+    Assert.Equal([HistoryEventTypes.Ticket.Created, HistoryEventTypes.Ticket.Called],
       result.Select(r => r.Event).ToArray());
   }
 }

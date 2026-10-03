@@ -54,7 +54,7 @@ public class QueueUseCasesTests : IDisposable
     var location = await Seed.LocationAsync(context);
     var flow = await Seed.FlowAsync(context, location.Id);
     var queue = await Seed.QueueAsync(context, location.Id, code: "P");
-    var handler = new CreateNewTicketHandler(context);
+    var handler = new CreateNewTicketHandler(context, new FakeEventPublisher());
 
     var first = await handler.Handle(new CreateNewTicketCommand(queue.Id, flow.Id));
     var second = await handler.Handle(new CreateNewTicketCommand(queue.Id, flow.Id));
@@ -77,7 +77,7 @@ public class QueueUseCasesTests : IDisposable
     var queue = await Seed.QueueAsync(context, location.Id, code: "P");
     queue.MaxValue = 2;
     await context.SaveChangesAsync();
-    var handler = new CreateNewTicketHandler(context);
+    var handler = new CreateNewTicketHandler(context, new FakeEventPublisher());
 
     var first = await handler.Handle(new CreateNewTicketCommand(queue.Id, flow.Id));
     var second = await handler.Handle(new CreateNewTicketCommand(queue.Id, flow.Id));
@@ -92,7 +92,7 @@ public class QueueUseCasesTests : IDisposable
   public async Task CreateNewTicket_throws_when_queue_not_found()
   {
     await using var context = _db.CreateContext();
-    var handler = new CreateNewTicketHandler(context);
+    var handler = new CreateNewTicketHandler(context, new FakeEventPublisher());
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
       handler.Handle(new CreateNewTicketCommand(Guid.NewGuid(), Guid.NewGuid())));

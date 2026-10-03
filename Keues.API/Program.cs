@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Nodes;
+using System.Threading.Channels;
 using Keues.API.Common;
 using Keues.API.Hubs;
 using Keues.Application.Common;
@@ -24,9 +25,11 @@ using Keues.Application.Features.Users.Login;
 using Keues.Application.Features.Users.Me;
 using Keues.Application.Features.Users.ForgotPassword;
 using Keues.Application.Features.Users.ResetPassword;
+using Keues.Domain.Events;
 using Keues.Infrastructure.Authorization;
 using Keues.Infrastructure.BackgroundServices;
 using Keues.Infrastructure.Email;
+using Keues.Infrastructure.Events;
 using Keues.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -157,6 +160,9 @@ builder.Services.AddDeviceUseCases();
 
 #endregion
 
+builder.Services.AddSingleton(Channel.CreateUnbounded<IKeuesEvent>());
+builder.Services.AddSingleton<IKeuesEventPublisher, ChannelEventPublisher>();
+builder.Services.AddHostedService<ChannelEventConsumer>();
 
 builder.Services.AddSingleton<ConnectedDeviceRegistry>();
 builder.Services.AddSignalR();

@@ -37,7 +37,7 @@ public class ResetQueuesHandle
         {
           Id = Guid.NewGuid(),
           TicketId = ticket.Id,
-          Event = KeuesEventsType.Ticket.Canceled,
+          Event = HistoryEventTypes.Ticket.Canceled,
           CreatedAt = now,
           Ticket =  ticket,  
         };

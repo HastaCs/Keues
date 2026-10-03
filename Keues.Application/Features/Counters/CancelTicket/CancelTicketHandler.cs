@@ -22,7 +22,7 @@ public class CancelTicketHandler
     var history = new TicketHistory
     {
       TicketId = ticket.Id,
-      Event = KeuesEventsType.Ticket.Canceled,
+      Event = HistoryEventTypes.Ticket.Canceled,
       CreatedAt = DateTime.UtcNow,
       CounterId = request.CounterId,
       UserId = request.UserId
