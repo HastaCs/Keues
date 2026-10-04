@@ -109,6 +109,7 @@ export const usersApi = {
         email: input.email,
         password: input.password,
         locationId: input.locationId,
+        externalId: input.externalId,
       },
     });
   },

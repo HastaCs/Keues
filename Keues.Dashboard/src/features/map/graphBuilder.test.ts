@@ -49,6 +49,7 @@ function makeUser(overrides: Partial<User> & { id: string }): User {
     locationId: LOCATION,
     createdAt: '2026-01-01T00:00:00Z',
     enabled: true,
+    externalId: '',
     ...overrides,
   };
 }

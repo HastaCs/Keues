@@ -44,6 +44,7 @@ export interface User {
   locationId: string | null;
   createdAt: string;
   enabled: boolean;
+  externalId: string;
 }
 
 export interface CreateUserInput {
@@ -51,6 +52,7 @@ export interface CreateUserInput {
   email: string;
   password: string;
   locationId: string;
+  externalId: string;
 }
 
 export interface UpdateUserInput extends CreateUserInput {

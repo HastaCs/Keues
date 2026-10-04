@@ -17,6 +17,7 @@ interface UserFormModalProps {
 interface FormState {
   name: string;
   email: string;
+  externalId: string;
   password: string;
   confirmPassword: string;
 }
@@ -27,6 +28,7 @@ function getInitialState(initialUser?: User): FormState {
   return {
     name: initialUser?.name ?? '',
     email: initialUser?.email ?? '',
+    externalId: initialUser?.externalId ?? '',
     password: '',
     confirmPassword: '',
   };
@@ -108,6 +110,7 @@ export function UserFormModal({
       email,
       password,
       locationId,
+      externalId: formState.externalId.trim(),
     });
   }
 
@@ -134,6 +137,20 @@ export function UserFormModal({
               setFormState((previous) => ({
                 ...previous,
                 name: value,
+              }));
+            }}
+          />
+
+          <TextInput
+            label={t('userForm.externalId')}
+            placeholder={t('userForm.externalIdPlaceholder')}
+            value={formState.externalId}
+            onChange={(event) => {
+              const value = event.currentTarget.value;
+
+              setFormState((previous) => ({
+                ...previous,
+                externalId: value,
               }));
             }}
           />
