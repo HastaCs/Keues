@@ -119,7 +119,7 @@ public class CounterUseCasesTests : IDisposable
     var location = await Seed.LocationAsync(context);
     var queue = await Seed.QueueAsync(context, location.Id);
     var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
-    var handler = new CallNextTicketHandler(context);
+    var handler = new CallNextTicketHandler(context, new FakeEventPublisher());
 
     var result = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
 
@@ -136,7 +136,7 @@ public class CounterUseCasesTests : IDisposable
     var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
     var t1 = await Seed.TicketAsync(context, queue.Id, flow.Id);
     var t2 = await Seed.TicketAsync(context, queue.Id, flow.Id);
-    var handler = new CallNextTicketHandler(context);
+    var handler = new CallNextTicketHandler(context, new FakeEventPublisher());
 
     var result = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
 
@@ -159,7 +159,7 @@ public class CounterUseCasesTests : IDisposable
     var queue = await Seed.QueueAsync(context, location.Id);
     var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
     await Seed.TicketAsync(context, queue.Id, flow.Id);
-    var handler = new CallNextTicketHandler(context);
+    var handler = new CallNextTicketHandler(context, new FakeEventPublisher());
 
     var first = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
     var second = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
@@ -178,7 +178,7 @@ public class CounterUseCasesTests : IDisposable
     var counter = await Seed.CounterAsync(context, location.Id, queues: [high, low]);
     await Seed.TicketAsync(context, high.Id, flow.Id);
     await Seed.TicketAsync(context, low.Id, flow.Id);
-    var handler = new CallNextTicketHandler(context);
+    var handler = new CallNextTicketHandler(context, new FakeEventPublisher());
 
     var result = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
 
@@ -204,7 +204,7 @@ public class CounterUseCasesTests : IDisposable
     await Seed.TicketAsync(context, aging.Id, flow.Id,
       createdAt: DateTime.UtcNow.AddMinutes(-60));
     await Seed.TicketAsync(context, fresh.Id, flow.Id);
-    var handler = new CallNextTicketHandler(context);
+    var handler = new CallNextTicketHandler(context, new FakeEventPublisher());
 
     var result = await handler.Handle(new CallNextTicketCommand(counter.Id, null));
 
@@ -228,8 +228,8 @@ public class CounterUseCasesTests : IDisposable
       await Seed.TicketAsync(context, qB.Id, flow.Id);
     }
 
-    var callHandler = new CallNextTicketHandler(context);
-    var attendHandler = new AttendTicketHandler(context);
+    var callHandler = new CallNextTicketHandler(context, new FakeEventPublisher());
+    var attendHandler = new AttendTicketHandler(context, new FakeEventPublisher());
 
     var calledQueues = new HashSet<Guid>();
     for (var i = 0; i < 30; i++)
@@ -248,7 +248,7 @@ public class CounterUseCasesTests : IDisposable
   public async Task CallNextTicket_throws_when_counter_not_found()
   {
     await using var context = _db.CreateContext();
-    var handler = new CallNextTicketHandler(context);
+    var handler = new CallNextTicketHandler(context, new FakeEventPublisher());
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
       handler.Handle(new CallNextTicketCommand(Guid.NewGuid(), null)));
@@ -265,7 +265,7 @@ public class CounterUseCasesTests : IDisposable
     var queue = await Seed.QueueAsync(context, location.Id);
     var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
     var ticket = await Seed.TicketAsync(context, queue.Id, flow.Id);
-    var handler = new AttendTicketHandler(context);
+    var handler = new AttendTicketHandler(context, new FakeEventPublisher());
 
     await handler.Handle(new AttendTicketCommand(counter.Id, ticket.Id,null));
 
@@ -285,7 +285,7 @@ public class CounterUseCasesTests : IDisposable
     var queue = await Seed.QueueAsync(context, location.Id);
     var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
     var ticket = await Seed.TicketAsync(context, queue.Id, flow.Id);
-    var handler = new AttendTicketHandler(context);
+    var handler = new AttendTicketHandler(context, new FakeEventPublisher());
 
     var counterId = missingCounter ? Guid.NewGuid() : counter.Id;
     var ticketId = missingTicket ? Guid.NewGuid() : ticket.Id;

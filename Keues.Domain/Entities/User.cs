@@ -25,6 +25,8 @@ public class User
   public DateTime? RemovedAt { get; set; }
   
   public Boolean Enabled { get; set; } = true;
+  //ExternalId is used to link the user with an external system, like an identity provider or a third-party service.
+  public string ExternalId { get; set; } = string.Empty;
   
  public ICollection<UserGroup> UserGroups { get; set; } = new List<UserGroup>();
  

@@ -1,3 +1,4 @@
+using Keues.Application.Events;
 using Keues.Domain.Events;
 
 namespace Keues.Tests.Infrastructure;

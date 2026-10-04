@@ -22,7 +22,7 @@ public class TransferTicketUseCasesTests : IDisposable
     var destQueue = await Seed.QueueAsync(context, location.Id, code: "F");
     var counter = await Seed.CounterAsync(context, location.Id, queues: [sourceQueue]);
     var ticket = await Seed.TicketAsync(context, sourceQueue.Id, flow.Id);
-    var handler = new TransferTicketHandler(context);
+    var handler = new TransferTicketHandler(context, new FakeEventPublisher());
 
     await handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id, null));
 
@@ -46,7 +46,7 @@ public class TransferTicketUseCasesTests : IDisposable
     ticket.CounterId = counter.Id;
     ticket.CalledAt = DateTime.UtcNow;
     await context.SaveChangesAsync();
-    var handler = new TransferTicketHandler(context);
+    var handler = new TransferTicketHandler(context, new FakeEventPublisher());
 
     await handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id, null));
 
@@ -64,7 +64,7 @@ public class TransferTicketUseCasesTests : IDisposable
     var flow = await Seed.FlowAsync(context, location.Id);
     var queue = await Seed.QueueAsync(context, location.Id);
     var ticket = await Seed.TicketAsync(context, queue.Id, flow.Id);
-    var handler = new TransferTicketHandler(context);
+    var handler = new TransferTicketHandler(context, new FakeEventPublisher());
     var missingCounterId = Guid.NewGuid();
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
@@ -80,7 +80,7 @@ public class TransferTicketUseCasesTests : IDisposable
     var location = await Seed.LocationAsync(context);
     var queue = await Seed.QueueAsync(context, location.Id);
     var counter = await Seed.CounterAsync(context, location.Id, queues: [queue]);
-    var handler = new TransferTicketHandler(context);
+    var handler = new TransferTicketHandler(context, new FakeEventPublisher());
     var missingTicketId = Guid.NewGuid();
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
@@ -98,7 +98,7 @@ public class TransferTicketUseCasesTests : IDisposable
     var sourceQueue = await Seed.QueueAsync(context, location.Id, code: "P");
     var counter = await Seed.CounterAsync(context, location.Id, queues: [sourceQueue]);
     var ticket = await Seed.TicketAsync(context, sourceQueue.Id, flow.Id);
-    var handler = new TransferTicketHandler(context);
+    var handler = new TransferTicketHandler(context, new FakeEventPublisher());
     var missingQueueId = Guid.NewGuid();
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
@@ -118,7 +118,7 @@ public class TransferTicketUseCasesTests : IDisposable
     var destQueue = await Seed.QueueAsync(context, locationB.Id, code: "F", name: "Cola F");
     var counter = await Seed.CounterAsync(context, locationA.Id, queues: [sourceQueue]);
     var ticket = await Seed.TicketAsync(context, sourceQueue.Id, flow.Id);
-    var handler = new TransferTicketHandler(context);
+    var handler = new TransferTicketHandler(context, new FakeEventPublisher());
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
       handler.Handle(new TransferTicketCommand(counter.Id, ticket.Id, destQueue.Id, null)));

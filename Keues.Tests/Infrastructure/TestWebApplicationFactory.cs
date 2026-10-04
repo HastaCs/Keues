@@ -1,4 +1,5 @@
 using Keues.Application.Common;
+using Keues.Application.Events;
 using Keues.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -23,6 +24,8 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
   private readonly string _contentRoot;
 
   public FakeEmailService Emails { get; } = new();
+
+  public FakeEventPublisher Events { get; } = new();
 
   public TestWebApplicationFactory()
   {
@@ -63,6 +66,9 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
 
       services.RemoveAll<IEmailService>();
       services.AddSingleton<IEmailService>(Emails);
+
+      services.RemoveAll<IKeuesEventPublisher>();
+      services.AddSingleton<IKeuesEventPublisher>(Events);
     });
   }
 

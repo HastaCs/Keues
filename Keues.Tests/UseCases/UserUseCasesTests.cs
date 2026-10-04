@@ -225,7 +225,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new CreateUserHandler(context);
 
     var response = await handler.Handle(
-      new CreateUserCommand("Juan Pérez", "Juan@Keues.DEV", "P@ssw0rd!", location.Id));
+      new CreateUserCommand("Juan Pérez", "Juan@Keues.DEV", "P@ssw0rd!", location.Id, "ext-1"));
 
     Assert.NotEqual(Guid.Empty, response.Id);
     Assert.Equal("Juan Pérez", response.Name);
@@ -246,7 +246,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new CreateUserHandler(context);
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new CreateUserCommand("Juan", "juan@keues.dev", "P@ssw0rd!", Guid.NewGuid())));
+      handler.Handle(new CreateUserCommand("Juan", "juan@keues.dev", "P@ssw0rd!", Guid.NewGuid(), "ext-1")));
 
     Assert.Equal("Location not found", ex.Message);
     Assert.Empty(context.Users);
@@ -261,7 +261,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new CreateUserHandler(context);
 
     var ex = await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new CreateUserCommand("Otro Juan", "JUAN@keues.dev", "P@ssw0rd!", location.Id)));
+      handler.Handle(new CreateUserCommand("Otro Juan", "JUAN@keues.dev", "P@ssw0rd!", location.Id, "ext-2")));
 
     Assert.Equal("User with this email already exists.", ex.Message);
     Assert.Equal(1, context.Users.Count());
@@ -275,7 +275,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new CreateUserHandler(context);
 
     await Assert.ThrowsAnyAsync<Exception>(() =>
-      handler.Handle(new CreateUserCommand("Juan", null!, "P@ssw0rd!", location.Id)));
+      handler.Handle(new CreateUserCommand("Juan", null!, "P@ssw0rd!", location.Id, "ext-1")));
   }
 
   [Fact]
@@ -286,7 +286,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new CreateUserHandler(context);
 
     await Assert.ThrowsAnyAsync<Exception>(() =>
-      handler.Handle(new CreateUserCommand("Juan", "juan@keues.dev", null!, location.Id)));
+      handler.Handle(new CreateUserCommand("Juan", "juan@keues.dev", null!, location.Id, "ext-1")));
   }
 
   // ---------- UpdateUser ----------
@@ -301,7 +301,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new UpdateUserHandler(context);
 
     var response = await handler.Handle(new UpdateUserCommand(
-      user.Id, "Juan Actualizado", "Nuevo@Keues.dev", "", destination.Id));
+      user.Id, "Juan Actualizado", "Nuevo@Keues.dev", "", destination.Id, "ext-1"));
 
     Assert.Equal(user.Id, response.Id);
     Assert.Equal("Juan Actualizado", response.Name);
@@ -322,7 +322,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new UpdateUserHandler(context);
 
     await handler.Handle(new UpdateUserCommand(
-      user.Id, "Juan", "juan@keues.dev", "", location.Id));
+      user.Id, "Juan", "juan@keues.dev", "", location.Id, "ext-1"));
 
     var stored = await context.Users.FindAsync(user.Id);
     Assert.Equal(originalHash, stored!.PasswordHash);
@@ -338,7 +338,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new UpdateUserHandler(context);
 
     await handler.Handle(new UpdateUserCommand(
-      user.Id, "Juan", "juan@keues.dev", "NuevaP@ss!", location.Id));
+      user.Id, "Juan", "juan@keues.dev", "NuevaP@ss!", location.Id, "ext-1"));
 
     var stored = await context.Users.FindAsync(user.Id);
     Assert.True(BCrypt.Net.BCrypt.Verify("NuevaP@ss!", stored!.PasswordHash));
@@ -354,7 +354,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new UpdateUserHandler(context);
 
     var response = await handler.Handle(new UpdateUserCommand(
-      user.Id, "Juan", "juan@keues.dev", "", location.Id));
+      user.Id, "Juan", "juan@keues.dev", "", location.Id, "ext-1"));
 
     Assert.Equal("juan@keues.dev", response.Email);
   }
@@ -367,7 +367,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new UpdateUserHandler(context);
 
     var ex = await Assert.ThrowsAsync<Exception>(() => handler.Handle(new UpdateUserCommand(
-      Guid.NewGuid(), "Juan", "juan@keues.dev", "", location.Id)));
+      Guid.NewGuid(), "Juan", "juan@keues.dev", "", location.Id, "ext-1")));
 
     Assert.Equal("User not found", ex.Message);
   }
@@ -381,7 +381,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new UpdateUserHandler(context);
 
     var ex = await Assert.ThrowsAsync<Exception>(() => handler.Handle(new UpdateUserCommand(
-      user.Id, "Juan", "juan@keues.dev", "", Guid.NewGuid())));
+      user.Id, "Juan", "juan@keues.dev", "", Guid.NewGuid(), "ext-1")));
 
     Assert.Equal("Location not found", ex.Message);
   }
@@ -395,7 +395,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new UpdateUserHandler(context);
 
     var ex = await Assert.ThrowsAsync<Exception>(() => handler.Handle(new UpdateUserCommand(
-      admin.Id, "Admin", "admin@keues.dev", "", location.Id)));
+      admin.Id, "Admin", "admin@keues.dev", "", location.Id, "ext-1")));
 
     Assert.Equal("You cannot update an admin user", ex.Message);
   }
@@ -410,7 +410,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new UpdateUserHandler(context);
 
     var ex = await Assert.ThrowsAsync<Exception>(() => handler.Handle(new UpdateUserCommand(
-      user.Id, "Juan", "Ocupado@keues.dev", "", location.Id)));
+      user.Id, "Juan", "Ocupado@keues.dev", "", location.Id, "ext-1")));
 
     Assert.Equal("Email already in use", ex.Message);
   }
@@ -424,7 +424,7 @@ public class UserUseCasesTests : IDisposable
     var handler = new UpdateUserHandler(context);
 
     await Assert.ThrowsAnyAsync<Exception>(() => handler.Handle(new UpdateUserCommand(
-      user.Id, "Juan", null!, "", location.Id)));
+      user.Id, "Juan", null!, "", location.Id, "ext-1")));
   }
 
   // ---------- GetUser ----------

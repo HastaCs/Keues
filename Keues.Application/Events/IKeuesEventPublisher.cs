@@ -1,4 +1,6 @@
-namespace Keues.Domain.Events;
+using Keues.Domain.Events;
+
+namespace Keues.Application.Events;
 
 public interface IKeuesEventPublisher
 {

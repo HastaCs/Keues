@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Threading.Channels;
+using Keues.Application.Events;
 using Keues.Domain.Events;
 
 namespace Keues.Infrastructure.Events;

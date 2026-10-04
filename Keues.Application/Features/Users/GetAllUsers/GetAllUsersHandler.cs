@@ -43,7 +43,7 @@ public class GetAllUsersHandler
     // out of place (e.g. "Álvaro" after "Z"). Sort in memory with a culture-aware,
     // case-insensitive comparer to get a real alphabetical order.
     var projected = await users
-      .Select(u => new GetUserResult(u.Id, u.Name, u.Email, u.LocationId, u.CreatedAt, u.Enabled))
+      .Select(u => new GetUserResult(u.Id, u.Name, u.Email, u.LocationId, u.CreatedAt, u.Enabled,u.ExternalId))
       .ToListAsync();
 
     var comparer = StringComparer.Create(CultureInfo.GetCultureInfo("es-ES"), ignoreCase: true);

@@ -2,6 +2,7 @@ using System.Data;
 using Keues.Application.Common;
 using Keues.Domain.Entities;
 using Keues.Domain.Enums;
+using Keues.Application.Events;
 using Keues.Domain.Events;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -16,10 +17,12 @@ namespace Keues.Application.Features.Counters.CallNextTicket;
 public class CallNextTicketHandler
 {
   private readonly IApplicationDbContext _context;
+  private readonly IKeuesEventPublisher _eventPublisher;
 
-  public CallNextTicketHandler(IApplicationDbContext context)
+  public CallNextTicketHandler(IApplicationDbContext context, IKeuesEventPublisher eventPublisher)
   {
     _context = context;
+    _eventPublisher = eventPublisher;
   }
 
   public async Task<CallNextTicketResult?> Handle(CallNextTicketCommand command)
@@ -65,6 +68,7 @@ public class CallNextTicketHandler
           await _context.TicketHistories.AddAsync(history);
           await _context.SaveChangesAsync();
           await transaction.CommitAsync();
+          await _eventPublisher.Publish(new TicketCalled(currentTicket.Id, counter.Id));
           return new CallNextTicketResult(currentTicket.Id, currentTicket.Code, currentTicket.QueueId);
         }
 
@@ -163,6 +167,7 @@ public class CallNextTicketHandler
         await _context.SaveChangesAsync();
         await transaction.CommitAsync();
 
+        await _eventPublisher.Publish(new TicketCalled(ticket.Id, counter.Id));
         return new CallNextTicketResult(ticket.Id, ticket.Code, ticket.QueueId);
       }
       catch

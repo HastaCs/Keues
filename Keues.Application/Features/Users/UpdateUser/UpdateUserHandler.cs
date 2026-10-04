@@ -29,18 +29,21 @@ public class UpdateUserHandler
     {
       throw new Exception("You cannot update an admin user");
     }
+
     var exists = await _context.Users.AnyAsync(x => x.Email == command.Email.ToLower() && x.Id != command.Id);
     if (exists)
     {
       throw new Exception("Email already in use");
     }
+
     user.LocationId = command.LocationId;
     user.Name = command.Name;
     user.Email = command.Email.ToLower();
+    user.ExternalId = command.ExternalId;
     if (!string.IsNullOrEmpty(command.Password))
       user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(command.Password);
 
     await _context.SaveChangesAsync();
-    return new UpdateUserResult(user.Id, user.Name, user.Email);
+    return new UpdateUserResult(user.Id, user.Name, user.Email, user.ExternalId);
   }
 }

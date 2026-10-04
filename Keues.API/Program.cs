@@ -25,6 +25,7 @@ using Keues.Application.Features.Users.Login;
 using Keues.Application.Features.Users.Me;
 using Keues.Application.Features.Users.ForgotPassword;
 using Keues.Application.Features.Users.ResetPassword;
+using Keues.Application.Events;
 using Keues.Domain.Events;
 using Keues.Infrastructure.Authorization;
 using Keues.Infrastructure.BackgroundServices;

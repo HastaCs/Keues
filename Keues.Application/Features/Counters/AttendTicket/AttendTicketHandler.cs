@@ -1,5 +1,6 @@
 using Keues.Application.Common;
 using Keues.Domain.Entities;
+using Keues.Application.Events;
 using Keues.Domain.Events;
 
 namespace Keues.Application.Features.Counters.AttendTicket;
@@ -7,10 +8,17 @@ namespace Keues.Application.Features.Counters.AttendTicket;
 public class AttendTicketHandler
 {
   private readonly IApplicationDbContext _context;
+  private readonly IKeuesEventPublisher _eventPublisher;
 
-  public AttendTicketHandler(IApplicationDbContext context)
+  /// <summary>
+  /// Atiende un ticket en concreto
+  /// </summary>
+  /// <param name="context"></param>
+  /// <param name="eventPublisher"></param>
+  public AttendTicketHandler(IApplicationDbContext context, IKeuesEventPublisher eventPublisher)
   {
     _context = context;
+    _eventPublisher = eventPublisher;
   }
 
   public async Task Handle(AttendTicketCommand request)
@@ -40,5 +48,7 @@ public class AttendTicketHandler
     await _context.TicketHistories.AddAsync(history);
 
     await _context.SaveChangesAsync();
+
+    await _eventPublisher.Publish(new TicketAttended(ticket.Id, request.CounterId));
   }
 }

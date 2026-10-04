@@ -1,6 +1,7 @@
 using Keues.Application.Common;
 using Keues.Domain.Entities;
 using Keues.Domain.Enums;
+using Keues.Application.Events;
 using Keues.Domain.Events;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,10 +10,12 @@ namespace Keues.Application.Features.Counters.TransferTicket;
 public class TransferTicketHandler
 {
   private readonly IApplicationDbContext _context;
+  private readonly IKeuesEventPublisher _eventPublisher;
 
-  public TransferTicketHandler(IApplicationDbContext context)
+  public TransferTicketHandler(IApplicationDbContext context, IKeuesEventPublisher eventPublisher)
   {
     _context = context;
+    _eventPublisher = eventPublisher;
   }
 
   public async Task Handle(TransferTicketCommand command)
@@ -54,5 +57,6 @@ public class TransferTicketHandler
     };
     await _context.TicketHistories.AddAsync(history);
     await _context.SaveChangesAsync();
+    await _eventPublisher.Publish(new TicketTransferred(ticket.Id, counter.Id, destinationQueue.Id));
   }
 }

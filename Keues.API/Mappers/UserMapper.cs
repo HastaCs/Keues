@@ -8,10 +8,10 @@ public static class UserMapper
 {
   public static CreateUserCommand ToCommand(this CreateUserRequest request)
   {
-    return new CreateUserCommand(request.Name, request.Email, request.Password?.Trim(), request.LocationId);
+    return new CreateUserCommand(request.Name, request.Email, request.Password?.Trim(), request.LocationId,request.ExternalId);
   }
   public static UpdateUserCommand ToCommand(this UpdateUserRequest request, Guid id)
   {
-    return new UpdateUserCommand(id, request.Name, request.Email, request.Password?.Trim(), request.LocationId);
+    return new UpdateUserCommand(id, request.Name, request.Email, request.Password?.Trim(), request.LocationId,request.ExternalId);
   }
 }

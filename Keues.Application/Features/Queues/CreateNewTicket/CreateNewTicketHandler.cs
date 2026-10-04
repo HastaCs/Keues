@@ -1,5 +1,6 @@
 using Keues.Application.Common;
 using Keues.Domain.Entities;
+using Keues.Application.Events;
 using Keues.Domain.Events;
 
 namespace Keues.Application.Features.Queues.CreateNewTicket;

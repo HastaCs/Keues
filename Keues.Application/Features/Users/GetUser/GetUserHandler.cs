@@ -19,6 +19,6 @@ public class GetUserHandler
       throw new Exception("User not found");
     }
 
-    return new GetUserResult(user.Id, user.Name, user.Email, user.LocationId, user.CreatedAt, user.Enabled);
+    return new GetUserResult(user.Id, user.Name, user.Email, user.LocationId, user.CreatedAt, user.Enabled,user.ExternalId);
   }
 }

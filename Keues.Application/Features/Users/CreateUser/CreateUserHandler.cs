@@ -30,11 +30,12 @@ public class CreateUserHandler
       Role = Keues.Domain.Enums.Rol.User,
       PasswordHash = password,
       LocationId = command.LocationId,
+      ExternalId = command.ExternalId
       
     };
     _context.Users.Add(newUser);
     await _context.SaveChangesAsync();
 
-    return new CreateUserResult(newUser.Id, newUser.Name, newUser.Email);
+    return new CreateUserResult(newUser.Id, newUser.Name, newUser.Email,newUser.ExternalId);
   }
 }

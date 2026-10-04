@@ -1,5 +1,6 @@
 using Keues.Application.Common;
 using Keues.Domain.Entities;
+using Keues.Application.Events;
 using Keues.Domain.Events;
 
 namespace Keues.Application.Features.Counters.CancelTicket;
@@ -7,10 +8,11 @@ namespace Keues.Application.Features.Counters.CancelTicket;
 public class CancelTicketHandler
 {
   private readonly IApplicationDbContext _context;
-
-  public CancelTicketHandler(IApplicationDbContext context)
+private readonly IKeuesEventPublisher _publisher;
+  public CancelTicketHandler(IApplicationDbContext context, IKeuesEventPublisher publisher)
   {
     _context = context;
+    _publisher = publisher;
   }
 
   public async Task Handle(CancelTicketCommand request)
@@ -29,5 +31,6 @@ public class CancelTicketHandler
     };
     await _context.TicketHistories.AddAsync(history);
     await _context.SaveChangesAsync();
+    await _publisher.Publish(new TicketCanceled(ticket.Id));
   }
 }
