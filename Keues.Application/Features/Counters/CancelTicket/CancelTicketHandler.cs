@@ -24,7 +24,7 @@ private readonly IKeuesEventPublisher _publisher;
     var history = new TicketHistory
     {
       TicketId = ticket.Id,
-      Event = HistoryEventTypes.Ticket.Canceled,
+      Event = EventTypes.Ticket.Canceled,
       CreatedAt = DateTime.UtcNow,
       CounterId = request.CounterId,
       UserId = request.UserId

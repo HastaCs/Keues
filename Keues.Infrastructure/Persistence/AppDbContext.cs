@@ -1,6 +1,8 @@
+using System.Text.Json;
 using Keues.Application.Common;
 using Keues.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Keues.Infrastructure.Persistence;
 
@@ -33,6 +35,22 @@ public class AppDbContext : DbContext, IApplicationDbContext
 
     modelBuilder.Entity<UserGroup>()
       .HasQueryFilter(ug => ug.RemovedAt == null);
+    
+    
+    var webhooksConverter = new ValueConverter<List<string>, string>(
+      v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+      v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new()
+    );
+    
+    modelBuilder.Entity<WebhooksConfig>(entity =>
+    {
+      entity.Property(x => x.Url)
+        .IsRequired();
+
+      entity.Property(x => x.Events)
+        .HasConversion(webhooksConverter)
+        .IsRequired();
+    });
   }
 
   public DbSet<Ticket> Tickets => Set<Ticket>();
@@ -51,4 +69,6 @@ public class AppDbContext : DbContext, IApplicationDbContext
   public DbSet<UserGroup> UserGroups => Set<UserGroup>();
 
   public DbSet<TicketHistory> TicketHistories => Set<TicketHistory>();
+  
+  public DbSet<WebhooksConfig> WebhooksConfigs => Set<WebhooksConfig>();
 }

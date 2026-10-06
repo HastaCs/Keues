@@ -27,6 +27,8 @@ using Keues.Application.Features.Users.ForgotPassword;
 using Keues.Application.Features.Users.ResetPassword;
 using Keues.Application.Events;
 using Keues.Application.Events.Handlers;
+using Keues.Application.Features.WebhooksConfig;
+using Keues.Domain.Entities;
 using Keues.Domain.Events;
 using Keues.Infrastructure.Authorization;
 using Keues.Infrastructure.BackgroundServices;
@@ -159,6 +161,7 @@ builder.Services.AddFlowUseCases();
 builder.Services.AddUsersUseCases();
 builder.Services.AddUserGroupsUseCases();
 builder.Services.AddDeviceUseCases();
+builder.Services.AddWebhooksConfigUseCases();
 
 #endregion
 
@@ -256,6 +259,25 @@ if (!app.Environment.IsDevelopment())
       await context.Response.SendFileAsync(
         Path.Combine(builder.Environment.WebRootPath, "index.html"));
     }));
+}
+
+
+using (var scope = app.Services.CreateScope())
+{
+  var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+  if (!await db.WebhooksConfigs.AnyAsync())
+  {
+    db.WebhooksConfigs.Add(new WebhooksConfig
+    {
+      Id = Guid.NewGuid(),
+      Url = string.Empty,
+      Events = new List<string>(),
+      Enabled = false
+    });
+
+    await db.SaveChangesAsync();
+  }
 }
 
 app.Run();

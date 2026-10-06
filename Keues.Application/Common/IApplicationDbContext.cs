@@ -24,6 +24,8 @@ public interface IApplicationDbContext
   
   DbSet<UserGroup> UserGroups { get; }
   
+  DbSet<WebhooksConfig> WebhooksConfigs { get; }
+  
   DatabaseFacade Database { get; }
   
   Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

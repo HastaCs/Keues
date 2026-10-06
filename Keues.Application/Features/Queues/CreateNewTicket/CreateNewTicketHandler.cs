@@ -30,7 +30,7 @@ public class CreateNewTicketHandler
     var history = new TicketHistory
     {
       TicketId = ticket.Id,
-      Event = HistoryEventTypes.Ticket.Created,
+      Event = EventTypes.Ticket.Created,
       Counter = null,
       QueueId = queue.Id,
     };

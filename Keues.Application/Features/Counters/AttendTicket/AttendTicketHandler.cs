@@ -40,7 +40,7 @@ public class AttendTicketHandler
     {
       Id = Guid.NewGuid(),
       TicketId = ticket.Id,
-      Event = HistoryEventTypes.Ticket.Attended,
+      Event = EventTypes.Ticket.Attended,
       CreatedAt = DateTime.UtcNow,
       CounterId = request.CounterId,
       UserId = request.UserId

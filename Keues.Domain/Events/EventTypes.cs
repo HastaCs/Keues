@@ -1,6 +1,6 @@
 namespace Keues.Domain.Events;
 
-public static class HistoryEventTypes
+public static class EventTypes
 {
   public static class Ticket
   {
