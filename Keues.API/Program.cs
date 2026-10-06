@@ -26,6 +26,7 @@ using Keues.Application.Features.Users.Me;
 using Keues.Application.Features.Users.ForgotPassword;
 using Keues.Application.Features.Users.ResetPassword;
 using Keues.Application.Events;
+using Keues.Application.Events.Handlers;
 using Keues.Domain.Events;
 using Keues.Infrastructure.Authorization;
 using Keues.Infrastructure.BackgroundServices;
@@ -161,12 +162,17 @@ builder.Services.AddDeviceUseCases();
 
 #endregion
 
+#region eventos
 builder.Services.AddSingleton(Channel.CreateUnbounded<IKeuesEvent>());
 builder.Services.AddSingleton<IKeuesEventPublisher, ChannelEventPublisher>();
 builder.Services.AddHostedService<ChannelEventConsumer>();
+builder.Services.AddScoped<IKeuesEventDispatcher, KeuesEventDispatcher>();
+builder.Services.AddKeuesEventHandlers();
+#endregion
 
 builder.Services.AddSingleton<ConnectedDeviceRegistry>();
 builder.Services.AddSignalR();
+
 
 
 builder.Services.AddAuthorizationServices(builder.Configuration);
