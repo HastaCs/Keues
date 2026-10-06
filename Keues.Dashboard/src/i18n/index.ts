@@ -117,8 +117,25 @@ const resources = {
       },
       settings: {
         title: 'Ajustes',
+        general: 'General',
         languageSpanish: 'Español',
         languageEnglish: 'Inglés',
+      },
+      webhooks: {
+        title: 'Webhooks',
+        url: 'URL del webhook',
+        urlPlaceholder: 'https://tu-servidor.com/webhook',
+        key: 'Key',
+        keyPlaceholder: 'Clave secreta',
+        enabled: 'Activar webhooks',
+        events: 'Eventos suscritos',
+        groups: {
+          ticketEvents: 'Tickets',
+        },
+        save: 'Guardar',
+        saved: 'Configuración de webhooks guardada',
+        saveError: 'No se pudo guardar la configuración de webhooks',
+        loadError: 'No se pudo cargar la configuración de webhooks',
       },
       locations: {
         pickOne: 'Elige una ubicacion',
@@ -770,8 +787,25 @@ const resources = {
       },
       settings: {
         title: 'Settings',
+        general: 'General',
         languageSpanish: 'Spanish',
         languageEnglish: 'English',
+      },
+      webhooks: {
+        title: 'Webhooks',
+        url: 'Webhook URL',
+        urlPlaceholder: 'https://your-server.com/webhook',
+        key: 'Key',
+        keyPlaceholder: 'Secret key',
+        enabled: 'Enable webhooks',
+        events: 'Subscribed events',
+        groups: {
+          ticketEvents: 'Ticket events',
+        },
+        save: 'Save',
+        saved: 'Webhook settings saved',
+        saveError: 'Could not save the webhook settings',
+        loadError: 'Could not load the webhook settings',
       },
       locations: {
         pickOne: 'Choose a location',
