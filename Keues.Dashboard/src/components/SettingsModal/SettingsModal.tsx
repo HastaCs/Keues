@@ -151,18 +151,18 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
             <Stack gap="md">
               {error ? <Alert color="red">{error}</Alert> : null}
 
-              <TextInput
-                label={t('webhooks.url')}
-                placeholder={t('webhooks.urlPlaceholder')}
-                value={url}
-                onChange={(event) => setUrl(event.currentTarget.value)}
+              <Switch
+                label={t('webhooks.enabled')}
+                checked={enabled}
+                onChange={(event) => setEnabled(event.currentTarget.checked)}
               />
 
               <Group grow align="flex-end" gap="md">
-                <Switch
-                  label={t('webhooks.enabled')}
-                  checked={enabled}
-                  onChange={(event) => setEnabled(event.currentTarget.checked)}
+                <TextInput
+                  label={t('webhooks.url')}
+                  placeholder={t('webhooks.urlPlaceholder')}
+                  value={url}
+                  onChange={(event) => setUrl(event.currentTarget.value)}
                 />
 
                 <TextInput

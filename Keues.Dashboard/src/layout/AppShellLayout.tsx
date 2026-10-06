@@ -10,6 +10,7 @@ import {
   Group,
   Loader,
   NavLink,
+  ScrollArea,
   Stack,
   Text,
   useMantineColorScheme,
@@ -297,17 +298,17 @@ export function AppShellLayout() {
       </AppShell.Header>
 
       <AppShell.Navbar p="md">
-        <Stack h="100%" justify="space-between">
-          <Stack gap="lg">
-            <Group px="xs" justify="space-between" wrap="nowrap">
-              <img
-                src={logoHorizontal}
-                alt={t('sidebar.brand')}
-                style={{ height: 26, width: 'auto', objectFit: 'contain' }}
-              />
-            </Group>
+        <Stack h="100%" gap="lg">
+          <Group px="xs" justify="space-between" wrap="nowrap">
+            <img
+              src={logoHorizontal}
+              alt={t('sidebar.brand')}
+              style={{ height: 26, width: 'auto', objectFit: 'contain' }}
+            />
+          </Group>
 
-            <Stack gap={6}>
+          <ScrollArea style={{ flex: 1, minHeight: 0 }} offsetScrollbars>
+            <Stack gap={6} pr="xs">
               <NavLink
                 component={Link}
                 to="/locations"
@@ -365,7 +366,7 @@ export function AppShellLayout() {
                   })
                 : null}
             </Stack>
-          </Stack>
+          </ScrollArea>
 
           <Badge variant="outline" color="blue" size="sm" radius="sm">
             v{APP_VERSION}
