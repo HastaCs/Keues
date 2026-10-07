@@ -1,5 +1,6 @@
 using Keues.Application.Features.WebhooksConfig.GetEvents;
 using Keues.Application.Features.WebhooksConfig.GetWebhooksConfig;
+using Keues.Application.Features.WebhooksConfig.IsSubscribed;
 using Keues.Application.Features.WebhooksConfig.UpdateWebhooksConfig;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<GetWebhooksConfigHandler>();
         services.AddScoped<UpdateWebhooksConfigHandler>();
         services.AddScoped<GetEventsHandler>();
+        services.AddScoped<IsSubscribedHandler>();
         
         services.AddScoped<WebhooksConfigUseCases>();
     

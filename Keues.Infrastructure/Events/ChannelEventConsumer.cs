@@ -26,12 +26,23 @@ public class ChannelEventConsumer : BackgroundService
   {
     await foreach (var keuesEvent in _channel.Reader.ReadAllAsync(stoppingToken))
     {
-      _logger.LogInformation($"📨 [EVENT-CONSUMER] Evento recibido: {keuesEvent.GetType().Name}");
-      using var scope = _scopeFactory.CreateScope();
+      try
+      {
+        _logger.LogInformation($"📨 [EVENT-CONSUMER] Evento recibido: {keuesEvent.GetType().Name}");
+        using var scope = _scopeFactory.CreateScope();
 
-      var dispatcher = scope.ServiceProvider.GetRequiredService<IKeuesEventDispatcher>();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<IKeuesEventDispatcher>();
 
-      await dispatcher.DispatchAsync(keuesEvent, stoppingToken);
+        await dispatcher.DispatchAsync(keuesEvent, stoppingToken);
+      }
+      catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+      {
+        break;
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Error procesando el evento {EventType}", keuesEvent.GetType().Name);
+      }
     }
   }
 }

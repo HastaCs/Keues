@@ -1,4 +1,5 @@
 using Keues.Application.Features.Tickets.GetTicket;
+using Keues.Application.Features.WebhooksConfig.IsSubscribed;
 using Keues.Domain.Events;
 using Microsoft.Extensions.Logging;
 
@@ -7,6 +8,7 @@ namespace Keues.Application.Events.Handlers.Tickets;
 public class TicketCreatedHandler : IKeuesEventHandler<TicketCreated>
 {
   private readonly ILogger<TicketCreatedHandler> _logger;
+
   private readonly GetTicketHandler _getTicketHandler;
 
   public TicketCreatedHandler(ILogger<TicketCreatedHandler> logger, GetTicketHandler getTicketHandler)
