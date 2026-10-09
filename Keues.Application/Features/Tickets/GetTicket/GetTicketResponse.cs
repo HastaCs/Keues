@@ -3,6 +3,9 @@ using Keues.Domain.Enums;
 namespace Keues.Application.Features.Tickets;
 
 
+/// <summary>
+/// La pabra Min es por "Minimal", es decir, que solo contiene los datos mínimos necesarios para identificar la entidad
+/// </summary>
 public record QueueMin
 {
   public Guid Id { get; set; }

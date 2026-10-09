@@ -34,6 +34,7 @@ using Keues.Infrastructure.Authorization;
 using Keues.Infrastructure.BackgroundServices;
 using Keues.Infrastructure.Email;
 using Keues.Infrastructure.Events;
+using Keues.Infrastructure.Http.Webhooks;
 using Keues.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -171,6 +172,7 @@ builder.Services.AddSingleton<IKeuesEventPublisher, ChannelEventPublisher>();
 builder.Services.AddHostedService<ChannelEventConsumer>();
 builder.Services.AddScoped<IKeuesEventDispatcher, KeuesEventDispatcher>();
 builder.Services.AddKeuesEventHandlers();
+builder.Services.AddHttpClient<IWebhookSender, WebhookSender>(c=>c.Timeout=TimeSpan.FromSeconds(10));
 #endregion
 
 builder.Services.AddSingleton<ConnectedDeviceRegistry>();
