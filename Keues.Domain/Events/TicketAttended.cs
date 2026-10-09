@@ -1,16 +1,17 @@
 namespace Keues.Domain.Events;
 
-public class TicketAttended: IKeuesEvent
+public class TicketAttended : IKeuesEvent
 {
-  public DateTime OccurredOn { get; }= DateTime.UtcNow;
+  public DateTime OccurredOn { get; } = DateTime.UtcNow;
   public string EventType { get; set; } = EventTypes.Ticket.Attended;
   public Guid Id { get; }
-  // The ID of the counter that attended the ticket
   public Guid CounterId { get; }
-  
-  public TicketAttended(Guid ticketId, Guid counterId)
+  public Guid? UserId { get; }
+
+  public TicketAttended(Guid ticketId, Guid counterId, Guid? userId = null)
   {
     Id = ticketId;
     CounterId = counterId;
+    UserId = userId;
   }
 }

@@ -1,5 +1,3 @@
-using Keues.Application.Features.Tickets.GetTicket;
-using Keues.Application.Features.WebhooksConfig.IsSubscribed;
 using Keues.Domain.Events;
 using Microsoft.Extensions.Logging;
 
@@ -8,21 +6,26 @@ namespace Keues.Application.Events.Handlers.Tickets;
 public class TicketCreatedHandler : IKeuesEventHandler<TicketCreated>
 {
   private readonly ILogger<TicketCreatedHandler> _logger;
-  private readonly GetTicketHandler _getTicketHandler;
-private readonly IWebhookSender _webhookService;
-  public TicketCreatedHandler(ILogger<TicketCreatedHandler> logger, GetTicketHandler getTicketHandler, IWebhookSender webhookService)
+  private readonly IWebhookSender _webhookService;
+  private readonly TicketEventPayloadBuilder _payloadBuilder;
+
+  public TicketCreatedHandler(
+    ILogger<TicketCreatedHandler> logger,
+    IWebhookSender webhookService,
+    TicketEventPayloadBuilder payloadBuilder)
   {
     _logger = logger;
-    _getTicketHandler = getTicketHandler;
     _webhookService = webhookService;
+    _payloadBuilder = payloadBuilder;
   }
 
   public async Task HandleAsync(TicketCreated keuesEvent, CancellationToken cancellationToken = default)
   {
-   var ticketCommand = new GetTicketCommand(keuesEvent.Id);
-    var ticket = await _getTicketHandler.Handle(ticketCommand);
-    _logger.LogInformation($"Ticket created with ID: {ticket.Id}, Code: {ticket.Code}");
-    var payload=new TicketEventPayload(EventTypes.Ticket.Created,keuesEvent.OccurredOn,new TicketPayload(ticket.Id));
+    var payload = await _payloadBuilder.BuildAsync(
+      EventTypes.Ticket.Created, keuesEvent.OccurredOn, keuesEvent.Id, null, null, cancellationToken);
+
+    _logger.LogInformation($"Ticket created with ID: {payload.data.id}, Code: {payload.data.code}");
+
     await _webhookService.SendAsync(payload, cancellationToken);
   }
 }

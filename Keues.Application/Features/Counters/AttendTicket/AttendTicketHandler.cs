@@ -49,6 +49,6 @@ public class AttendTicketHandler
 
     await _context.SaveChangesAsync();
 
-    await _eventPublisher.Publish(new TicketAttended(ticket.Id, request.CounterId));
+    await _eventPublisher.Publish(new TicketAttended(ticket.Id, request.CounterId, request.UserId));
   }
 }

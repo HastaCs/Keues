@@ -57,6 +57,6 @@ public class TransferTicketHandler
     };
     await _context.TicketHistories.AddAsync(history);
     await _context.SaveChangesAsync();
-    await _eventPublisher.Publish(new TicketTransferred(ticket.Id, counter.Id, destinationQueue.Id));
+    await _eventPublisher.Publish(new TicketTransferred(ticket.Id, counter.Id, destinationQueue.Id, command.UserId));
   }
 }

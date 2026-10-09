@@ -31,6 +31,6 @@ private readonly IKeuesEventPublisher _publisher;
     };
     await _context.TicketHistories.AddAsync(history);
     await _context.SaveChangesAsync();
-    await _publisher.Publish(new TicketCanceled(ticket.Id));
+    await _publisher.Publish(new TicketCanceled(ticket.Id, request.CounterId, request.UserId));
   }
 }

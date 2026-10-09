@@ -8,6 +8,8 @@ public static class DependencyInjection
 {
   public static IServiceCollection AddKeuesEventHandlers(this IServiceCollection services)
   {
+    services.AddScoped<TicketEventPayloadBuilder>();
+
     // Register all event handlers in the assembly
     services.AddScoped<IKeuesEventHandler<TicketCreated>, TicketCreatedHandler>();
     services.AddScoped<IKeuesEventHandler<TicketTransferred>, TicketTransferredHandler>();

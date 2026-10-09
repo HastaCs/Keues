@@ -68,7 +68,7 @@ public class CallNextTicketHandler
           await _context.TicketHistories.AddAsync(history);
           await _context.SaveChangesAsync();
           await transaction.CommitAsync();
-          await _eventPublisher.Publish(new TicketCalled(currentTicket.Id, counter.Id));
+          await _eventPublisher.Publish(new TicketCalled(currentTicket.Id, counter.Id, command.UserId));
           return new CallNextTicketResult(currentTicket.Id, currentTicket.Code, currentTicket.QueueId);
         }
 
@@ -167,7 +167,7 @@ public class CallNextTicketHandler
         await _context.SaveChangesAsync();
         await transaction.CommitAsync();
 
-        await _eventPublisher.Publish(new TicketCalled(ticket.Id, counter.Id));
+        await _eventPublisher.Publish(new TicketCalled(ticket.Id, counter.Id, command.UserId));
         return new CallNextTicketResult(ticket.Id, ticket.Code, ticket.QueueId);
       }
       catch

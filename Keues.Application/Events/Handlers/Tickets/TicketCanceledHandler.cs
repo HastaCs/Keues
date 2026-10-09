@@ -1,28 +1,32 @@
-using Keues.Application.Features.Tickets.GetTicket;
 using Keues.Domain.Events;
 using Microsoft.Extensions.Logging;
 
 namespace Keues.Application.Events.Handlers.Tickets;
 
-public class TicketCanceledHandler:IKeuesEventHandler<TicketCanceled> 
+public class TicketCanceledHandler : IKeuesEventHandler<TicketCanceled>
 {
   private readonly ILogger<TicketCanceledHandler> _logger;
-  private readonly GetTicketHandler _getTicketHandler;
   private readonly IWebhookSender _webhookService;
+  private readonly TicketEventPayloadBuilder _payloadBuilder;
 
-  public TicketCanceledHandler(ILogger<TicketCanceledHandler> logger, GetTicketHandler getTicketHandler, IWebhookSender webhookService)
+  public TicketCanceledHandler(
+    ILogger<TicketCanceledHandler> logger,
+    IWebhookSender webhookService,
+    TicketEventPayloadBuilder payloadBuilder)
   {
     _logger = logger;
-    _getTicketHandler = getTicketHandler;
     _webhookService = webhookService;
+    _payloadBuilder = payloadBuilder;
   }
 
   public async Task HandleAsync(TicketCanceled keuesEvent, CancellationToken cancellationToken = default)
   {
-    var ticketCommand = new GetTicketCommand(keuesEvent.Id);
-    var ticket = await _getTicketHandler.Handle(ticketCommand);
-    _logger.LogInformation($"Ticket canceled with ID: {ticket.Id}, Code: {ticket.Code}");
-    var payload=new TicketEventPayload(EventTypes.Ticket.Canceled,keuesEvent.OccurredOn,new TicketPayload(ticket.Id));
+    var payload = await _payloadBuilder.BuildAsync(
+      EventTypes.Ticket.Canceled, keuesEvent.OccurredOn, keuesEvent.Id, keuesEvent.CounterId, keuesEvent.UserId,
+      cancellationToken);
+
+    _logger.LogInformation($"Ticket canceled with ID: {payload.data.id}, Code: {payload.data.code}");
+
     await _webhookService.SendAsync(payload, cancellationToken);
   }
 }
