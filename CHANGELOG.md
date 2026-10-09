@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.6.0](https://github.com/HastaCs/Keues/compare/v1.5.0...v1.6.0) (2026-10-09)
+
+
+### 🚀 Features
+
+* add externalId field to user ([0e2779e](https://github.com/HastaCs/Keues/commit/0e2779ebd27bbe6220ef52f9cb275d35f753d623))
+* add system overview graph ([b1befc3](https://github.com/HastaCs/Keues/commit/b1befc36bf15d10d2b70f2703a17d7d60c19e738))
+* enhance flow and counter selection i ([dd3c00b](https://github.com/HastaCs/Keues/commit/dd3c00ba8b93fde81864eb0efa44f242b8c84b5f))
+* implement webhooks ([adb1fb5](https://github.com/HastaCs/Keues/commit/adb1fb5d7121acb6c8f2224a4ccc4fe75096a97b))
+
+
+### 🐛 Bug Fixes
+
+* Navbar ([423d1bf](https://github.com/HastaCs/Keues/commit/423d1bfdfa9af8e1713cbe98076eaec356a2492c))
+* orden usuarios por acento ([ae56bb4](https://github.com/HastaCs/Keues/commit/ae56bb42dfdcada0bb697779ba5843e3b12e61d8))
+* When flow is empty ([eba0c0f](https://github.com/HastaCs/Keues/commit/eba0c0f50797d6f2afb2023477c0abf817559cab))
+
 ## [1.5.0](https://github.com/HastaCs/Keues/compare/v1.4.0...v1.5.0) (2026-09-20)
 
 
