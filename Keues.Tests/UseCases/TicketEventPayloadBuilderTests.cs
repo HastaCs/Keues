@@ -82,6 +82,8 @@ public class TicketEventPayloadBuilderTests : IDisposable
     var flow = await Seed.FlowAsync(context, location.Id);
     var queue = await Seed.QueueAsync(context, location.Id);
     var user = await Seed.UserAsync(context, location.Id, name: "Ana");
+    user.ExternalId = "COR-ANA";
+    await context.SaveChangesAsync();
     var ticket = await Seed.TicketAsync(context, queue.Id, flow.Id);
 
     var payload = await Builder(context).BuildAsync(
@@ -90,6 +92,7 @@ public class TicketEventPayloadBuilderTests : IDisposable
     Assert.NotNull(payload.data.user);
     Assert.Equal(user.Id, payload.data.user!.id);
     Assert.Equal("Ana", payload.data.user.name);
+    Assert.Equal("COR-ANA", payload.data.user.externalId);
   }
 
   [Fact]
@@ -130,6 +133,7 @@ public class TicketEventPayloadBuilderTests : IDisposable
     var queue = await Seed.QueueAsync(context, location.Id, name: "Envíos");
     var counter = await Seed.CounterAsync(context, location.Id, name: "Caja 1", queues: [queue]);
     var user = await Seed.UserAsync(context, location.Id, name: "Ana");
+    user.ExternalId = "COR-ANA";
     var ticket = await Seed.TicketAsync(context, queue.Id, flow.Id);
     ticket.CounterId = counter.Id;
     await context.SaveChangesAsync();
@@ -148,6 +152,7 @@ public class TicketEventPayloadBuilderTests : IDisposable
     Assert.Equal("Envíos", payload.data.queue.name);
     Assert.Equal("Caja 1", payload.data.counter!.name);
     Assert.Equal("Ana", payload.data.user!.name);
+    Assert.Equal("COR-ANA", payload.data.user.externalId);
     Assert.Equal(location.Name, payload.data.location.name);
   }
 

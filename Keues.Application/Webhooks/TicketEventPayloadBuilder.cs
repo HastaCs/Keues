@@ -45,7 +45,7 @@ public class TicketEventPayloadBuilder(IApplicationDbContext context)
       counter = await ResolveCounter(counterId, cancellationToken);
     }
 
-    EntityRef? user = null;
+    UserRef? user = null;
     if (userId is Guid userIdValue)
     {
       user = await ResolveUser(userIdValue, cancellationToken);
@@ -63,9 +63,9 @@ public class TicketEventPayloadBuilder(IApplicationDbContext context)
     return counter is null ? null : new EntityRef(counter.Id, counter.Name);
   }
 
-  private async Task<EntityRef?> ResolveUser(Guid userId, CancellationToken cancellationToken)
+  private async Task<UserRef?> ResolveUser(Guid userId, CancellationToken cancellationToken)
   {
     var user = await context.Users.FindAsync([userId], cancellationToken);
-    return user is null ? null : new EntityRef(user.Id, user.Name);
+    return user is null ? null : new UserRef(user.Id, user.Name, user.ExternalId);
   }
 }

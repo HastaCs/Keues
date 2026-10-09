@@ -7,7 +7,9 @@ public record TicketEventData(
   string code,
   EntityRef queue,
   EntityRef? counter,
-  EntityRef? user,
+  UserRef? user,
   EntityRef location);
 
 public record EntityRef(Guid id, string name);
+
+public record UserRef(Guid id, string name, string externalId);
