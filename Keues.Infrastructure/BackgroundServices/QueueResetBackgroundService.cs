@@ -22,7 +22,7 @@ public sealed class QueueResetBackgroundService : BackgroundService
     {
       var now = new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute);
 
-      _logger.LogInformation("🔥 QueueResetBackgroundService funcionando: {Time}", now);
+    //  _logger.LogInformation("🔥 QueueResetBackgroundService funcionando: {Time}", now);
 
       using var scope = _scopeFactory.CreateScope();
 

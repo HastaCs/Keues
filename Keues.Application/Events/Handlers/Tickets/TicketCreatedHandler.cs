@@ -19,9 +19,8 @@ public class TicketCreatedHandler : IKeuesEventHandler<TicketCreated>
 
   public async Task HandleAsync(TicketCreated keuesEvent, CancellationToken cancellationToken = default)
   {
-    _logger.LogInformation("DISPATCHED Handling TicketCreated event.");
-    var ticketCommand = new GetTicketCommand(keuesEvent.Id);
+   var ticketCommand = new GetTicketCommand(keuesEvent.Id);
     var ticket = await _getTicketHandler.Handle(ticketCommand);
-    _logger.LogInformation($"Ticket created with ID: {ticket.Id}, Codigo: {ticket.Code}");
+    _logger.LogInformation($"Ticket created with ID: {ticket.Id}, Code: {ticket.Code}");
   }
 }

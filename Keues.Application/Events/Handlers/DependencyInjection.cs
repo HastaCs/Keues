@@ -10,7 +10,11 @@ public static class DependencyInjection
   {
     // Register all event handlers in the assembly
     services.AddScoped<IKeuesEventHandler<TicketCreated>, TicketCreatedHandler>();
-
+    services.AddScoped<IKeuesEventHandler<TicketTransferred>, TicketTransferredHandler>();
+    services.AddScoped<IKeuesEventHandler<TicketCanceled>, TicketCanceledHandler>();
+    services.AddScoped<IKeuesEventHandler<TicketCalled>, TicketCalledHandler>();
+    services.AddScoped<IKeuesEventHandler<TicketAttended>, TicketAttendedHandler>();
+    
     return services;
   }
 }
