@@ -29,12 +29,12 @@ import {
   IconUsers,
   IconUsersGroup,
 } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { ApiError } from '@/api/httpClient';
-import { userGroupsApi } from '@/api/UserGroupsApi';
+import { getErrorMessage } from '@/api/getErrorMessage';
+import { useRemoveUserGroup, useUserGroups } from '@/api/hooks/userGroups';
 import type { UserGroup } from '@/api/interfaces/UserGroup/UserGroups';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
@@ -98,18 +98,6 @@ function sortGroups(items: UserGroup[], sort: UserGroupSort): UserGroup[] {
   });
 
   return sort.direction === 'desc' ? sorted.reverse() : sorted;
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
 }
 
 function formatDate(value: string): string {
@@ -191,36 +179,22 @@ export function UserGroupsPanel() {
   const navigate = useNavigate();
   const location = useActiveLocation();
 
-  const [groups, setGroups] = useState<UserGroup[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const userGroupsQuery = useUserGroups(location?.id);
+  const removeGroup = useRemoveUserGroup(location?.id ?? '');
+
   const [search, setSearch] = useState('');
   const [view, setView] = useState<UserGroupView>(getStoredView);
   const [sort, setSort] = useState<UserGroupSort>(getStoredSort);
   const [deletingGroup, setDeletingGroup] = useState<UserGroup | undefined>(undefined);
-  const [deleting, setDeleting] = useState(false);
 
-  const refreshGroups = useCallback(async () => {
-    if (!location) {
-      return;
-    }
+  const groups = userGroupsQuery.data ?? [];
 
-    setError(null);
-    setLoading(true);
-
-    try {
-      const response = await userGroupsApi.list(location.id);
-      setGroups(response.data);
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    } finally {
-      setLoading(false);
-    }
-  }, [location, t]);
-
-  useEffect(() => {
-    void refreshGroups();
-  }, [refreshGroups]);
+  const loadError = userGroupsQuery.isError
+    ? getErrorMessage(userGroupsQuery.error, t('errors.unexpected'))
+    : null;
+  const error = removeGroup.error
+    ? getErrorMessage(removeGroup.error, t('errors.unexpected'))
+    : loadError;
 
   const filteredGroups = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -274,23 +248,14 @@ export function UserGroupsPanel() {
     }
   }
 
-  async function handleConfirmDeleteGroup() {
+  function handleConfirmDeleteGroup() {
     if (!deletingGroup) {
       return;
     }
 
-    setDeleting(true);
-    setError(null);
-
-    try {
-      await userGroupsApi.remove(deletingGroup.id);
-      setDeletingGroup(undefined);
-      await refreshGroups();
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    } finally {
-      setDeleting(false);
-    }
+    removeGroup.mutate(deletingGroup.id, {
+      onSuccess: () => setDeletingGroup(undefined),
+    });
   }
 
   if (!location) {
@@ -312,7 +277,7 @@ export function UserGroupsPanel() {
             <Button
               variant="default"
               onClick={() => setDeletingGroup(undefined)}
-              disabled={deleting}
+              disabled={removeGroup.isPending}
             >
               {t('common.cancel')}
             </Button>
@@ -320,7 +285,7 @@ export function UserGroupsPanel() {
             <Button
               color="red"
               leftSection={<IconTrash size={14} />}
-              loading={deleting}
+              loading={removeGroup.isPending}
               onClick={handleConfirmDeleteGroup}
             >
               {t('common.delete')}
@@ -395,7 +360,7 @@ export function UserGroupsPanel() {
           </Group>
         </Group>
 
-        {loading ? (
+        {userGroupsQuery.isPending ? (
           <Group justify="center" py="xl">
             <Loader />
           </Group>

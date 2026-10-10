@@ -75,7 +75,7 @@ Keues is made up of four applications that work together:
 
 | Application | Who uses it | What it does |
 |---|---|---|
-| [**Keues**](https://github.com/HastaCs/Keues) *(this repo)* | Administrator | Central API + web dashboard for configuration and real-time monitoring |
+| [**Keues**](https://github.com/HastaCs/Keues) *(this repo)* | Administrator | Central API + web dashboard for configuration and monitoring |
 | [**Keues-Counter**](https://github.com/HastaCs/Keues-Counter) | Desk operator | Calls the next turn, marks tickets as attended or frees the desk |
 | [**Keues-Monitors**](https://github.com/HastaCs/Keues-Monitors) | Customer-facing screens | Shows the current turn and the desk the customer should go to |
 | [**Keues-TicketMachine**](https://github.com/HastaCs/Keues-TicketMachine) | Customer (touch kiosk) | Shows the service menu and delivers the turn number |
@@ -107,11 +107,11 @@ The next-turn selection algorithm combines three mechanisms:
 - **Aging** — every X minutes a ticket has been waiting, its priority automatically rises by one point, preventing anyone from waiting indefinitely even if their queue has a lower base priority.
 
 ### Administration dashboard
-Web panel with real-time monitoring for each location:
+Web panel with monitoring for each location:
 
 - Daily KPIs: tickets waiting, in service, attended and cancelled.
 - Average waiting time and average service time.
-- Real-time view of which desk is serving which turn and since when.
+- View of which desk is serving which turn and since when.
 - Tickets waiting per queue ordered by age.
 - Full history with filters by status, queue, date range and free-text search.
 
@@ -122,7 +122,7 @@ Web panel with real-time monitoring for each location:
 - **Colours** for queues and counters, visible in the dashboard and on monitors.
 
 ### Real time with no effort
-Monitors and counters receive changes instantly. No reloading. No polling. The administrator also sees the dashboard updated in real time.
+Monitors and counters receive changes instantly. No reloading. No polling.
 
 ### Multi-language and theme
 Interface available in **English and Spanish**. **Light/dark theme** toggle in the top bar.

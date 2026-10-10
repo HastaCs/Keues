@@ -1,18 +1,13 @@
-import { request } from "./httpClient";
-import type { ApiResponse } from "./interfaces/common/ApiResponse";
-import type {
-  FlowInput,
-  FlowMenuItem,
-  UpdateFlowInput,
-  Flow,
-} from "./interfaces/Flow/Flows";
+import { request } from './httpClient';
+import type { ApiResponse } from './interfaces/common/ApiResponse';
+import type { FlowInput, FlowMenuItem, UpdateFlowInput, Flow } from './interfaces/Flow/Flows';
 
-import type { LocationId } from "@/api/interfaces/Location/Locations";
+import type { LocationId } from '@/api/interfaces/Location/Locations';
 
-const endpoint = "/flows";
+const endpoint = '/flows';
 
 function parseMenuItems(flowJson: unknown): FlowMenuItem[] {
-  if (typeof flowJson !== "string" || flowJson.trim() === "") {
+  if (typeof flowJson !== 'string' || flowJson.trim() === '') {
     return [];
   }
 
@@ -48,29 +43,29 @@ export const flowsApi = {
     return request<Flow>(`${endpoint}/${id}`);
   },
 
-create(flow: FlowInput) {
-  return request<Flow>(endpoint, {
-    method: "POST",
-    body: flow,
-  }).then((response) => ({
-    ...response,
-    menuItems: parseMenuItems(response.flowJson),
-  }));
-},
+  create(flow: FlowInput) {
+    return request<Flow>(endpoint, {
+      method: 'POST',
+      body: flow,
+    }).then((response) => ({
+      ...response,
+      menuItems: parseMenuItems(response.flowJson),
+    }));
+  },
 
-update(flow: UpdateFlowInput) {
-  return request<Flow>(`${endpoint}/${flow.id}`, {
-    method: "PUT",
-    body: flow,
-  }).then((response) => ({
-    ...response,
-    menuItems: parseMenuItems(response.flowJson),
-  }));
-},
+  update(flow: UpdateFlowInput) {
+    return request<Flow>(`${endpoint}/${flow.id}`, {
+      method: 'PUT',
+      body: flow,
+    }).then((response) => ({
+      ...response,
+      menuItems: parseMenuItems(response.flowJson),
+    }));
+  },
 
   remove(id: string) {
     return request<void>(`${endpoint}/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
   },
 };

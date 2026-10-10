@@ -23,8 +23,14 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
-import { ApiError } from '@/api/httpClient';
-import { usersApi } from '@/api/UsersApi';
+import { getErrorMessage } from '@/api/getErrorMessage';
+import {
+  useCreateUser,
+  useRemoveUser,
+  useSetUserEnabled,
+  useUpdateUser,
+  useUsers,
+} from '@/api/hooks/users';
 import type { CreateUserInput, User } from '@/api/interfaces/User/Users';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
@@ -45,18 +51,6 @@ function getStoredHideInactive(): boolean {
 
 function getStoredOptionalNoticeDismissed(): boolean {
   return window.localStorage.getItem(OPTIONAL_NOTICE_STORAGE_KEY) === 'true';
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
 }
 
 function formatDate(value: string): string {
@@ -87,10 +81,6 @@ export function UsersPanel() {
   const location = useActiveLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -100,16 +90,38 @@ export function UsersPanel() {
   );
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
-  const [pagination, setPagination] = useState<{ total: number; totalPages: number }>({
-    total: 0,
-    totalPages: 1,
-  });
-  const [reloadKey, setReloadKey] = useState(0);
   const [formOpened, setFormOpened] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>(undefined);
   const [deletingUser, setDeletingUser] = useState<User | undefined>(undefined);
-  const [deleting, setDeleting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const usersQuery = useUsers(
+    {
+      locationId: location?.id ?? '',
+      name: debouncedSearch || undefined,
+      isActive: hideInactive ? true : undefined,
+      page,
+      limit: pageSize,
+      sortOrder,
+    },
+    Boolean(location)
+  );
+  const createUser = useCreateUser(location?.id ?? '');
+  const updateUser = useUpdateUser(location?.id ?? '');
+  const removeUser = useRemoveUser(location?.id ?? '');
+  const setUserEnabled = useSetUserEnabled(location?.id ?? '');
+
+  const response = usersQuery.data;
+  const users = response?.data ?? [];
+  const total = response?.pagination?.total ?? 0;
+  const totalPages = response?.pagination?.totalPages ?? 1;
+
+  const loadError = usersQuery.isError
+    ? getErrorMessage(usersQuery.error, t('errors.unexpected'))
+    : null;
+
+  const actionError = setUserEnabled.error ?? removeUser.error;
+  const error = actionError ? getErrorMessage(actionError, t('errors.unexpected')) : loadError;
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -122,52 +134,6 @@ export function UsersPanel() {
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, sortOrder, hideInactive, pageSize]);
-
-  useEffect(() => {
-    if (!location) {
-      return;
-    }
-
-    let cancelled = false;
-
-    setError(null);
-    setLoading(true);
-
-    usersApi
-      .list({
-        locationId: location.id,
-        name: debouncedSearch || undefined,
-        isActive: hideInactive ? true : undefined,
-        page,
-        limit: pageSize,
-        sortOrder,
-      })
-      .then((response) => {
-        if (cancelled) {
-          return;
-        }
-
-        setUsers(response.data);
-        setPagination({
-          total: response.pagination?.total ?? 0,
-          totalPages: response.pagination?.totalPages ?? 1,
-        });
-      })
-      .catch((requestError) => {
-        if (!cancelled) {
-          setError(getErrorMessage(requestError, t('errors.unexpected')));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [location, debouncedSearch, page, pageSize, sortOrder, hideInactive, reloadKey, t]);
 
   useEffect(() => {
     const openId = searchParams.get('open');
@@ -195,74 +161,48 @@ export function UsersPanel() {
     setFormOpened(true);
   }
 
-  async function openEditModal(user: User) {
-    setError(null);
-
-    try {
-      const fullUser = await usersApi.get(user.id);
-      setEditingUser(fullUser);
-      setFormError(null);
-      setFormOpened(true);
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    }
+  function openEditModal(user: User) {
+    setEditingUser(user);
+    setFormError(null);
+    setFormOpened(true);
   }
 
-  async function toggleEnabled(user: User, isEnabled: boolean) {
-    setError(null);
-    setUsers((current) =>
-      current.map((item) => (item.id === user.id ? { ...item, enabled: isEnabled } : item))
-    );
-
-    try {
-      await usersApi.setEnabled(user.id, isEnabled);
-    } catch (requestError) {
-      setUsers((current) =>
-        current.map((item) => (item.id === user.id ? { ...item, enabled: !isEnabled } : item))
-      );
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    }
+  function toggleEnabled(user: User, isEnabled: boolean) {
+    setUserEnabled.mutate({ id: user.id, isEnabled });
   }
 
   async function handleSubmitUser(payload: CreateUserInput) {
-    setSaving(true);
-    setFormError(null);
-
-    try {
-      if (editingUser) {
-        await usersApi.update({ id: editingUser.id, ...payload });
-      } else {
-        await usersApi.create(payload);
-      }
-
+    const closeForm = () => {
       setFormOpened(false);
       setEditingUser(undefined);
-      setFormError(null);
-      setReloadKey((current) => current + 1);
-    } catch (requestError) {
-      setFormError(getErrorMessage(requestError, t('errors.unexpected')));
-    } finally {
-      setSaving(false);
+    };
+
+    if (editingUser) {
+      updateUser.mutate(
+        { ...payload, id: editingUser.id },
+        {
+          onSuccess: closeForm,
+          onError: (requestError) =>
+            setFormError(getErrorMessage(requestError, t('errors.unexpected'))),
+        }
+      );
+    } else {
+      createUser.mutate(payload, {
+        onSuccess: closeForm,
+        onError: (requestError) =>
+          setFormError(getErrorMessage(requestError, t('errors.unexpected'))),
+      });
     }
   }
 
-  async function handleConfirmDeleteUser() {
+  function handleConfirmDeleteUser() {
     if (!deletingUser) {
       return;
     }
 
-    setDeleting(true);
-    setError(null);
-
-    try {
-      await usersApi.remove(deletingUser.id);
-      setDeletingUser(undefined);
-      setReloadKey((current) => current + 1);
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    } finally {
-      setDeleting(false);
-    }
+    removeUser.mutate(deletingUser.id, {
+      onSuccess: () => setDeletingUser(undefined),
+    });
   }
 
   if (!location) {
@@ -284,7 +224,7 @@ export function UsersPanel() {
             <Button
               variant="default"
               onClick={() => setDeletingUser(undefined)}
-              disabled={deleting}
+              disabled={removeUser.isPending}
             >
               {t('common.cancel')}
             </Button>
@@ -292,7 +232,7 @@ export function UsersPanel() {
             <Button
               color="red"
               leftSection={<IconTrash size={14} />}
-              loading={deleting}
+              loading={removeUser.isPending}
               onClick={handleConfirmDeleteUser}
             >
               {t('common.delete')}
@@ -303,7 +243,7 @@ export function UsersPanel() {
 
       <UserFormModal
         opened={formOpened}
-        loading={saving}
+        loading={createUser.isPending || updateUser.isPending}
         error={formError}
         initialUser={editingUser}
         locationId={location.id}
@@ -379,7 +319,7 @@ export function UsersPanel() {
           </Group>
         </Group>
 
-        {loading ? (
+        {usersQuery.isPending ? (
           <Group justify="center" py="xl">
             <Loader />
           </Group>
@@ -407,7 +347,7 @@ export function UsersPanel() {
                     <Table.Tr
                       key={user.id}
                       style={{ cursor: 'pointer' }}
-                      onClick={() => void openEditModal(user)}
+                      onClick={() => openEditModal(user)}
                     >
                       <Table.Td>
                         <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
@@ -433,9 +373,7 @@ export function UsersPanel() {
                             <Switch
                               size="sm"
                               checked={user.enabled}
-                              onChange={(event) =>
-                                void toggleEnabled(user, event.currentTarget.checked)
-                              }
+                              onChange={(event) => toggleEnabled(user, event.currentTarget.checked)}
                             />
                           </Box>
 
@@ -475,14 +413,14 @@ export function UsersPanel() {
             <Group justify="space-between" align="center" wrap="wrap" gap="sm">
               <Text size="sm" c="dimmed">
                 {t('users.showing', {
-                  from: pagination.total === 0 ? 0 : (page - 1) * pageSize + 1,
-                  to: Math.min(page * pageSize, pagination.total),
-                  total: pagination.total,
+                  from: total === 0 ? 0 : (page - 1) * pageSize + 1,
+                  to: Math.min(page * pageSize, total),
+                  total,
                 })}
               </Text>
 
               <Group gap="xs">
-                <Pagination total={pagination.totalPages} value={page} onChange={setPage} />
+                <Pagination total={totalPages} value={page} onChange={setPage} />
                 <Select
                   value={String(pageSize)}
                   onChange={(value) => setPageSize(Number(value) || PAGE_SIZE)}

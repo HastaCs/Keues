@@ -1,9 +1,14 @@
-import { request } from "./httpClient";
+import { request } from './httpClient';
 
-import type { ApiResponse } from "./interfaces/common/ApiResponse";
-import { LocationId, LocationInput, LocationKeue, UpdateLocationInput } from "./interfaces/Location/Locations";
+import type { ApiResponse } from './interfaces/common/ApiResponse';
+import {
+  LocationId,
+  LocationInput,
+  LocationKeue,
+  UpdateLocationInput,
+} from './interfaces/Location/Locations';
 
-const endpoint = "/locations";
+const endpoint = '/locations';
 
 export const locationsApi = {
   list() {
@@ -16,21 +21,21 @@ export const locationsApi = {
 
   create(input: LocationInput) {
     return request<LocationKeue>(endpoint, {
-      method: "POST",
+      method: 'POST',
       body: input,
     });
   },
 
   update(input: UpdateLocationInput) {
     return request<LocationKeue>(`${endpoint}/${input.id}`, {
-      method: "PUT",
+      method: 'PUT',
       body: input,
     });
   },
 
   remove(id: LocationId) {
     return request<void>(`${endpoint}/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
   },
 };

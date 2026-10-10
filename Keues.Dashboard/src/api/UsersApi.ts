@@ -90,10 +90,6 @@ export const usersApi = {
     return request<ApiResponse<User[]>>(`${endpoint}?${buildListQuery(params)}`);
   },
 
-  get(id: string) {
-    return request<User>(`${endpoint}/${id}`);
-  },
-
   create(input: CreateUserInput) {
     return request<UserMutationResult>(endpoint, {
       method: 'POST',

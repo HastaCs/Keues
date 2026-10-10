@@ -457,6 +457,10 @@ export function buildFlowGraph(source: MapSourceData, selectedFlowIds?: string[]
       if (kind === 'ticket' && !queue) {
         addIssue(state, 'missingQueueReference', 'error', itemId);
       }
+
+      if (kind === 'menu' && !items.some((child) => child.parentId === item.id)) {
+        addIssue(state, 'menuWithoutChildren', 'warning', itemId);
+      }
     });
   });
 

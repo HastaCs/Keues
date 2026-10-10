@@ -47,6 +47,7 @@ export interface TicketHistory {
 
 export interface ListTicketsParams {
   locationId: string;
+  code?: string;
   status?: TicketStatus;
   queueId?: string;
   createdFrom?: string;

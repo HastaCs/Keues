@@ -193,7 +193,8 @@ const resources = {
         title: 'Tickets de la location activa',
         heading: 'Tickets',
         subtitle: 'Consulta los tickets creados y su estado actual.',
-        searchPlaceholder: 'Buscar por codigo, cola o puesto...',
+        searchPlaceholder: 'Buscar por código...',
+        filters: 'Filtros',
         statusAll: 'Todos los estados',
         statusWaiting: 'En espera',
         statusInProgress: 'Siendo atendido',
@@ -355,7 +356,6 @@ const resources = {
         backToFlows: 'Volver a flujos',
         noMenusForFreeFlow: 'Los flujos de paso libre no necesitan menús ni tickets.',
         emptyFlows: 'No hay flujos. Crea uno nuevo para empezar.',
-        selectFlowToEdit: 'Selecciona una card de flujo para empezar a editar.',
         treeTitle: 'Estructura de menus',
         createHint:
           'Usa los dos botones: anadir item en raiz o anadir item dentro del menu seleccionado. Arrastra los nodos para reordenarlos o moverlos entre menus.',
@@ -478,6 +478,7 @@ const resources = {
           counterWithoutQueue: 'Puesto sin ninguna cola que pueda llamar.',
           flowWithoutTickets: 'Máquina sin menús ni tickets.',
           missingQueueReference: 'El ticket apunta a una cola que ya no existe.',
+          menuWithoutChildren: 'Menú sin tickets: es un nodo final que no lleva a ningún ticket.',
           mismatchedLinks:
             'La relación entre cola y puesto no está sincronizada en ambos sentidos.',
           ghostUser: 'Hay un usuario autorizado que ya no existe en la ubicación.',
@@ -860,7 +861,8 @@ const resources = {
         title: 'Tickets for active location',
         heading: 'Tickets',
         subtitle: 'Check created tickets and their current status.',
-        searchPlaceholder: 'Search by code, queue or counter...',
+        searchPlaceholder: 'Search by code...',
+        filters: 'Filters',
         statusAll: 'All statuses',
         statusWaiting: 'Waiting',
         statusInProgress: 'Being served',
@@ -1022,7 +1024,6 @@ const resources = {
         backToFlows: 'Back to flows',
         noMenusForFreeFlow: 'Free-walk flows do not need menus or tickets.',
         emptyFlows: 'No flows yet. Create one to get started.',
-        selectFlowToEdit: 'Select a flow card to start editing.',
         treeTitle: 'Menu structure',
         createHint:
           'Use the two buttons: add item at root or add item inside the selected menu. Drag nodes to reorder or move them between menus.',
@@ -1145,6 +1146,8 @@ const resources = {
           counterWithoutQueue: 'Counter without any queue it can call.',
           flowWithoutTickets: 'Machine without menus or tickets.',
           missingQueueReference: 'The ticket points to a queue that no longer exists.',
+          menuWithoutChildren:
+            'Menu without tickets: a leaf node that does not lead to any ticket.',
           mismatchedLinks: 'The queue-counter relationship is not synced in both directions.',
           ghostUser: 'An authorized user no longer exists in the location.',
           ghostGroup: 'An authorized group no longer exists in the location.',

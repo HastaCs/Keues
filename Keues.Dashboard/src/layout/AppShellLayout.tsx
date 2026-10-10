@@ -35,12 +35,11 @@ import {
   IconUsers,
   IconUsersGroup,
 } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, Outlet, useLocation } from 'react-router-dom';
 
-import { locationsApi } from '@/api/LocationsApi';
-import type { LocationKeue } from '@/api/interfaces/Location/Locations';
+import { useLocationDetail } from '@/api/hooks/locations';
 import logoHorizontal from '@/assets/logos/horizontal.png';
 import { SettingsModal } from '@/components/SettingsModal/SettingsModal';
 import { UserMenu } from '@/components/UserMenu/UserMenu';
@@ -67,12 +66,6 @@ interface NavigationItem {
   label: string;
   icon: React.ComponentType<{ size?: number; stroke?: number }>;
   children?: NavigationItem[];
-}
-
-interface LocationState {
-  locationId?: string;
-  location: LocationKeue | null;
-  failed: boolean;
 }
 
 const navigationItems: NavigationItem[] = [
@@ -120,44 +113,11 @@ export function AppShellLayout() {
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
   const [desktopOpened] = useDisclosure(true);
   const [settingsOpened, setSettingsOpened] = useState(false);
-  const [locationState, setLocationState] = useState<LocationState>({
-    locationId: undefined,
-    location: null,
-    failed: false,
-  });
 
-  useEffect(() => {
-    if (!locationId) {
-      setLocationState({ locationId: undefined, location: null, failed: false });
-      return;
-    }
-
-    let cancelled = false;
-    setLocationState({ locationId, location: null, failed: false });
-
-    locationsApi
-      .get(locationId)
-      .then((response) => {
-        if (!cancelled) {
-          setLocationState({ locationId, location: response, failed: false });
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setLocationState({ locationId, location: null, failed: true });
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [locationId]);
-
-  const location = locationState.locationId === locationId ? locationState.location : null;
-  const loadingLocation =
-    Boolean(locationId) && (locationState.locationId !== locationId || !location);
-  const locationFailed =
-    Boolean(locationId) && locationState.locationId === locationId && locationState.failed;
+  const locationQuery = useLocationDetail(locationId);
+  const location = locationQuery.data ?? null;
+  const loadingLocation = Boolean(locationId) && locationQuery.isPending;
+  const locationFailed = Boolean(locationId) && locationQuery.isError;
 
   const moduleLabelKey = locationId && moduleSegment ? `sidebar.${moduleSegment}` : undefined;
 

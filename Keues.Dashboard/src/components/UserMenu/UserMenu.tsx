@@ -13,7 +13,12 @@ export function UserMenu() {
   return (
     <Menu position="bottom-end" width={240} withArrow>
       <Menu.Target>
-        <ActionIcon variant="default" size="lg" radius="md" aria-label={user?.name ?? t('user.name')}>
+        <ActionIcon
+          variant="default"
+          size="lg"
+          radius="md"
+          aria-label={user?.name ?? t('user.name')}
+        >
           <Avatar size={24} radius="xl" color="blue" src={undefined}>
             {initial}
           </Avatar>

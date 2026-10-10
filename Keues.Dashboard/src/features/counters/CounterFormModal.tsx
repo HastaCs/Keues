@@ -25,13 +25,10 @@ import {
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { queuesApi } from '@/api/QueuesApi';
-import { usersApi } from '@/api/UsersApi';
-import { userGroupsApi } from '@/api/UserGroupsApi';
+import { useQueues } from '@/api/hooks/queues';
+import { useUserGroups } from '@/api/hooks/userGroups';
+import { useUsers } from '@/api/hooks/users';
 import type { Counter, CreateCounterInput } from '@/api/interfaces/Counter/Counters';
-import type { Queue } from '@/api/interfaces/Queue/Queues';
-import type { User } from '@/api/interfaces/User/Users';
-import type { UserGroup } from '@/api/interfaces/UserGroup/UserGroups';
 import { colors } from '@/data/common';
 
 const AUTHORIZED_USERS_LIMIT = 100;
@@ -68,15 +65,9 @@ export function CounterFormModal(props: CounterFormModalProps) {
 
   const [formState, setFormState] = useState<CounterFormState>(getInitialState(initialCounter));
 
-  const [queues, setQueues] = useState<Queue[]>([]);
-
   const [selectedQueues, setSelectedQueues] = useState<string[]>([]);
 
-  const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
-
   const [selectedUserGroups, setSelectedUserGroups] = useState<string[]>([]);
-
-  const [users, setUsers] = useState<User[]>([]);
 
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
@@ -87,51 +78,25 @@ export function CounterFormModal(props: CounterFormModalProps) {
 
   const [nameError, setNameError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!opened) {
-      return;
-    }
+  const queuesQuery = useQueues(opened ? locationId : undefined);
+  const userGroupsQuery = useUserGroups(opened ? locationId : undefined);
+  const usersQuery = useUsers(
+    {
+      locationId,
+      name: '',
+      isActive: true,
+      page: 1,
+      limit: AUTHORIZED_USERS_LIMIT,
+    },
+    opened
+  );
 
-    async function loadQueues() {
-      try {
-        const types = await queuesApi.list(locationId);
-
-        setQueues(types.data);
-      } catch {
-        // Ignoramos errores al cargar las colas.
-      }
-    }
-
-    async function loadUserGroups() {
-      try {
-        const response = await userGroupsApi.list(locationId);
-
-        setUserGroups(response.data);
-      } catch {
-        // Ignoramos errores al cargar los grupos.
-      }
-    }
-
-    async function loadUsers() {
-      try {
-        const response = await usersApi.list({
-          locationId,
-          name: '',
-          isActive: true,
-          page: 1,
-          limit: AUTHORIZED_USERS_LIMIT,
-        });
-
-        setUsers([...response.data].sort((a, b) => a.name.localeCompare(b.name, 'es')));
-      } catch {
-        // Ignoramos errores al cargar los usuarios.
-      }
-    }
-
-    loadQueues();
-    loadUserGroups();
-    loadUsers();
-  }, [opened, locationId]);
+  const queues = queuesQuery.data ?? [];
+  const userGroups = userGroupsQuery.data ?? [];
+  const users = useMemo(
+    () => [...(usersQuery.data?.data ?? [])].sort((a, b) => a.name.localeCompare(b.name, 'es')),
+    [usersQuery.data]
+  );
 
   useEffect(() => {
     if (!opened) {

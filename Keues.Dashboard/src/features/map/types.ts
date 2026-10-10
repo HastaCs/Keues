@@ -11,6 +11,7 @@ export type MapIssueCode =
   | 'counterWithoutQueue'
   | 'flowWithoutTickets'
   | 'missingQueueReference'
+  | 'menuWithoutChildren'
   | 'mismatchedLinks'
   | 'ghostUser'
   | 'ghostGroup';

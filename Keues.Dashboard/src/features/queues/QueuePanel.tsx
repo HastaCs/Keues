@@ -37,31 +37,20 @@ import {
   IconUsers,
 } from '@tabler/icons-react';
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
-import { ApiError } from '@/api/httpClient';
-import { queuesApi } from '@/api/QueuesApi';
-import { countersApi } from '@/api/CountersApi';
+import { getErrorMessage } from '@/api/getErrorMessage';
+import { useCounters } from '@/api/hooks/counters';
+import { useCreateQueue, useQueues, useRemoveQueue, useUpdateQueue } from '@/api/hooks/queues';
 import { Queue, QueueInput } from '@/api/interfaces/Queue/Queues';
-import { useActiveLocation } from '@/features/locations/LocationContext';
-import { QueueFormModal } from './QueueFormModal';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
+import { useActiveLocation } from '@/features/locations/LocationContext';
+import { QueueFormModal } from './QueueFormModal';
 
 import styles from '@/styles/hover-card.module.css';
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
-}
 
 type QueueView = 'cards' | 'table';
 
@@ -164,11 +153,6 @@ function SortableTh({
   );
 }
 
-interface CounterMeta {
-  name: string;
-  color: string;
-}
-
 export function QueuesPanel() {
   const { t } = useTranslation();
 
@@ -176,13 +160,11 @@ export function QueuesPanel() {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [queues, setQueues] = useState<Queue[]>([]);
-
-  const [loading, setLoading] = useState(true);
-
-  const [saving, setSaving] = useState(false);
-
-  const [error, setError] = useState<string | null>(null);
+  const queuesQuery = useQueues(location?.id);
+  const countersQuery = useCounters(location?.id);
+  const createQueue = useCreateQueue(location?.id ?? '');
+  const updateQueue = useUpdateQueue(location?.id ?? '');
+  const removeQueue = useRemoveQueue(location?.id ?? '');
 
   const [search, setSearch] = useState('');
 
@@ -190,47 +172,30 @@ export function QueuesPanel() {
 
   const [view, setView] = useState<QueueView>(getStoredView);
 
-  const [counterMeta, setCounterMeta] = useState<Record<string, CounterMeta>>({});
-
   const [formOpened, setFormOpened] = useState(false);
 
   const [editingQueue, setEditingQueue] = useState<Queue>();
 
   const [deletingQueue, setDeletingQueue] = useState<Queue>();
 
-  const refreshQueues = useCallback(async () => {
-    if (!location) {
-      return;
-    }
+  const queues = queuesQuery.data ?? [];
 
-    setLoading(true);
-    setError(null);
+  const counterMeta = useMemo(() => {
+    const counters = countersQuery.data ?? [];
 
-    try {
-      const response = await queuesApi.list(location.id);
+    return Object.fromEntries(
+      counters.map((counter) => [counter.id, { name: counter.name, color: counter.color }])
+    );
+  }, [countersQuery.data]);
 
-      setQueues(response.data);
+  const loadError = queuesQuery.isError
+    ? getErrorMessage(queuesQuery.error, t('errors.unexpected'))
+    : countersQuery.isError
+      ? getErrorMessage(countersQuery.error, t('errors.unexpected'))
+      : null;
 
-      const countersResponse = await countersApi.list(location.id);
-
-      setCounterMeta(
-        Object.fromEntries(
-          countersResponse.data.map((counter) => [
-            counter.id,
-            { name: counter.name, color: counter.color },
-          ])
-        )
-      );
-    } catch (err) {
-      setError(getErrorMessage(err, t('errors.unexpected')));
-    } finally {
-      setLoading(false);
-    }
-  }, [location]);
-
-  useEffect(() => {
-    void refreshQueues();
-  }, [refreshQueues]);
+  const mutationError = createQueue.error ?? updateQueue.error ?? removeQueue.error;
+  const error = mutationError ? getErrorMessage(mutationError, t('errors.unexpected')) : loadError;
 
   useEffect(() => {
     const openId = searchParams.get('open');
@@ -290,43 +255,26 @@ export function QueuesPanel() {
   }
 
   async function handleSubmitQueue(payload: QueueInput) {
-    setSaving(true);
-
-    try {
-      if (editingQueue) {
-        await queuesApi.update({
-          ...payload,
-          id: editingQueue.id,
-        });
-      } else {
-        await queuesApi.create(payload);
-      }
-
+    const closeForm = () => {
       setFormOpened(false);
       setEditingQueue(undefined);
+    };
 
-      await refreshQueues();
-    } catch (err) {
-      setError(getErrorMessage(err, t('errors.unexpected')));
-    } finally {
-      setSaving(false);
+    if (editingQueue) {
+      updateQueue.mutate({ ...payload, id: editingQueue.id }, { onSuccess: closeForm });
+    } else {
+      createQueue.mutate(payload, { onSuccess: closeForm });
     }
   }
 
-  async function handleConfirmDeleteQueue() {
+  function handleConfirmDeleteQueue() {
     if (!deletingQueue) {
       return;
     }
 
-    try {
-      await queuesApi.remove(deletingQueue.id);
-
-      setDeletingQueue(undefined);
-
-      await refreshQueues();
-    } catch (err) {
-      setError(getErrorMessage(err, t('errors.unexpected')));
-    }
+    removeQueue.mutate(deletingQueue.id, {
+      onSuccess: () => setDeletingQueue(undefined),
+    });
   }
 
   if (!location) {
@@ -363,7 +311,7 @@ export function QueuesPanel() {
       <QueueFormModal
         opened={formOpened}
         initialQueue={editingQueue}
-        loading={saving}
+        loading={createQueue.isPending || updateQueue.isPending}
         locationId={location.id}
         onClose={() => setFormOpened(false)}
         onSubmit={handleSubmitQueue}
@@ -453,7 +401,7 @@ export function QueuesPanel() {
           </Group>
         </Group>
 
-        {loading ? (
+        {queuesQuery.isPending ? (
           <Group justify="center">
             <Loader />
           </Group>

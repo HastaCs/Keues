@@ -1,13 +1,12 @@
 //EL location es otra cosa en javascript y se ralla
 export interface LocationKeue {
-    id: string;
-    name: string;
-    description: string;
-    color: string;
+  id: string;
+  name: string;
+  description: string;
+  color: string;
 }
 
 export type LocationId = string;
-
 
 export interface LocationInput {
   name: string;

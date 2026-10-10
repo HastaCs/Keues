@@ -3,6 +3,7 @@ import {
   Alert,
   Badge,
   Button,
+  Collapse,
   Group,
   Loader,
   Pagination,
@@ -14,34 +15,21 @@ import {
   TextInput,
   ThemeIcon,
 } from '@mantine/core';
-import { IconHistory, IconSearch, IconTicket, IconX } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { IconFilter, IconHistory, IconSearch, IconTicket, IconX } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ApiError } from '@/api/httpClient';
-import { queuesApi } from '@/api/QueuesApi';
-import { ticketsApi } from '@/api/TicketsApi';
-import type { Queue } from '@/api/interfaces/Queue/Queues';
+import { getErrorMessage } from '@/api/getErrorMessage';
+import { useQueues } from '@/api/hooks/queues';
+import { useTickets } from '@/api/hooks/tickets';
 import { TICKET_STATUS, type Ticket, type TicketStatus } from '@/api/interfaces/Tickets/Tickets';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { useActiveLocation } from '@/features/locations/LocationContext';
-import { TicketHistoryModal } from '@/features/tickets/TicketHistoryModal';
+import { TicketHistoryModal } from './TicketHistoryModal';
 
 type SortDirection = 'asc' | 'desc';
 type StatusFilter = 'all' | TicketStatus;
 
 const PAGE_SIZE = 20;
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
-}
 
 function toIsoDate(value: string, endOfDay: boolean): string | undefined {
   if (!value) {
@@ -100,116 +88,65 @@ export function TicketsPanel() {
   const { t } = useTranslation();
   const location = useActiveLocation();
 
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [queues, setQueues] = useState<Queue[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [queueFilter, setQueueFilter] = useState<string>('all');
+  const [queueFilter, setQueueFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
-  const [pagination, setPagination] = useState<{ total: number; totalPages: number }>({
-    total: 0,
-    totalPages: 1,
-  });
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [filtersOpened, setFiltersOpened] = useState(false);
+
+  const queuesQuery = useQueues(location?.id);
+  const queues = queuesQuery.data ?? [];
+
+  const ticketsQuery = useTickets(
+    {
+      locationId: location?.id ?? '',
+      code: debouncedSearch || undefined,
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      queueId: queueFilter === 'all' ? undefined : queueFilter,
+      createdFrom: toIsoDate(dateFrom, false),
+      createdTo: toIsoDate(dateTo, true),
+      page,
+      limit: pageSize,
+      sortOrder: sortDirection,
+    },
+    Boolean(location)
+  );
+
+  const response = ticketsQuery.data;
+  const tickets = response?.data ?? [];
+  const total = response?.pagination?.total ?? 0;
+  const totalPages = response?.pagination?.totalPages ?? 1;
+
+  const error = ticketsQuery.isError
+    ? getErrorMessage(ticketsQuery.error, t('errors.unexpected'))
+    : null;
 
   useEffect(() => {
-    if (!location) {
-      return;
-    }
+    const handle = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 300);
 
-    let cancelled = false;
-    queuesApi
-      .list(location.id)
-      .then((response) => {
-        if (!cancelled) {
-          setQueues(response.data);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setQueues([]);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [location]);
+    return () => window.clearTimeout(handle);
+  }, [search]);
 
   useEffect(() => {
     setPage(1);
-  }, [statusFilter, queueFilter, dateFrom, dateTo, pageSize]);
+  }, [debouncedSearch, statusFilter, queueFilter, dateFrom, dateTo, pageSize]);
 
-  useEffect(() => {
-    if (!location) {
-      return;
-    }
-
-    let cancelled = false;
-
-    setError(null);
-    setLoading(true);
-
-    ticketsApi
-      .list({
-        locationId: location.id,
-        status: statusFilter === 'all' ? undefined : statusFilter,
-        queueId: queueFilter === 'all' ? undefined : queueFilter,
-        createdFrom: toIsoDate(dateFrom, false),
-        createdTo: toIsoDate(dateTo, true),
-        page,
-        limit: pageSize,
-        sortOrder: sortDirection,
-      })
-      .then((response) => {
-        if (!cancelled) {
-          setTickets(response.data);
-          setPagination({
-            total: response.pagination?.total ?? 0,
-            totalPages: response.pagination?.totalPages ?? 1,
-          });
-        }
-      })
-      .catch((requestError) => {
-        if (!cancelled) {
-          setError(getErrorMessage(requestError, t('errors.unexpected')));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [location, statusFilter, queueFilter, dateFrom, dateTo, page, pageSize, sortDirection, t]);
-
-  const filteredTickets = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    const matches = tickets.filter((ticket) => {
-      const matchesQuery =
-        query.length === 0 ||
-        ticket.code.toLowerCase().includes(query) ||
-        (ticket.queue?.name ?? '').toLowerCase().includes(query) ||
-        (ticket.counter?.name ?? '').toLowerCase().includes(query);
-
-      return matchesQuery;
-    });
-
-    return matches;
-  }, [tickets, search]);
+  const activeFilterCount = [
+    statusFilter !== 'all',
+    queueFilter !== 'all',
+    dateFrom !== '',
+    dateTo !== '',
+  ].filter(Boolean).length;
 
   function handleClearFilters() {
-    setSearch('');
     setStatusFilter('all');
     setQueueFilter('all');
     setDateFrom('');
@@ -221,72 +158,38 @@ export function TicketsPanel() {
     return null;
   }
 
-  const hasActiveFilters =
-    statusFilter !== 'all' || queueFilter !== 'all' || dateFrom !== '' || dateTo !== '';
-
   return (
     <Stack gap="lg">
       <PageHeader label={location.name} title={t('tickets.heading')} />
 
-      {error && (
+      {error ? (
         <Alert color="red" title={t('errors.requestFailed')}>
           {error}
         </Alert>
-      )}
+      ) : null}
 
-      <Group align="flex-end" wrap="wrap">
+      <Group align="flex-end" gap="sm" wrap="nowrap">
         <TextInput
           value={search}
           onChange={(event) => setSearch(event.currentTarget.value)}
           placeholder={t('tickets.searchPlaceholder')}
           leftSection={<IconSearch size={16} />}
-          style={{ maxWidth: 420, width: '100%' }}
-        />
-
-        <Select
-          value={String(statusFilter)}
-          onChange={(value) =>
-            setStatusFilter(value === 'all' ? 'all' : (Number(value) as TicketStatus))
+          rightSection={
+            search ? (
+              <ActionIcon
+                variant="transparent"
+                size="sm"
+                onClick={() => {
+                  setSearch('');
+                  setDebouncedSearch('');
+                }}
+              >
+                <IconX size={14} />
+              </ActionIcon>
+            ) : undefined
           }
-          data={[
-            { value: 'all', label: t('tickets.statusAll') },
-            { value: String(TICKET_STATUS.Waiting), label: t('tickets.statusWaiting') },
-            { value: String(TICKET_STATUS.InProgress), label: t('tickets.statusInProgress') },
-            { value: String(TICKET_STATUS.Attended), label: t('tickets.statusAttended') },
-            { value: String(TICKET_STATUS.Canceled), label: t('tickets.statusCanceled') },
-          ]}
-          allowDeselect={false}
-          style={{ minWidth: 170 }}
+          style={{ flex: 1, maxWidth: 360 }}
         />
-
-        <Select
-          value={queueFilter}
-          onChange={(value) => setQueueFilter(value ?? 'all')}
-          data={[
-            { value: 'all', label: t('tickets.queueAll') },
-            ...queues.map((queue) => ({ value: queue.id, label: queue.name })),
-          ]}
-          allowDeselect={false}
-          style={{ minWidth: 170 }}
-        />
-
-        <Group align="flex-end" gap="md">
-          <TextInput
-            label={t('tickets.dateFrom')}
-            type="date"
-            value={dateFrom}
-            onChange={(event) => setDateFrom(event.currentTarget.value)}
-            style={{ width: 170 }}
-          />
-
-          <TextInput
-            label={t('tickets.dateTo')}
-            type="date"
-            value={dateTo}
-            onChange={(event) => setDateTo(event.currentTarget.value)}
-            style={{ width: 170 }}
-          />
-        </Group>
 
         <Select
           value={sortDirection}
@@ -296,21 +199,91 @@ export function TicketsPanel() {
             { value: 'asc', label: t('tickets.sortOldest') },
           ]}
           allowDeselect={false}
-          style={{ minWidth: 190 }}
+          style={{ width: 190 }}
         />
 
-        {hasActiveFilters ? (
-          <Button variant="default" leftSection={<IconX size={16} />} onClick={handleClearFilters}>
-            {t('tickets.clearFilters')}
-          </Button>
-        ) : null}
+        <Button
+          variant={activeFilterCount > 0 ? 'light' : 'default'}
+          leftSection={<IconFilter size={16} />}
+          rightSection={
+            activeFilterCount > 0 ? (
+              <Badge size="sm" circle>
+                {activeFilterCount}
+              </Badge>
+            ) : undefined
+          }
+          onClick={() => setFiltersOpened((open) => !open)}
+        >
+          {t('tickets.filters')}
+        </Button>
       </Group>
 
-      {loading ? (
+      <Collapse expanded={filtersOpened}>
+        <Paper withBorder radius="md" p="md">
+          <Group align="flex-end" wrap="wrap">
+            <Select
+              label={t('tickets.status')}
+              value={String(statusFilter)}
+              onChange={(value) =>
+                setStatusFilter(value === 'all' ? 'all' : (Number(value) as TicketStatus))
+              }
+              data={[
+                { value: 'all', label: t('tickets.statusAll') },
+                { value: String(TICKET_STATUS.Waiting), label: t('tickets.statusWaiting') },
+                { value: String(TICKET_STATUS.InProgress), label: t('tickets.statusInProgress') },
+                { value: String(TICKET_STATUS.Attended), label: t('tickets.statusAttended') },
+                { value: String(TICKET_STATUS.Canceled), label: t('tickets.statusCanceled') },
+              ]}
+              allowDeselect={false}
+              style={{ width: 190 }}
+            />
+
+            <Select
+              label={t('tickets.queueTypeFilter')}
+              value={queueFilter}
+              onChange={(value) => setQueueFilter(value ?? 'all')}
+              data={[
+                { value: 'all', label: t('tickets.queueAll') },
+                ...queues.map((queue) => ({ value: queue.id, label: queue.name })),
+              ]}
+              allowDeselect={false}
+              style={{ width: 190 }}
+            />
+
+            <TextInput
+              label={t('tickets.dateFrom')}
+              type="date"
+              value={dateFrom}
+              onChange={(event) => setDateFrom(event.currentTarget.value)}
+              style={{ width: 170 }}
+            />
+
+            <TextInput
+              label={t('tickets.dateTo')}
+              type="date"
+              value={dateTo}
+              onChange={(event) => setDateTo(event.currentTarget.value)}
+              style={{ width: 170 }}
+            />
+
+            {activeFilterCount > 0 ? (
+              <Button
+                variant="subtle"
+                leftSection={<IconX size={16} />}
+                onClick={handleClearFilters}
+              >
+                {t('tickets.clearFilters')}
+              </Button>
+            ) : null}
+          </Group>
+        </Paper>
+      </Collapse>
+
+      {ticketsQuery.isPending ? (
         <Group justify="center" py="xl">
           <Loader />
         </Group>
-      ) : filteredTickets.length === 0 ? (
+      ) : tickets.length === 0 ? (
         <Paper withBorder radius="md" p="xl">
           <Stack align="center" gap={6}>
             <Text fw={600}>{t('tickets.emptyTitle')}</Text>
@@ -336,7 +309,7 @@ export function TicketsPanel() {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {filteredTickets.map((ticket) => (
+              {tickets.map((ticket) => (
                 <Table.Tr key={ticket.id}>
                   <Table.Td>
                     <ActionIcon
@@ -395,14 +368,14 @@ export function TicketsPanel() {
           >
             <Text size="sm" c="dimmed">
               {t('tickets.showing', {
-                from: pagination.total === 0 ? 0 : (page - 1) * pageSize + 1,
-                to: Math.min(page * pageSize, pagination.total),
-                total: pagination.total,
+                from: total === 0 ? 0 : (page - 1) * pageSize + 1,
+                to: Math.min(page * pageSize, total),
+                total,
               })}
             </Text>
 
             <Group gap="xs">
-              <Pagination total={pagination.totalPages} value={page} onChange={setPage} />
+              <Pagination total={totalPages} value={page} onChange={setPage} />
               <Select
                 value={String(pageSize)}
                 onChange={(value) => setPageSize(Number(value) || PAGE_SIZE)}

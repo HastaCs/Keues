@@ -14,26 +14,26 @@ import {
   Text,
   TextInput,
   Title,
-} from "@mantine/core";
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { ApiError } from "@/api/httpClient";
-import { usersApi } from "@/api/UsersApi";
-import { useAuth } from "@/auth/AuthContext";
+} from '@mantine/core';
+import { useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { ApiError } from '@/api/httpClient';
+import { usersApi } from '@/api/UsersApi';
+import { useAuth } from '@/auth/AuthContext';
 
 export default function Login() {
   const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [mode, setMode] = useState<"login" | "forgot">("login");
-  const [forgotEmail, setForgotEmail] = useState("");
+  const [mode, setMode] = useState<'login' | 'forgot'>('login');
+  const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSent, setForgotSent] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -43,9 +43,9 @@ export default function Login() {
 
     try {
       await login(email, password);
-      navigate("/locations", { replace: true });
+      navigate('/locations', { replace: true });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : t("login.failed"));
+      setError(err instanceof ApiError ? err.message : t('login.failed'));
     } finally {
       setLoading(false);
     }
@@ -61,7 +61,7 @@ export default function Login() {
       await usersApi.forgotPassword({ email: forgotEmail });
       setForgotSent(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : t("login.failed"));
+      setError(err instanceof ApiError ? err.message : t('login.failed'));
     } finally {
       setLoading(false);
     }
@@ -71,8 +71,8 @@ export default function Login() {
     <MantineProvider forceColorScheme="light">
       <Box
         style={{
-          minHeight: "100vh",
-          background: "var(--mantine-color-gray-0)",
+          minHeight: '100vh',
+          background: 'var(--mantine-color-gray-0)',
         }}
       >
         <Container size="lg" h="100vh">
@@ -86,23 +86,23 @@ export default function Login() {
                   </Title>
 
                   <Text size="xl" c="dimmed">
-                    {t("login.brandTagline")}
+                    {t('login.brandTagline')}
                   </Text>
 
-                  <Text c="dimmed">{t("login.leftDescription")}</Text>
+                  <Text c="dimmed">{t('login.leftDescription')}</Text>
                 </Stack>
               </Center>
 
               {/* Lado derecho */}
               <Center>
                 <Paper shadow="md" radius="lg" p="xl" w={420} withBorder>
-                  {mode === "login" ? (
+                  {mode === 'login' ? (
                     <form onSubmit={handleSubmit}>
                       <Stack>
-                        <Title order={2}>{t("login.title")}</Title>
+                        <Title order={2}>{t('login.title')}</Title>
 
                         <Text c="dimmed" size="sm">
-                          {t("login.subtitle")}
+                          {t('login.subtitle')}
                         </Text>
 
                         {error && <Alert color="red">{error}</Alert>}
@@ -110,28 +110,28 @@ export default function Login() {
                         <TextInput
                           required
                           type="email"
-                          label={t("login.email")}
-                          placeholder={t("login.emailPlaceholder")}
+                          label={t('login.email')}
+                          placeholder={t('login.emailPlaceholder')}
                           value={email}
                           onChange={(e) => setEmail(e.currentTarget.value)}
                         />
 
                         <PasswordInput
                           required
-                          label={t("login.password")}
+                          label={t('login.password')}
                           placeholder="********"
                           value={password}
                           onChange={(e) => setPassword(e.currentTarget.value)}
                         />
 
                         <Checkbox
-                          label={t("login.remember")}
+                          label={t('login.remember')}
                           checked={remember}
                           onChange={(e) => setRemember(e.currentTarget.checked)}
                         />
 
                         <Button type="submit" fullWidth size="md" loading={loading}>
-                          {t("login.submit")}
+                          {t('login.submit')}
                         </Button>
 
                         <Anchor
@@ -140,38 +140,38 @@ export default function Login() {
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            setMode("forgot");
+                            setMode('forgot');
                             setError(null);
                             setForgotSent(false);
                           }}
                         >
-                          {t("login.forgotPassword")}
+                          {t('login.forgotPassword')}
                         </Anchor>
                       </Stack>
                     </form>
                   ) : (
                     <form onSubmit={handleForgotSubmit}>
                       <Stack>
-                        <Title order={2}>{t("login.forgotTitle")}</Title>
+                        <Title order={2}>{t('login.forgotTitle')}</Title>
 
                         <Text c="dimmed" size="sm">
-                          {t("login.forgotDescription")}
+                          {t('login.forgotDescription')}
                         </Text>
 
-                        {forgotSent && <Alert color="green">{t("login.forgotSent")}</Alert>}
+                        {forgotSent && <Alert color="green">{t('login.forgotSent')}</Alert>}
                         {error && <Alert color="red">{error}</Alert>}
 
                         <TextInput
                           required
                           type="email"
-                          label={t("login.email")}
-                          placeholder={t("login.emailPlaceholder")}
+                          label={t('login.email')}
+                          placeholder={t('login.emailPlaceholder')}
                           value={forgotEmail}
                           onChange={(e) => setForgotEmail(e.currentTarget.value)}
                         />
 
                         <Button type="submit" fullWidth size="md" loading={loading}>
-                          {t("login.forgotSubmit")}
+                          {t('login.forgotSubmit')}
                         </Button>
 
                         <Anchor
@@ -180,11 +180,11 @@ export default function Login() {
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            setMode("login");
+                            setMode('login');
                             setError(null);
                           }}
                         >
-                          {t("login.forgotBack")}
+                          {t('login.forgotBack')}
                         </Anchor>
                       </Stack>
                     </form>

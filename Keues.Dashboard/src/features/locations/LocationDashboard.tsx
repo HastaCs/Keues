@@ -21,25 +21,12 @@ import {
   IconStack2,
   IconUsers,
 } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ApiError } from '@/api/httpClient';
-import { dashboardApi } from '@/api/DashboardApi';
+import { getErrorMessage } from '@/api/getErrorMessage';
+import { useDashboard } from '@/api/hooks/dashboard';
 import type { DashboardSummary } from '@/api/interfaces/Dashboard/Dashboard';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { useActiveLocation } from '@/features/locations/LocationContext';
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
-}
 
 function formatMinutes(value: number | null): string {
   if (value === null || Number.isNaN(value)) {
@@ -231,41 +218,12 @@ export function LocationDashboard() {
   const { t } = useTranslation();
   const location = useActiveLocation();
 
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!location) {
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    dashboardApi
-      .get({ locationId: location.id })
-      .then((response) => {
-        if (!cancelled) {
-          setSummary(response);
-        }
-      })
-      .catch((requestError) => {
-        if (!cancelled) {
-          setError(getErrorMessage(requestError, t('errors.unexpected')));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [location, t]);
+  const summaryQuery = useDashboard(location?.id);
+  const summary = summaryQuery.data ?? null;
+  const loading = summaryQuery.isPending;
+  const error = summaryQuery.isError
+    ? getErrorMessage(summaryQuery.error, t('errors.unexpected'))
+    : null;
 
   if (!location) {
     return null;

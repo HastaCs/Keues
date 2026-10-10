@@ -1,18 +1,9 @@
-import {
-  Button,
-  ColorSwatch,
-  Group,
-  Modal,
-  Stack,
-  Text,
-  TextInput,
-  Textarea,
-} from "@mantine/core";
-import { IconCheck } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { colors } from "../../data/common";
-import { LocationInput, LocationKeue} from "../../api/interfaces/Location/Locations";
+import { Button, ColorSwatch, Group, Modal, Stack, Text, TextInput, Textarea } from '@mantine/core';
+import { IconCheck } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { colors } from '../../data/common';
+import { LocationInput, LocationKeue } from '../../api/interfaces/Location/Locations';
 
 interface LocationFormModalProps {
   opened: boolean;
@@ -30,9 +21,9 @@ interface FormState {
 
 function getInitialState(initialLocation?: LocationKeue): FormState {
   return {
-    name: initialLocation?.name ?? "",
-    description: initialLocation?.description ?? "",
-    color: initialLocation?.color ?? "blue",
+    name: initialLocation?.name ?? '',
+    description: initialLocation?.description ?? '',
+    color: initialLocation?.color ?? 'blue',
   };
 }
 
@@ -45,9 +36,7 @@ export function LocationFormModal({
 }: LocationFormModalProps) {
   const { t } = useTranslation();
 
-  const [formState, setFormState] = useState<FormState>(
-    getInitialState(initialLocation)
-  );
+  const [formState, setFormState] = useState<FormState>(getInitialState(initialLocation));
 
   const [nameError, setNameError] = useState<string | null>(null);
 
@@ -68,7 +57,7 @@ export function LocationFormModal({
     const trimmedName = formState.name.trim();
 
     if (!trimmedName) {
-      setNameError(t("locationForm.nameRequired"));
+      setNameError(t('locationForm.nameRequired'));
       return;
     }
 
@@ -85,18 +74,14 @@ export function LocationFormModal({
     <Modal
       opened={opened}
       onClose={onClose}
-      title={
-        isEditing
-          ? t("locationForm.editTitle")
-          : t("locationForm.createTitle")
-      }
+      title={isEditing ? t('locationForm.editTitle') : t('locationForm.createTitle')}
       centered
     >
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
           <TextInput
-            label={t("locationForm.name")}
-            placeholder={t("locationForm.namePlaceholder")}
+            label={t('locationForm.name')}
+            placeholder={t('locationForm.namePlaceholder')}
             value={formState.name}
             error={nameError}
             withAsterisk
@@ -111,8 +96,8 @@ export function LocationFormModal({
           />
 
           <Textarea
-            label={t("locationForm.description")}
-            placeholder={t("locationForm.descriptionPlaceholder")}
+            label={t('locationForm.description')}
+            placeholder={t('locationForm.descriptionPlaceholder')}
             minRows={3}
             value={formState.description}
             onChange={(event) => {
@@ -126,7 +111,7 @@ export function LocationFormModal({
           />
 
           <Stack gap="xs">
-            <Text fw={500}>{t("locationForm.color")}</Text>
+            <Text fw={500}>{t('locationForm.color')}</Text>
 
             <Group gap="sm">
               {colors.map((color) => (
@@ -134,12 +119,12 @@ export function LocationFormModal({
                   key={color}
                   color={`var(--mantine-color-${color}-6)`}
                   style={{
-                    cursor: "pointer",
-                    borderRadius: "50%",
+                    cursor: 'pointer',
+                    borderRadius: '50%',
                     border:
                       formState.color === color
-                        ? "2px solid var(--mantine-color-black)"
-                        : "2px solid transparent",
+                        ? '2px solid var(--mantine-color-black)'
+                        : '2px solid transparent',
                   }}
                   onClick={() =>
                     setFormState((previous) => ({
@@ -148,27 +133,19 @@ export function LocationFormModal({
                     }))
                   }
                 >
-                  {formState.color === color && (
-                    <IconCheck size={14} color="white" />
-                  )}
+                  {formState.color === color && <IconCheck size={14} color="white" />}
                 </ColorSwatch>
               ))}
             </Group>
           </Stack>
 
           <Group justify="flex-end">
-            <Button
-              variant="default"
-              onClick={onClose}
-              disabled={loading}
-            >
-              {t("common.cancel")}
+            <Button variant="default" onClick={onClose} disabled={loading}>
+              {t('common.cancel')}
             </Button>
 
             <Button type="submit" loading={loading}>
-              {isEditing
-                ? t("locationForm.editAction")
-                : t("locationForm.createAction")}
+              {isEditing ? t('locationForm.editAction') : t('locationForm.createAction')}
             </Button>
           </Group>
         </Stack>

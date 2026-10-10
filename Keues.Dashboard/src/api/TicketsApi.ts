@@ -9,6 +9,10 @@ function buildQuery(params: ListTicketsParams): string {
   const query = new URLSearchParams();
   query.set('locationId', params.locationId);
 
+  if (params.code) {
+    query.set('code', params.code);
+  }
+
   if (params.status !== undefined) {
     query.set('status', String(params.status));
   }
@@ -43,10 +47,6 @@ function buildQuery(params: ListTicketsParams): string {
 export const ticketsApi = {
   list(params: ListTicketsParams) {
     return request<ApiResponse<Ticket[]>>(`${endpoint}?${buildQuery(params)}`);
-  },
-
-  get(id: TicketId) {
-    return request<Ticket>(`${endpoint}/${id}`);
   },
 
   getHistory(id: TicketId) {

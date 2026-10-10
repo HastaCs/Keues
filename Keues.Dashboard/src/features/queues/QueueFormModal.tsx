@@ -19,10 +19,10 @@ import {
 import { IconCheck, IconDeviceDesktop, IconDeviceTv, IconInfoCircle } from '@tabler/icons-react';
 import { colors } from '../../data/common';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { countersApi } from '@/api/CountersApi';
+import { useCounters } from '@/api/hooks/counters';
 
 interface QueueFormModalProps {
   opened: boolean;
@@ -45,12 +45,6 @@ interface QueueFormState {
   color: string;
   resetAt: string;
   locaitonId: string;
-}
-
-interface CounterOption {
-  id: string;
-  code: string;
-  name: string;
 }
 
 function padTimePart(value: number): string {
@@ -107,25 +101,13 @@ export function QueueFormModal(props: QueueFormModalProps) {
 
   const [resetAtEnabled, setResetAtEnabled] = useState(Boolean(initialQueue?.resetAt));
 
-  const [counters, setCounters] = useState<CounterOption[]>([]);
   const [selectedCounters, setSelectedCounters] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (!opened) {
-      return;
-    }
-
-    async function loadCounters() {
-      try {
-        const result = await countersApi.list(locationId);
-        setCounters(result.data.sort((a, b) => a.name.localeCompare(b.name)));
-      } catch {
-        // Ignoramos errores al cargar counters.
-      }
-    }
-
-    loadCounters();
-  }, [opened, locationId]);
+  const countersQuery = useCounters(opened ? locationId : undefined);
+  const counters = useMemo(
+    () => [...(countersQuery.data ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+    [countersQuery.data]
+  );
 
   useEffect(() => {
     if (!opened) {

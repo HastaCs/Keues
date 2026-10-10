@@ -14,13 +14,13 @@ import {
   TextInput,
 } from '@mantine/core';
 import { IconCheck, IconSearch, IconX } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { ApiError } from '@/api/httpClient';
-import { usersApi } from '@/api/UsersApi';
-import { userGroupsApi } from '@/api/UserGroupsApi';
+import { getErrorMessage } from '@/api/getErrorMessage';
+import { useCreateUserGroup, useUpdateUserGroup, useUserGroup } from '@/api/hooks/userGroups';
+import { useUsers } from '@/api/hooks/users';
 import type { User } from '@/api/interfaces/User/Users';
 import type { CreateUserGroupInput, UserGroupUser } from '@/api/interfaces/UserGroup/UserGroups';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
@@ -28,18 +28,6 @@ import { useActiveLocation } from '@/features/locations/LocationContext';
 import { colors } from '@/data/common';
 
 const USERS_LIMIT = 100;
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
-}
 
 export function UserGroupFormPage() {
   const { t } = useTranslation();
@@ -52,72 +40,67 @@ export function UserGroupFormPage() {
   const [color, setColor] = useState('blue');
   const [nameError, setNameError] = useState<string | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<UserGroupUser[]>([]);
-  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [userSearch, setUserSearch] = useState('');
 
+  const groupQuery = useUserGroup(isEditing ? groupId : undefined);
+  const usersQuery = useUsers(
+    {
+      locationId: location?.id ?? '',
+      name: '',
+      isActive: true,
+      page: 1,
+      limit: USERS_LIMIT,
+    },
+    Boolean(location)
+  );
+  const createGroup = useCreateUserGroup(location?.id ?? '');
+  const updateGroup = useUpdateUserGroup(location?.id ?? '');
+
+  const availableUsers = usersQuery.data?.data ?? [];
+
+  const hydratedGroupId = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!location) {
+    const group = groupQuery.data;
+
+    if (!group || hydratedGroupId.current === group.id) {
       return;
     }
 
-    let cancelled = false;
+    hydratedGroupId.current = group.id;
+    setName(group.name);
+    setColor(group.color);
+    setSelectedUsers(group.userIds);
+  }, [groupQuery.data]);
 
-    setLoading(true);
-    setError(null);
+  const loading = usersQuery.isPending || (isEditing && groupQuery.isPending);
 
-    const groupRequest = isEditing && groupId ? userGroupsApi.get(groupId) : Promise.resolve(null);
+  const loadError = usersQuery.isError
+    ? getErrorMessage(usersQuery.error, t('errors.unexpected'))
+    : groupQuery.isError
+      ? getErrorMessage(groupQuery.error, t('errors.unexpected'))
+      : null;
 
-    Promise.all([
-      groupRequest,
-      usersApi.list({
-        locationId: location.id,
-        name: '',
-        isActive: true,
-        page: 1,
-        limit: USERS_LIMIT,
-      }),
-    ])
-      .then(([group, usersResponse]) => {
-        if (cancelled) {
-          return;
-        }
-
-        if (group) {
-          setName(group.name);
-          setColor(group.color);
-          setSelectedUsers(group.userIds);
-        }
-
-        setAvailableUsers(usersResponse.data);
-      })
-      .catch((requestError) => {
-        if (!cancelled) {
-          setError(getErrorMessage(requestError, t('errors.unexpected')));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [location, groupId, isEditing, t]);
+  const mutationError = createGroup.error ?? updateGroup.error;
+  const error = mutationError ? getErrorMessage(mutationError, t('errors.unexpected')) : loadError;
 
   const selectedIds = useMemo(() => new Set(selectedUsers.map((user) => user.id)), [selectedUsers]);
+
+  const sortedSelectedUsers = useMemo(
+    () => [...selectedUsers].sort((a, b) => a.name.localeCompare(b.name, 'es')),
+    [selectedUsers]
+  );
 
   const filteredUsers = useMemo(() => {
     const query = userSearch.trim().toLowerCase();
 
-    return availableUsers.filter(
-      (user) =>
-        !selectedIds.has(user.id) && (query.length === 0 || user.name.toLowerCase().includes(query))
-    );
+    return availableUsers
+      .filter(
+        (user) =>
+          !selectedIds.has(user.id) &&
+          (query.length === 0 || user.name.toLowerCase().includes(query))
+      )
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
   }, [availableUsers, selectedIds, userSearch]);
 
   function addUser(user: User) {
@@ -135,7 +118,7 @@ export function UserGroupFormPage() {
     }
   }
 
-  async function handleSave() {
+  function handleSave() {
     if (!location) {
       return;
     }
@@ -148,8 +131,6 @@ export function UserGroupFormPage() {
     }
 
     setNameError(null);
-    setSaving(true);
-    setError(null);
 
     const payload: CreateUserGroupInput = {
       name: trimmedName,
@@ -158,18 +139,10 @@ export function UserGroupFormPage() {
       userIds: selectedUsers.map((user) => user.id),
     };
 
-    try {
-      if (isEditing && groupId) {
-        await userGroupsApi.update({ id: groupId, ...payload });
-      } else {
-        await userGroupsApi.create(payload);
-      }
-
-      goBack();
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    } finally {
-      setSaving(false);
+    if (isEditing && groupId) {
+      updateGroup.mutate({ id: groupId, ...payload }, { onSuccess: goBack });
+    } else {
+      createGroup.mutate(payload, { onSuccess: goBack });
     }
   }
 
@@ -185,11 +158,15 @@ export function UserGroupFormPage() {
         description={location.name}
         actions={
           <Group>
-            <Button variant="default" onClick={goBack} disabled={saving}>
+            <Button
+              variant="default"
+              onClick={goBack}
+              disabled={createGroup.isPending || updateGroup.isPending}
+            >
               {t('common.cancel')}
             </Button>
 
-            <Button onClick={() => void handleSave()} loading={saving}>
+            <Button onClick={handleSave} loading={createGroup.isPending || updateGroup.isPending}>
               {t('userGroupForm.saveAction')}
             </Button>
           </Group>
@@ -311,7 +288,7 @@ export function UserGroupFormPage() {
                     ) : (
                       <ScrollArea h={420} type="auto">
                         <Stack gap={4}>
-                          {selectedUsers.map((user) => (
+                          {sortedSelectedUsers.map((user) => (
                             <Paper key={user.id} withBorder radius="sm" p="xs">
                               <Group justify="space-between" wrap="nowrap">
                                 <Text size="sm" truncate>

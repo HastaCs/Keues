@@ -20,11 +20,10 @@ import {
   IconTicket,
   IconX,
 } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ApiError } from '@/api/httpClient';
-import { ticketsApi } from '@/api/TicketsApi';
-import type { Ticket, TicketHistory } from '@/api/interfaces/Tickets/Tickets';
+import { getErrorMessage } from '@/api/getErrorMessage';
+import { useTicketHistory } from '@/api/hooks/tickets';
+import type { Ticket } from '@/api/interfaces/Tickets/Tickets';
 
 interface EventMeta {
   labelKey: string;
@@ -52,18 +51,6 @@ const DEFAULT_EVENT_META: EventMeta = {
 
 function getEventMeta(event: string): EventMeta {
   return EVENT_META[event] ?? DEFAULT_EVENT_META;
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
 }
 
 function getInitials(name: string): string {
@@ -97,42 +84,13 @@ interface TicketHistoryModalProps {
 
 export function TicketHistoryModal({ ticket, opened, onClose }: TicketHistoryModalProps) {
   const { t } = useTranslation();
-  const [history, setHistory] = useState<TicketHistory[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!opened || !ticket) {
-      return;
-    }
-
-    let cancelled = false;
-
-    setLoading(true);
-    setError(null);
-
-    ticketsApi
-      .getHistory(ticket.id)
-      .then((response) => {
-        if (!cancelled) {
-          setHistory(response.data);
-        }
-      })
-      .catch((requestError) => {
-        if (!cancelled) {
-          setError(getErrorMessage(requestError, t('tickets.historyError')));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [opened, ticket, t]);
+  const historyQuery = useTicketHistory(opened && ticket ? ticket.id : undefined);
+  const history = historyQuery.data ?? [];
+  const loading = historyQuery.isPending;
+  const error = historyQuery.isError
+    ? getErrorMessage(historyQuery.error, t('tickets.historyError'))
+    : null;
 
   return (
     <Modal opened={opened} onClose={onClose} title={t('tickets.history')} centered size="lg">

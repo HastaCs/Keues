@@ -32,14 +32,16 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import cardHoverClasses from '@/styles/card-hover.module.css';
 import statusDotStyles from '@/styles/status-dot.module.css';
 import { FlowIconKey, FlowMenuItem, Flow, MenuNodeType } from '@/api/interfaces/Flow/Flows';
-import { flowsApi } from '@/api/FlowsApi';
-import { queuesApi } from '@/api/QueuesApi';
+import { useCreateFlow, useFlows, useRemoveFlow, useUpdateFlow } from '@/api/hooks/flows';
+import { useQueues } from '@/api/hooks/queues';
+import { queryKeys } from '@/api/queryKeys';
 import { useActiveLocation } from '@/features/locations/LocationContext';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
@@ -109,12 +111,36 @@ function collectTreeValues(nodes: Tree.NodeData[]): string[] {
   return nodes.flatMap((node) => [node.value, ...collectTreeValues(node.children ?? [])]);
 }
 
+function serializeMenuItems(items: FlowMenuItem[]): string {
+  return JSON.stringify(
+    items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      nodeType: item.nodeType,
+      parentId: item.parentId,
+      queueId: item.queueId,
+      icon: item.icon,
+      color: item.color,
+    }))
+  );
+}
+
 export function FlowsPanel() {
   const location = useActiveLocation();
   const { t } = useTranslation();
   const tree = useTree();
 
-  const [flows, setFlows] = useState<Flow[]>([]);
+  const queryClient = useQueryClient();
+
+  const flowsQuery = useFlows(location?.id);
+  const queuesQuery = useQueues(location?.id);
+  const createFlow = useCreateFlow(location?.id ?? '');
+  const updateFlow = useUpdateFlow(location?.id ?? '');
+  const removeFlow = useRemoveFlow(location?.id ?? '');
+
+  const flows = flowsQuery.data ?? [];
+
   const [activeFlowId, setActiveFlowId] = useState<string | null>(null);
   const [ruleError, setRuleError] = useState<string | null>(null);
   const [flowModalOpened, setFlowModalOpened] = useState(false);
@@ -137,22 +163,13 @@ export function FlowsPanel() {
     }
 
     const flow = flowsRef.current.find((entry) => entry.id === activeFlowId);
-    setSavedMenuItemsJson(flow ? JSON.stringify(flow.menuItems) : '');
+    setSavedMenuItemsJson(flow ? serializeMenuItems(flow.menuItems) : '');
   }, [activeFlowId]);
 
   useEffect(() => {
-    const fetchFlows = async () => {
-      if (!location) {
-        return;
-      }
-
-      const persistedFlows = await flowsApi.list(location.id).then((response) => response.data);
-      setFlows(persistedFlows);
-      setActiveFlowId(null);
-    };
-
-    fetchFlows();
-  }, [location]);
+    setActiveFlowId(null);
+    setPendingSelectedNodeId(null);
+  }, [location?.id]);
 
   const activeFlow = useMemo(
     () => flows.find((flow) => flow.id === activeFlowId),
@@ -175,37 +192,10 @@ export function FlowsPanel() {
     return build(null);
   }, [activeFlow]);
 
-  //De listTicketTypes quiero guardar los tipos de ticket para mostrarlos en el select de ticketTypeId
-  const [QueueOptions, setQueueOptions] = useState<{ value: string; label: string }[]>([]);
-
-  useEffect(() => {
-    if (!activeFlow) {
-      setQueueOptions([]);
-      return;
-    }
-
-    const loadQueueTypes = async () => {
-      try {
-        if (!location) {
-          setQueueOptions([]);
-          return;
-        }
-
-        const types = await queuesApi.list(location.id);
-
-        setQueueOptions(
-          types.data.map((type) => ({
-            value: type.id,
-            label: type.name,
-          }))
-        );
-      } catch {
-        setQueueOptions([]);
-      }
-    };
-
-    loadQueueTypes();
-  }, [activeFlow]);
+  const queueOptions = useMemo(
+    () => (queuesQuery.data ?? []).map((type) => ({ value: type.id, label: type.name })),
+    [queuesQuery.data]
+  );
 
   const activeItemsById = useMemo(() => {
     if (!activeFlow) {
@@ -216,8 +206,8 @@ export function FlowsPanel() {
   }, [activeFlow]);
 
   const queueNameById = useMemo(
-    () => new Map(QueueOptions.map((option) => [option.value, option.label])),
-    [QueueOptions]
+    () => new Map(queueOptions.map((option) => [option.value, option.label])),
+    [queueOptions]
   );
 
   useEffect(() => {
@@ -264,7 +254,8 @@ export function FlowsPanel() {
   const canCreateChild = selectedNode?.nodeType === 'menu';
 
   const hasUnsavedChanges =
-    Boolean(activeFlow) && savedMenuItemsJson !== JSON.stringify(activeFlow?.menuItems);
+    Boolean(activeFlow) &&
+    savedMenuItemsJson !== serializeMenuItems(activeFlow ? activeFlow.menuItems : []);
 
   const parentOptions = useMemo(() => {
     if (!activeFlow || !selectedNode) {
@@ -288,7 +279,7 @@ export function FlowsPanel() {
       return;
     }
 
-    setFlows((previous) =>
+    queryClient.setQueryData<Flow[]>(queryKeys.flows(location?.id ?? ''), (previous = []) =>
       previous.map((flow) => (flow.id === activeFlowId ? mutator(flow) : flow))
     );
   }
@@ -319,8 +310,6 @@ export function FlowsPanel() {
   function submitFlow() {
     const normalizedName = flowName.trim();
 
-    //Mando a la api el flujo para guardarlo
-
     if (editingFlowId) {
       const flowJson = menuItems.map((item) => ({
         id: item.id,
@@ -332,83 +321,45 @@ export function FlowsPanel() {
         icon: item.icon,
         color: item.color,
       }));
-      /* const objectToSend = {
-        Id: editingFlowId,
-        Name: normalizedName,
-        Description: flowDescription.trim(),
-        FlowType: flowMode,
-        FlowJson: JSON.stringify(flowJson),
-      };*/
 
-      flowsApi
-        .update({
+      updateFlow.mutate(
+        {
           id: editingFlowId,
           name: normalizedName,
           description: flowDescription.trim(),
           flowType: flowMode,
           locationId: location?.id ?? '',
           flowJson: JSON.stringify(flowJson),
-        })
+        },
+        { onSuccess: () => setFlowModalOpened(false) }
+      );
 
-        .then(() => {
-          //Actualizo el flujo en la lista de flujos
-          setFlows((previous) =>
-            previous.map((flow) =>
-              flow.id === editingFlowId
-                ? {
-                    ...flow,
-                    name: normalizedName,
-                    description: flowDescription.trim(),
-                    flowType: flowMode,
-                  }
-                : flow
-            )
-          );
-        })
-        .catch(() => {});
-    } else {
-      flowsApi
-        .create({
-          name: normalizedName,
-          description: flowDescription.trim(),
-          flowType: flowMode,
-          locationId: location?.id ?? '',
-          flowJson: '[]',
-        })
-        .then((data) => {
-          //Añadir el flujo a la lista de flujos
-          setFlows((previous) => [...previous, data]);
-          setActiveFlowId(data.id);
-        })
-        .catch(() => {});
-
-      // setFlows((previous) => [...previous, nextFlow]);
-      setActiveFlowId(null);
+      return;
     }
 
-    setFlowModalOpened(false);
+    createFlow.mutate(
+      {
+        name: normalizedName,
+        description: flowDescription.trim(),
+        flowType: flowMode,
+        locationId: location?.id ?? '',
+        flowJson: '[]',
+      },
+      { onSuccess: () => setFlowModalOpened(false) }
+    );
   }
 
   function deleteFlow(flowId: string) {
-    //Hago un fetch con DELETE a la api para eliminar el flujo. EL delete no devuelve nada solo un statos 200 si ha ido bien
-    flowsApi
-      .remove(flowId)
-      .then(() => {
-        setFlows((previous) => previous.filter((entry) => entry.id !== flowId));
+    removeFlow.mutate(flowId, {
+      onSuccess: () => {
         if (activeFlowId === flowId) {
           setActiveFlowId(null);
         }
+
         tree.clearSelected();
         setPendingSelectedNodeId(null);
-      })
-      .catch(() => {});
-
-    /* setFlows((previous) => previous.filter((entry) => entry.id !== flowId));
-    if (activeFlowId === flowId) {
-      setActiveFlowId(null);
-    }
-    tree.clearSelected();
-    setPendingSelectedNodeId(null);*/
+      },
+    });
   }
 
   function handleConfirmDeleteFlow() {
@@ -599,27 +550,27 @@ export function FlowsPanel() {
       FlowJson: JSON.stringify(flujoJson.menuItems),
     };*/
 
-    flowsApi
-      .update({
+    updateFlow.mutate(
+      {
         id: flujoJson.flowId ?? '',
         name: flujoJson.name ?? '',
         description: flujoJson.description ?? '',
         flowType: flujoJson.mode ?? 0,
         locationId: flujoJson.locationId ?? '',
         flowJson: JSON.stringify(flujoJson.menuItems),
-      })
-
-      .then(() => {
-        const savedFlow = flowsRef.current.find((entry) => entry.id === activeFlowId);
-        setSavedMenuItemsJson(JSON.stringify(savedFlow?.menuItems ?? []));
-        notifications.show({
-          title: t('flows.savedTitle'),
-          message: t('flows.savedMessage'),
-          color: 'teal',
-          autoClose: 3000,
-        });
-      })
-      .catch(() => {});
+      },
+      {
+        onSuccess: () => {
+          setSavedMenuItemsJson(serializeMenuItems(activeFlow.menuItems));
+          notifications.show({
+            title: t('flows.savedTitle'),
+            message: t('flows.savedMessage'),
+            color: 'teal',
+            autoClose: 3000,
+          });
+        },
+      }
+    );
   };
 
   if (!location) {
@@ -742,7 +693,7 @@ export function FlowsPanel() {
               color="red"
               onClick={() => {
                 const savedFlow = flowsRef.current.find((entry) => entry.id === activeFlowId);
-                setSavedMenuItemsJson(JSON.stringify(savedFlow?.menuItems ?? []));
+                setSavedMenuItemsJson(savedFlow ? serializeMenuItems(savedFlow.menuItems) : '');
                 setUnsavedModalOpened(false);
                 setActiveFlowId(null);
               }}
@@ -840,11 +791,7 @@ export function FlowsPanel() {
                 </Button>
               }
             />
-          ) : (
-            <Paper withBorder radius="md" p="xl">
-              <Text>{t('flows.selectFlowToEdit')}</Text>
-            </Paper>
-          )
+          ) : null
         ) : (
           <>
             <Group justify="space-between" align="center">
@@ -893,262 +840,261 @@ export function FlowsPanel() {
             ) : (
               <SimpleGrid cols={2} spacing="md">
                 <Card withBorder radius="md" p="md" style={{ minHeight: 560 }}>
-                    <Stack gap="sm">
-                      <Group justify="space-between">
-                        <Text fw={700}>{t('flows.treeTitle')}</Text>
-                        <Group gap={6}>
-                          <Tooltip label={t('flows.addItemRoot')}>
-                            <ActionIcon
-                              variant="light"
-                              color="teal"
-                              onClick={() => createNode('root')}
-                            >
-                              <IconHomePlus size={14} />
-                            </ActionIcon>
-                          </Tooltip>
-                          <Tooltip
-                            label={
-                              canCreateChild
-                                ? t('flows.addItemChild')
-                                : t('flows.selectMenuToInsertChild')
-                            }
+                  <Stack gap="sm">
+                    <Group justify="space-between">
+                      <Text fw={700}>{t('flows.treeTitle')}</Text>
+                      <Group gap={6}>
+                        <Tooltip label={t('flows.addItemRoot')}>
+                          <ActionIcon
+                            variant="light"
+                            color="teal"
+                            onClick={() => createNode('root')}
                           >
-                            <ActionIcon
-                              variant="light"
-                              color="indigo"
-                              onClick={() => createNode('child')}
-                              disabled={!canCreateChild}
-                            >
-                              <IconArrowDown size={14} />
-                            </ActionIcon>
-                          </Tooltip>
-                          <Tooltip label={t('common.delete')}>
-                            <ActionIcon
-                              variant="light"
-                              color="red"
-                              onClick={() => {
-                                if (selectedNodeChildrenCount > 0) {
-                                  setConfirmDeleteNodeOpened(true);
-                                } else {
-                                  deleteSelectedNode();
-                                }
-                              }}
-                              disabled={!selectedNode}
-                            >
-                              <IconTrash size={14} />
-                            </ActionIcon>
-                          </Tooltip>
-                        </Group>
+                            <IconHomePlus size={14} />
+                          </ActionIcon>
+                        </Tooltip>
+                        <Tooltip
+                          label={
+                            canCreateChild
+                              ? t('flows.addItemChild')
+                              : t('flows.selectMenuToInsertChild')
+                          }
+                        >
+                          <ActionIcon
+                            variant="light"
+                            color="indigo"
+                            onClick={() => createNode('child')}
+                            disabled={!canCreateChild}
+                          >
+                            <IconArrowDown size={14} />
+                          </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label={t('common.delete')}>
+                          <ActionIcon
+                            variant="light"
+                            color="red"
+                            onClick={() => {
+                              if (selectedNodeChildrenCount > 0) {
+                                setConfirmDeleteNodeOpened(true);
+                              } else {
+                                deleteSelectedNode();
+                              }
+                            }}
+                            disabled={!selectedNode}
+                          >
+                            <IconTrash size={14} />
+                          </ActionIcon>
+                        </Tooltip>
                       </Group>
+                    </Group>
 
-                      <Text size="xs" c="dimmed">
-                        {t('flows.createHint')}
-                      </Text>
+                    <Text size="xs" c="dimmed">
+                      {t('flows.createHint')}
+                    </Text>
 
-                      <Divider />
+                    <Divider />
 
-                      {treeData.length === 0 ? (
-                        <Text c="dimmed">{t('flows.emptyTree')}</Text>
-                      ) : (
-                        <Tree
-                          data={treeData}
-                          tree={tree}
-                          selectOnClick
-                          expandOnClick={false}
-                          expandOnSpace={false}
-                          withLines
-                          onDragDrop={handleTreeDrop}
-                          allowDrop={({ draggedNode, targetNode, position }) => {
-                            if (!activeFlow || draggedNode === targetNode) {
-                              return false;
-                            }
+                    {treeData.length === 0 ? (
+                      <Text c="dimmed">{t('flows.emptyTree')}</Text>
+                    ) : (
+                      <Tree
+                        data={treeData}
+                        tree={tree}
+                        selectOnClick
+                        expandOnClick={false}
+                        expandOnSpace={false}
+                        withLines
+                        onDragDrop={handleTreeDrop}
+                        allowDrop={({ draggedNode, targetNode, position }) => {
+                          if (!activeFlow || draggedNode === targetNode) {
+                            return false;
+                          }
 
-                            const dragged = activeFlow.menuItems.find(
-                              (item) => item.id === draggedNode
-                            );
-                            const target = activeFlow.menuItems.find(
-                              (item) => item.id === targetNode
-                            );
+                          const dragged = activeFlow.menuItems.find(
+                            (item) => item.id === draggedNode
+                          );
+                          const target = activeFlow.menuItems.find(
+                            (item) => item.id === targetNode
+                          );
 
-                            if (!dragged || !target) {
-                              return false;
-                            }
+                          if (!dragged || !target) {
+                            return false;
+                          }
 
-                            if (position === 'inside' && target.nodeType !== 'menu') {
-                              return false;
-                            }
+                          if (position === 'inside' && target.nodeType !== 'menu') {
+                            return false;
+                          }
 
-                            return !collectDescendantIds(
-                              activeFlow.menuItems,
-                              draggedNode
-                            ).includes(targetNode);
-                          }}
-                          renderNode={({ node, elementProps }) => {
-                            const item = activeItemsById.get(node.value);
-                            if (!item) {
-                              return <Box {...elementProps}>{String(node.label)}</Box>;
-                            }
+                          return !collectDescendantIds(activeFlow.menuItems, draggedNode).includes(
+                            targetNode
+                          );
+                        }}
+                        renderNode={({ node, elementProps }) => {
+                          const item = activeItemsById.get(node.value);
+                          if (!item) {
+                            return <Box {...elementProps}>{String(node.label)}</Box>;
+                          }
 
-                            const itemEmoji = getNodeEmoji(item.icon);
-                            const queueName = item.queueId
-                              ? queueNameById.get(item.queueId)
-                              : undefined;
+                          const itemEmoji = getNodeEmoji(item.icon);
+                          const queueName = item.queueId
+                            ? queueNameById.get(item.queueId)
+                            : undefined;
 
-                            return (
-                              <div {...elementProps}>
-                                <Group gap="xs" wrap="nowrap">
-                                  <Text size="md" lh={1}>
-                                    {itemEmoji}
-                                  </Text>
-                                  <Text size="sm">{item.name}</Text>
+                          return (
+                            <div {...elementProps}>
+                              <Group gap="xs" wrap="nowrap">
+                                <Text size="md" lh={1}>
+                                  {itemEmoji}
+                                </Text>
+                                <Text size="sm">{item.name}</Text>
+                                <Badge
+                                  size="xs"
+                                  variant="light"
+                                  color={item.nodeType === 'ticket' ? 'grape' : 'gray'}
+                                >
+                                  {item.nodeType === 'menu'
+                                    ? t('flows.nodeMenu')
+                                    : t('flows.nodeTicket')}
+                                </Badge>
+                                {item.nodeType === 'ticket' && queueName ? (
                                   <Badge
                                     size="xs"
                                     variant="light"
-                                    color={item.nodeType === 'ticket' ? 'grape' : 'gray'}
+                                    color="blue"
+                                    leftSection={<IconCategory size={10} />}
                                   >
-                                    {item.nodeType === 'menu'
-                                      ? t('flows.nodeMenu')
-                                      : t('flows.nodeTicket')}
+                                    {queueName}
                                   </Badge>
-                                  {item.nodeType === 'ticket' && queueName ? (
-                                    <Badge
-                                      size="xs"
-                                      variant="light"
-                                      color="blue"
-                                      leftSection={<IconCategory size={10} />}
-                                    >
-                                      {queueName}
-                                    </Badge>
-                                  ) : null}
-                                </Group>
-                              </div>
-                            );
-                          }}
-                        />
+                                ) : null}
+                              </Group>
+                            </div>
+                          );
+                        }}
+                      />
+                    )}
+
+                    <Divider />
+
+                    <Group justify="space-between" align="center">
+                      {hasUnsavedChanges ? (
+                        <Group gap={6} wrap="nowrap">
+                          <span className={statusDotStyles.dot} />
+                          <Text size="xs" c="dimmed">
+                            {t('flows.unsavedIndicator')}
+                          </Text>
+                        </Group>
+                      ) : (
+                        <span />
                       )}
 
-                      <Divider />
+                      <Button
+                        variant="filled"
+                        color="blue"
+                        leftSection={<IconDeviceFloppy size={14} />}
+                        onClick={handleSave}
+                      >
+                        {t('flows.save')}
+                      </Button>
+                    </Group>
+                  </Stack>
+                </Card>
 
-                      <Group justify="space-between" align="center">
-                        {hasUnsavedChanges ? (
-                          <Group gap={6} wrap="nowrap">
-                            <span className={statusDotStyles.dot} />
-                            <Text size="xs" c="dimmed">
-                              {t('flows.unsavedIndicator')}
+                <Card withBorder radius="md" p="md" style={{ minHeight: 560 }}>
+                  {!selectedNode ? (
+                    <Text c="dimmed">{t('flows.selectNodeHint')}</Text>
+                  ) : (
+                    <Stack gap="md">
+                      <Text fw={700}>{t('flows.editorTitle')}</Text>
+
+                      <Text fw={500} size="sm">
+                        {t('flows.nodeType')}
+                      </Text>
+
+                      <SegmentedControl
+                        fullWidth
+                        value={selectedNode.nodeType}
+                        onChange={handleNodeTypeChange}
+                        data={[
+                          { value: 'menu', label: t('flows.nodeMenu') },
+                          {
+                            value: 'ticket',
+                            label: t('flows.nodeTicket'),
+                            disabled: selectedNodeChildrenCount > 0,
+                          },
+                        ]}
+                      />
+
+                      <TextInput
+                        label={t('flows.nodeName')}
+                        value={selectedNode.name}
+                        onChange={(event) =>
+                          updateSelectedNode({ name: event.currentTarget.value })
+                        }
+                        withAsterisk
+                        leftSection={
+                          <Tooltip label={t('flows.nodeNameMonitorHelp')} withArrow>
+                            <IconDeviceTv size={16} />
+                          </Tooltip>
+                        }
+                      />
+
+                      <TextInput
+                        label={t('flows.nodeDescription')}
+                        value={selectedNode.description}
+                        onChange={(event) =>
+                          updateSelectedNode({ description: event.currentTarget.value })
+                        }
+                      />
+
+                      <Select
+                        label={t('flows.parentNode')}
+                        value={selectedNode.parentId ?? ''}
+                        onChange={(value) => updateSelectedNode({ parentId: value || null })}
+                        data={parentOptions}
+                        allowDeselect={false}
+                      />
+
+                      {selectedNode.nodeType === 'ticket' ? (
+                        <>
+                          <Select
+                            label={t('flows.ticketType')}
+                            value={selectedNode.queueId}
+                            onChange={(value) => updateSelectedNode({ queueId: value })}
+                            data={queueOptions}
+                            searchable
+                            allowDeselect={false}
+                          />
+
+                          <Stack gap={6}>
+                            <Text fw={600} size="sm">
+                              {t('flows.iconLabel')}
                             </Text>
-                          </Group>
-                        ) : (
-                          <span />
-                        )}
+                            <Group gap="xs">
+                              {iconOptions.map((option) => {
+                                const isActive = selectedNode.icon === option.key;
 
-                        <Button
-                          variant="filled"
-                          color="blue"
-                          leftSection={<IconDeviceFloppy size={14} />}
-                          onClick={handleSave}
-                        >
-                          {t('flows.save')}
-                        </Button>
-                      </Group>
+                                return (
+                                  <ActionIcon
+                                    key={option.key}
+                                    variant={isActive ? 'filled' : 'default'}
+                                    color={isActive ? 'grape' : 'gray'}
+                                    onClick={() => updateSelectedNode({ icon: option.key })}
+                                    aria-label={t(option.labelKey)}
+                                    size="lg"
+                                  >
+                                    <Text size="md" lh={1}>
+                                      {option.emoji}
+                                    </Text>
+                                  </ActionIcon>
+                                );
+                              })}
+                            </Group>
+                          </Stack>
+                        </>
+                      ) : null}
                     </Stack>
-                  </Card>
-
-                  <Card withBorder radius="md" p="md" style={{ minHeight: 560 }}>
-                    {!selectedNode ? (
-                      <Text c="dimmed">{t('flows.selectNodeHint')}</Text>
-                    ) : (
-                      <Stack gap="md">
-                        <Text fw={700}>{t('flows.editorTitle')}</Text>
-
-                        <Text fw={500} size="sm">
-                          {t('flows.nodeType')}
-                        </Text>
-
-                        <SegmentedControl
-                          fullWidth
-                          value={selectedNode.nodeType}
-                          onChange={handleNodeTypeChange}
-                          data={[
-                            { value: 'menu', label: t('flows.nodeMenu') },
-                            {
-                              value: 'ticket',
-                              label: t('flows.nodeTicket'),
-                              disabled: selectedNodeChildrenCount > 0,
-                            },
-                          ]}
-                        />
-
-                        <TextInput
-                          label={t('flows.nodeName')}
-                          value={selectedNode.name}
-                          onChange={(event) =>
-                            updateSelectedNode({ name: event.currentTarget.value })
-                          }
-                          withAsterisk
-                          leftSection={
-                            <Tooltip label={t('flows.nodeNameMonitorHelp')} withArrow>
-                              <IconDeviceTv size={16} />
-                            </Tooltip>
-                          }
-                        />
-
-                        <TextInput
-                          label={t('flows.nodeDescription')}
-                          value={selectedNode.description}
-                          onChange={(event) =>
-                            updateSelectedNode({ description: event.currentTarget.value })
-                          }
-                        />
-
-                        <Select
-                          label={t('flows.parentNode')}
-                          value={selectedNode.parentId ?? ''}
-                          onChange={(value) => updateSelectedNode({ parentId: value || null })}
-                          data={parentOptions}
-                          allowDeselect={false}
-                        />
-
-                        {selectedNode.nodeType === 'ticket' ? (
-                          <>
-                            <Select
-                              label={t('flows.ticketType')}
-                              value={selectedNode.queueId}
-                              onChange={(value) => updateSelectedNode({ queueId: value })}
-                              data={QueueOptions}
-                              searchable
-                              allowDeselect={false}
-                            />
-
-                            <Stack gap={6}>
-                              <Text fw={600} size="sm">
-                                {t('flows.iconLabel')}
-                              </Text>
-                              <Group gap="xs">
-                                {iconOptions.map((option) => {
-                                  const isActive = selectedNode.icon === option.key;
-
-                                  return (
-                                    <ActionIcon
-                                      key={option.key}
-                                      variant={isActive ? 'filled' : 'default'}
-                                      color={isActive ? 'grape' : 'gray'}
-                                      onClick={() => updateSelectedNode({ icon: option.key })}
-                                      aria-label={t(option.labelKey)}
-                                      size="lg"
-                                    >
-                                      <Text size="md" lh={1}>
-                                        {option.emoji}
-                                      </Text>
-                                    </ActionIcon>
-                                  );
-                                })}
-                              </Group>
-                            </Stack>
-                          </>
-                        ) : null}
-                      </Stack>
-                    )}
-                  </Card>
+                  )}
+                </Card>
               </SimpleGrid>
             )}
           </>

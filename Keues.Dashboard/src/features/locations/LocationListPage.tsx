@@ -24,28 +24,25 @@ import {
   IconSearch,
   IconTrash,
 } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { ApiError } from '@/api/httpClient';
-import { locationsApi } from '@/api/LocationsApi';
+import { getErrorMessage } from '@/api/getErrorMessage';
+import {
+  useCreateLocation,
+  useLocations,
+  useRemoveLocation,
+  useUpdateLocation,
+} from '@/api/hooks/locations';
+import {
+  LocationInput,
+  LocationKeue,
+  UpdateLocationInput,
+} from '@/api/interfaces/Location/Locations';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import cardHoverClasses from '@/styles/card-hover.module.css';
 import { LocationFormModal } from './LocationFormModal';
-import { LocationInput, LocationKeue } from '@/api/interfaces/Location/Locations';
-
-function getErrorMessage(error: unknown, fallbackMessage: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallbackMessage;
-}
 
 function sortLocations(items: LocationKeue[], direction: string): LocationKeue[] {
   const sorted = [...items].sort((left, right) => left.name.localeCompare(right.name, 'es'));
@@ -55,33 +52,24 @@ function sortLocations(items: LocationKeue[], direction: string): LocationKeue[]
 export function LocationListPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [locations, setLocations] = useState<LocationKeue[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [sortDirection, setSortDirection] = useState<string>('asc');
   const [formOpened, setFormOpened] = useState(false);
   const [editingLocation, setEditingLocation] = useState<LocationKeue | undefined>(undefined);
   const [deletingLocation, setDeletingLocation] = useState<LocationKeue | undefined>(undefined);
 
-  const refreshLocations = useCallback(async () => {
-    setError(null);
-    setLoading(true);
+  const locationsQuery = useLocations();
+  const createLocation = useCreateLocation();
+  const updateLocation = useUpdateLocation();
+  const removeLocation = useRemoveLocation();
 
-    try {
-      const response = await locationsApi.list();
-      setLocations(response.data);
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
+  const locations = locationsQuery.data ?? [];
 
-  useEffect(() => {
-    void refreshLocations();
-  }, [refreshLocations]);
+  const loadError = locationsQuery.isError
+    ? getErrorMessage(locationsQuery.error, t('errors.unexpected'))
+    : null;
+  const mutationError = createLocation.error ?? updateLocation.error ?? removeLocation.error;
+  const error = mutationError ? getErrorMessage(mutationError, t('errors.unexpected')) : loadError;
 
   const filteredLocations = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -107,45 +95,33 @@ export function LocationListPage() {
   }
 
   async function handleSubmitLocation(payload: LocationInput) {
-    setSaving(true);
-    setError(null);
-
-    try {
-      if (editingLocation) {
-        await locationsApi.update({
-          id: editingLocation.id,
-          name: payload.name,
-          description: payload.description,
-          color: payload.color,
-        });
-      } else {
-        await locationsApi.create(payload);
-      }
-
+    const closeForm = () => {
       setFormOpened(false);
       setEditingLocation(undefined);
-      await refreshLocations();
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    } finally {
-      setSaving(false);
+    };
+
+    if (editingLocation) {
+      const input: UpdateLocationInput = {
+        id: editingLocation.id,
+        name: payload.name,
+        description: payload.description,
+        color: payload.color,
+      };
+
+      updateLocation.mutate(input, { onSuccess: closeForm });
+    } else {
+      createLocation.mutate(payload, { onSuccess: closeForm });
     }
   }
 
-  async function handleConfirmDeleteLocation() {
+  function handleConfirmDeleteLocation() {
     if (!deletingLocation) {
       return;
     }
 
-    setError(null);
-
-    try {
-      await locationsApi.remove(deletingLocation.id);
-      setDeletingLocation(undefined);
-      await refreshLocations();
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    }
+    removeLocation.mutate(deletingLocation.id, {
+      onSuccess: () => setDeletingLocation(undefined),
+    });
   }
 
   return (
@@ -176,7 +152,7 @@ export function LocationListPage() {
       <LocationFormModal
         opened={formOpened}
         initialLocation={editingLocation}
-        loading={saving}
+        loading={createLocation.isPending || updateLocation.isPending}
         onClose={() => setFormOpened(false)}
         onSubmit={handleSubmitLocation}
       />
@@ -218,7 +194,7 @@ export function LocationListPage() {
           />
         </Group>
 
-        {loading ? (
+        {locationsQuery.isPending ? (
           <Center py={64}>
             <Loader />
           </Center>

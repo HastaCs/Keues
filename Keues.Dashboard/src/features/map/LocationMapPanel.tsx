@@ -25,15 +25,14 @@ import {
   type ReactFlowInstance,
 } from '@xyflow/react';
 import { IconAlertTriangle, IconArmchair, IconGitBranch, IconRefresh } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { countersApi } from '@/api/CountersApi';
-import { flowsApi } from '@/api/FlowsApi';
-import { ApiError } from '@/api/httpClient';
-import { queuesApi } from '@/api/QueuesApi';
-import { userGroupsApi } from '@/api/UserGroupsApi';
-import { usersApi } from '@/api/UsersApi';
-import type { User } from '@/api/interfaces/User/Users';
+import { getErrorMessage } from '@/api/getErrorMessage';
+import { useCounters } from '@/api/hooks/counters';
+import { useFlows } from '@/api/hooks/flows';
+import { useQueues } from '@/api/hooks/queues';
+import { useUserGroups } from '@/api/hooks/userGroups';
+import { useAllUsers } from '@/api/hooks/users';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
 import { useActiveLocation } from '@/features/locations/LocationContext';
@@ -43,46 +42,6 @@ import { MapNode } from './MapNode';
 import type { MapGraph, MapGraphNode, MapView } from './types';
 
 const nodeTypes = { mapNode: MapNode };
-
-const USERS_PAGE_LIMIT = 100;
-const USERS_MAX_PAGES = 100;
-
-async function fetchAllUsers(locationId: string): Promise<User[]> {
-  const all: User[] = [];
-  let page = 1;
-
-  for (;;) {
-    const response = await usersApi.list({
-      locationId,
-      page,
-      limit: USERS_PAGE_LIMIT,
-      sortOrder: 'asc',
-    });
-
-    all.push(...response.data);
-
-    const totalPages = response.pagination?.totalPages ?? 1;
-    if (response.data.length < USERS_PAGE_LIMIT || page >= totalPages || page >= USERS_MAX_PAGES) {
-      break;
-    }
-
-    page += 1;
-  }
-
-  return all;
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
-}
 
 function FitViewOnChange({ trigger }: { trigger: unknown }) {
   const { fitView } = useReactFlow();
@@ -145,13 +104,58 @@ export function LocationMapPanel() {
   const { colorScheme } = useMantineColorScheme();
 
   const [view, setView] = useState<MapView>('machines');
-  const [source, setSource] = useState<MapSourceData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [issuesOpened, setIssuesOpened] = useState(false);
   const [selectedCounters, setSelectedCounters] = useState<string[] | null>(null);
   const [selectedFlows, setSelectedFlows] = useState<string[] | null>(null);
   const [instance, setInstance] = useState<ReactFlowInstance<MapGraphNode, Edge> | null>(null);
+
+  const queuesQuery = useQueues(location?.id);
+  const countersQuery = useCounters(location?.id);
+  const groupsQuery = useUserGroups(location?.id);
+  const flowsQuery = useFlows(location?.id);
+  const usersQuery = useAllUsers(location?.id);
+
+  const source = useMemo<MapSourceData | null>(() => {
+    if (
+      !queuesQuery.data ||
+      !countersQuery.data ||
+      !groupsQuery.data ||
+      !flowsQuery.data ||
+      !usersQuery.data
+    ) {
+      return null;
+    }
+
+    return {
+      queues: queuesQuery.data,
+      counters: countersQuery.data,
+      groups: groupsQuery.data,
+      flows: flowsQuery.data,
+      users: usersQuery.data,
+    };
+  }, [queuesQuery.data, countersQuery.data, groupsQuery.data, flowsQuery.data, usersQuery.data]);
+
+  const loading =
+    queuesQuery.isPending ||
+    countersQuery.isPending ||
+    groupsQuery.isPending ||
+    flowsQuery.isPending ||
+    usersQuery.isPending;
+
+  const isFetching =
+    queuesQuery.isFetching ||
+    countersQuery.isFetching ||
+    groupsQuery.isFetching ||
+    flowsQuery.isFetching ||
+    usersQuery.isFetching;
+
+  const queryError =
+    queuesQuery.error ??
+    countersQuery.error ??
+    groupsQuery.error ??
+    flowsQuery.error ??
+    usersQuery.error;
+  const error = queryError ? getErrorMessage(queryError, t('errors.unexpected')) : null;
 
   const allCounterIds = useMemo(
     () => source?.counters.map((counter) => counter.id) ?? [],
@@ -176,40 +180,15 @@ export function LocationMapPanel() {
     [source]
   );
 
-  const load = useCallback(async () => {
-    if (!location) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const [queues, counters, groups, flows, users] = await Promise.all([
-        queuesApi.list(location.id),
-        countersApi.list(location.id),
-        userGroupsApi.list(location.id),
-        flowsApi.list(location.id),
-        fetchAllUsers(location.id),
-      ]);
-
-      setSource({
-        queues: queues.data,
-        counters: counters.data,
-        groups: groups.data,
-        flows: flows.data,
-        users,
-      });
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    } finally {
-      setLoading(false);
-    }
-  }, [location, t]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  function handleRefresh() {
+    void Promise.all([
+      queuesQuery.refetch(),
+      countersQuery.refetch(),
+      groupsQuery.refetch(),
+      flowsQuery.refetch(),
+      usersQuery.refetch(),
+    ]);
+  }
 
   const graph = useMemo(() => {
     if (!source) {
@@ -245,8 +224,8 @@ export function LocationMapPanel() {
             <Button
               variant="default"
               leftSection={<IconRefresh size={16} />}
-              loading={loading}
-              onClick={() => void load()}
+              loading={isFetching}
+              onClick={handleRefresh}
             >
               {t('map.refresh')}
             </Button>

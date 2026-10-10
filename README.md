@@ -75,7 +75,7 @@ Keues se compone de cuatro aplicaciones que trabajan juntas:
 
 | Aplicación | Quién la usa | Qué hace |
 |---|---|---|
-| [**Keues**](https://github.com/HastaCs/Keues) *(este repo)* | Administrador | API central + dashboard web de configuración y seguimiento en tiempo real |
+| [**Keues**](https://github.com/HastaCs/Keues) *(este repo)* | Administrador | API central + dashboard web de configuración y seguimiento |
 | [**Keues-Counter**](https://github.com/HastaCs/Keues-Counter) | Operador del mostrador | Llama el siguiente turno, marca tickets como atendidos o libera el puesto |
 | [**Keues-Monitors**](https://github.com/HastaCs/Keues-Monitors) | Pantallas visibles al cliente | Muestra el turno actual y el mostrador al que debe ir el cliente |
 | [**Keues-TicketMachine**](https://github.com/HastaCs/Keues-TicketMachine) | Cliente (kiosco táctil) | Muestra el menú de servicios y entrega el número de turno |
@@ -107,11 +107,11 @@ El algoritmo de selección del siguiente turno combina tres mecanismos:
 - **Envejecimiento (aging)** — cada X minutos que un ticket lleva esperando, sube automáticamente un punto de prioridad, evitando que nadie espere indefinidamente aunque su cola tenga menor prioridad base.
 
 ### Dashboard de administración
-Panel web con seguimiento en tiempo real de cada establecimiento:
+Panel web con seguimiento de cada establecimiento:
 
 - KPIs del día: tickets en espera, en atención, atendidos y cancelados.
 - Tiempo medio de espera y tiempo medio de servicio.
-- Vista en tiempo real de qué mostrador está atendiendo qué turno y desde cuándo.
+- Vista de qué mostrador está atendiendo qué turno y desde cuándo.
 - Tickets esperando por cola ordenados por antigüedad.
 - Historial completo con filtros por estado, cola, rango de fechas y búsqueda libre.
 
@@ -122,7 +122,7 @@ Panel web con seguimiento en tiempo real de cada establecimiento:
 - **Colores** para colas y mostradores, visibles en el dashboard y en los monitores.
 
 ### Tiempo real sin esfuerzo
-Los monitores y mostradores reciben los cambios al instante. Sin recargar. Sin polling. El administrador también ve el dashboard actualizado en tiempo real.
+Los monitores y mostradores reciben los cambios al instante. Sin recargar. Sin polling.
 
 ### Multi-idioma y tema
 Interfaz disponible en **español e inglés**. Toggle de **tema claro/oscuro** en la barra superior.

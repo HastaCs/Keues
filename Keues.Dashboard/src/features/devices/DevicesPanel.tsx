@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { devicesApi } from '@/api/DevicesApi';
+import { useState } from 'react';
+import { getErrorMessage } from '@/api/getErrorMessage';
+import { useDevices, useRemoveDevice } from '@/api/hooks/devices';
 
 import {
   Alert,
@@ -80,67 +81,30 @@ function formatLastConnection(
 export function DevicesPanel({ ns, deviceType, icon: DeviceIcon }: DevicesPanelProps) {
   const { t } = useTranslation();
   const location = useActiveLocation();
-  const [machines, setMachines] = useState<Device[]>([]);
-
-  const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState<string | null>(null);
 
   const [deletingDevice, setDeletingDevice] = useState<Device | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    if (!location) {
-      setMachines([]);
-      setLoading(false);
-      return;
-    }
+  const devicesQuery = useDevices(deviceType, location?.id);
+  const removeDevice = useRemoveDevice(deviceType, location?.id ?? '');
 
-    void cargarDevices();
-  }, [location]);
+  const machines = devicesQuery.data ?? [];
+  const loading = devicesQuery.isPending;
 
-  async function cargarDevices() {
-    if (!location) {
-      return;
-    }
+  const loadError = devicesQuery.isError
+    ? getErrorMessage(devicesQuery.error, t(`${ns}.loadError`))
+    : null;
+  const error = removeDevice.error
+    ? getErrorMessage(removeDevice.error, t('errors.unexpected'))
+    : loadError;
 
-    try {
-      setLoading(true);
-      setError(null);
-
-      let response;
-
-      if (deviceType === 0) {
-        response = await devicesApi.listMachines(location.id);
-      } else if (deviceType === 1) {
-        response = await devicesApi.listCounters(location.id);
-      } else {
-        response = await devicesApi.listMonitors(location.id);
-      }
-
-      setMachines(response.data ?? []);
-    } catch (error: any) {
-      setError(error.message ?? t(`${ns}.loadError`));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleConfirmDelete() {
+  function handleConfirmDelete() {
     if (!deletingDevice) {
       return;
     }
 
-    try {
-      setDeleting(true);
-      await devicesApi.remove(deletingDevice.id);
-      setDeletingDevice(null);
-      await cargarDevices();
-    } catch (requestError: any) {
-      setError(requestError.message ?? t('errors.unexpected'));
-    } finally {
-      setDeleting(false);
-    }
+    removeDevice.mutate(deletingDevice.id, {
+      onSuccess: () => setDeletingDevice(null),
+    });
   }
 
   if (!location) {
@@ -165,11 +129,15 @@ export function DevicesPanel({ ns, deviceType, icon: DeviceIcon }: DevicesPanelP
           </Text>
 
           <Group justify="flex-end">
-            <Button variant="default" onClick={() => setDeletingDevice(null)} disabled={deleting}>
+            <Button
+              variant="default"
+              onClick={() => setDeletingDevice(null)}
+              disabled={removeDevice.isPending}
+            >
               {t('common.cancel')}
             </Button>
 
-            <Button color="red" onClick={handleConfirmDelete} loading={deleting}>
+            <Button color="red" onClick={handleConfirmDelete} loading={removeDevice.isPending}>
               {t('common.delete')}
             </Button>
           </Group>

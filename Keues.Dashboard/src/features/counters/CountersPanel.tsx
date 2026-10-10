@@ -35,32 +35,25 @@ import {
   IconUser,
   IconUsersGroup,
 } from '@tabler/icons-react';
-import { countersApi } from '@/api/CountersApi';
-import { queuesApi } from '@/api/QueuesApi';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { ApiError } from '@/api/httpClient';
 
-import styles from '@/styles/hover-card.module.css';
-
-import { CounterFormModal } from './CounterFormModal';
+import { getErrorMessage } from '@/api/getErrorMessage';
+import {
+  useCounters,
+  useCreateCounter,
+  useRemoveCounter,
+  useUpdateCounter,
+} from '@/api/hooks/counters';
+import { useQueues } from '@/api/hooks/queues';
 import { Counter, CreateCounterInput } from '@/api/interfaces/Counter/Counters';
-import { useActiveLocation } from '@/features/locations/LocationContext';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
+import { useActiveLocation } from '@/features/locations/LocationContext';
+import { CounterFormModal } from './CounterFormModal';
 
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
-}
+import styles from '@/styles/hover-card.module.css';
 
 type CounterView = 'cards' | 'table';
 
@@ -157,11 +150,6 @@ function SortableTh({
   );
 }
 
-interface QueueMeta {
-  name: string;
-  color: string;
-}
-
 export function CountersPanel() {
   const { t } = useTranslation();
 
@@ -169,13 +157,11 @@ export function CountersPanel() {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [counters, setCounters] = useState<Counter[]>([]);
-
-  const [loading, setLoading] = useState(true);
-
-  const [saving, setSaving] = useState(false);
-
-  const [error, setError] = useState<string | null>(null);
+  const countersQuery = useCounters(location?.id);
+  const queuesQuery = useQueues(location?.id);
+  const createCounter = useCreateCounter(location?.id ?? '');
+  const updateCounter = useUpdateCounter(location?.id ?? '');
+  const removeCounter = useRemoveCounter(location?.id ?? '');
 
   const [search, setSearch] = useState('');
 
@@ -183,44 +169,30 @@ export function CountersPanel() {
 
   const [view, setView] = useState<CounterView>(getStoredView);
 
-  const [queueMeta, setQueueMeta] = useState<Record<string, QueueMeta>>({});
-
   const [formOpened, setFormOpened] = useState(false);
 
   const [editingCounter, setEditingCounter] = useState<Counter | undefined>();
 
   const [deletingCounter, setDeletingCounter] = useState<Counter | undefined>();
 
-  const refreshCounters = useCallback(async () => {
-    if (!location) {
-      return;
-    }
+  const counters = countersQuery.data ?? [];
 
-    setError(null);
-    setLoading(true);
+  const queueMeta = useMemo(() => {
+    const queues = queuesQuery.data ?? [];
 
-    try {
-      const response = await countersApi.list(location.id);
+    return Object.fromEntries(
+      queues.map((queue) => [queue.id, { name: queue.name, color: queue.color }])
+    );
+  }, [queuesQuery.data]);
 
-      setCounters(response.data);
+  const loadError = countersQuery.isError
+    ? getErrorMessage(countersQuery.error, t('errors.unexpected'))
+    : queuesQuery.isError
+      ? getErrorMessage(queuesQuery.error, t('errors.unexpected'))
+      : null;
 
-      const queuesResponse = await queuesApi.list(location.id);
-
-      setQueueMeta(
-        Object.fromEntries(
-          queuesResponse.data.map((queue) => [queue.id, { name: queue.name, color: queue.color }])
-        )
-      );
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    } finally {
-      setLoading(false);
-    }
-  }, [location]);
-
-  useEffect(() => {
-    void refreshCounters();
-  }, [refreshCounters]);
+  const mutationError = createCounter.error ?? updateCounter.error ?? removeCounter.error;
+  const error = mutationError ? getErrorMessage(mutationError, t('errors.unexpected')) : loadError;
 
   useEffect(() => {
     const openId = searchParams.get('open');
@@ -283,48 +255,26 @@ export function CountersPanel() {
   }
 
   async function handleSubmitCounter(payload: CreateCounterInput) {
-    if (!location) {
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-
-    try {
-      if (editingCounter) {
-        await countersApi.update({ id: editingCounter.id, ...payload });
-      } else {
-        await countersApi.create(payload);
-      }
-
+    const closeForm = () => {
       setFormOpened(false);
-
       setEditingCounter(undefined);
+    };
 
-      await refreshCounters();
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    } finally {
-      setSaving(false);
+    if (editingCounter) {
+      updateCounter.mutate({ ...payload, id: editingCounter.id }, { onSuccess: closeForm });
+    } else {
+      createCounter.mutate(payload, { onSuccess: closeForm });
     }
   }
 
-  async function handleConfirmDeleteCounter() {
+  function handleConfirmDeleteCounter() {
     if (!deletingCounter) {
       return;
     }
 
-    setError(null);
-
-    try {
-      await countersApi.remove(deletingCounter.id);
-
-      setDeletingCounter(undefined);
-
-      await refreshCounters();
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('errors.unexpected')));
-    }
+    removeCounter.mutate(deletingCounter.id, {
+      onSuccess: () => setDeletingCounter(undefined),
+    });
   }
 
   if (!location) {
@@ -361,7 +311,7 @@ export function CountersPanel() {
       <CounterFormModal
         opened={formOpened}
         initialCounter={editingCounter}
-        loading={saving}
+        loading={createCounter.isPending || updateCounter.isPending}
         locationId={location.id}
         onClose={() => setFormOpened(false)}
         onSubmit={handleSubmitCounter}
@@ -460,7 +410,7 @@ export function CountersPanel() {
           </Group>
         </Group>
 
-        {loading ? (
+        {countersQuery.isPending ? (
           <Group justify="center" py="xl">
             <Loader />
           </Group>

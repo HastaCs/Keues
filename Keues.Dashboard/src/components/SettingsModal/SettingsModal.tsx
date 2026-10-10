@@ -12,27 +12,14 @@ import {
   TextInput,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ApiError } from '@/api/httpClient';
-import type { WebhookEventGroups } from '@/api/interfaces/Webhooks/Webhooks';
-import { webhooksApi } from '@/api/WebhooksApi';
+import { getErrorMessage } from '@/api/getErrorMessage';
+import { useUpdateWebhooksConfig, useWebhookEvents, useWebhooksConfig } from '@/api/hooks/webhooks';
 
 interface SettingsModalProps {
   opened: boolean;
   onClose: () => void;
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
 }
 
 function groupLabel(group: string): string {
@@ -46,49 +33,44 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
   const [url, setUrl] = useState('');
   const [key, setKey] = useState('');
   const [enabled, setEnabled] = useState(false);
-  const [eventGroups, setEventGroups] = useState<WebhookEventGroups>({});
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
 
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const configQuery = useWebhooksConfig(opened);
+  const eventsQuery = useWebhookEvents(opened);
+  const updateConfig = useUpdateWebhooksConfig();
+
+  const eventGroups = eventsQuery.data ?? {};
+
+  const hydratedRef = useRef(false);
 
   useEffect(() => {
     if (!opened) {
+      hydratedRef.current = false;
       return;
     }
 
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
+    if (hydratedRef.current || !configQuery.data) {
+      return;
+    }
 
-    Promise.all([webhooksApi.get(), webhooksApi.events()])
-      .then(([config, events]) => {
-        if (cancelled) {
-          return;
-        }
+    hydratedRef.current = true;
+    setUrl(configQuery.data.url);
+    setKey(configQuery.data.key);
+    setEnabled(configQuery.data.enabled);
+    setSelectedEvents(configQuery.data.events);
+  }, [opened, configQuery.data]);
 
-        setUrl(config.url);
-        setKey(config.key);
-        setEnabled(config.enabled);
-        setSelectedEvents(config.events);
-        setEventGroups(events);
-      })
-      .catch((requestError) => {
-        if (!cancelled) {
-          setError(getErrorMessage(requestError, t('webhooks.loadError')));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
+  const loading = configQuery.isPending || eventsQuery.isPending;
 
-    return () => {
-      cancelled = true;
-    };
-  }, [opened, t]);
+  const loadError = configQuery.isError
+    ? getErrorMessage(configQuery.error, t('webhooks.loadError'))
+    : eventsQuery.isError
+      ? getErrorMessage(eventsQuery.error, t('webhooks.loadError'))
+      : null;
+  const saveError = updateConfig.error
+    ? getErrorMessage(updateConfig.error, t('webhooks.saveError'))
+    : null;
+  const error = saveError ?? loadError;
 
   function handleLanguageSelect(value: string | null) {
     if (value === 'es' || value === 'en') {
@@ -102,23 +84,18 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
     );
   }
 
-  async function handleSave() {
-    setSaving(true);
-    setError(null);
-
-    try {
-      await webhooksApi.update({
+  function handleSave() {
+    updateConfig.mutate(
+      {
         url: url.trim(),
         key: key.trim(),
         events: selectedEvents,
         enabled,
-      });
-      notifications.show({ message: t('webhooks.saved'), color: 'green' });
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, t('webhooks.saveError')));
-    } finally {
-      setSaving(false);
-    }
+      },
+      {
+        onSuccess: () => notifications.show({ message: t('webhooks.saved'), color: 'green' }),
+      }
+    );
   }
 
   return (
@@ -204,7 +181,7 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
                   {t('common.cancel')}
                 </Button>
 
-                <Button onClick={() => void handleSave()} loading={saving}>
+                <Button onClick={handleSave} loading={updateConfig.isPending}>
                   {t('webhooks.save')}
                 </Button>
               </Group>
