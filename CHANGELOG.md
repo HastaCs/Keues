@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.0](https://github.com/HastaCs/Keues/compare/v1.6.0...v1.7.0) (2026-10-10)
+
+
+### 🚀 Features
+
+* Added TanStack ([a0404d9](https://github.com/HastaCs/Keues/commit/a0404d9a1170b3dd392fadec0bf6c5d39828b7c9))
+
+
+### 🐛 Bug Fixes
+
+* use contains instead of exact match for Code filter ([4cce2f1](https://github.com/HastaCs/Keues/commit/4cce2f1e4acd1c2046772b62a5fea4f9ab2e48ed))
+
 ## [1.6.0](https://github.com/HastaCs/Keues/compare/v1.5.0...v1.6.0) (2026-10-09)
 
 
