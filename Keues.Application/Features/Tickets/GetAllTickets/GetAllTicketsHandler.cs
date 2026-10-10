@@ -14,9 +14,9 @@ public class GetAllTicketsHandler
   public async Task<GetAllTicketsResponse> Handle(GetAllTicketsCommand request)
   {
     var ticketQuery = _context.Tickets.AsQueryable();
-    if(request.Code != null)
+    if(!string.IsNullOrWhiteSpace(request.Code))
     {
-      ticketQuery = ticketQuery.Where(t => t.Code == request.Code);
+      ticketQuery = ticketQuery.Where(t => t.Code.Contains(request.Code));
     }
     if(request.CreatedFrom != null)
     {

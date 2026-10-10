@@ -27,6 +27,7 @@ namespace Keues.API.Controllers
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Get([FromQuery] GetAllTicketsCommand command)
     {
+      command = command with { Code = command.Code?.Trim().ToUpper() };
       try
       {
         var result = await ticketsUseCases.GetAllTickets.Handle(command);
