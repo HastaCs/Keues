@@ -23,9 +23,11 @@ import {
   IconArrowDown,
   IconArrowLeft,
   IconCategory,
+  IconCopy,
   IconDeviceFloppy,
   IconDeviceTv,
   IconEdit,
+  IconExternalLink,
   IconHomePlus,
   IconInfoCircle,
   IconPlus,
@@ -45,6 +47,7 @@ import { queryKeys } from '@/api/queryKeys';
 import { useActiveLocation } from '@/features/locations/LocationContext';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { PageHeader } from '@/components/PageHeader/PageHeader';
+import { buildManualMonitorUrl } from './manualMonitorUrl';
 
 interface IconOption {
   key: FlowIconKey;
@@ -209,6 +212,17 @@ export function FlowsPanel() {
     () => new Map(queueOptions.map((option) => [option.value, option.label])),
     [queueOptions]
   );
+
+  const manualMonitorUrl = useMemo(() => {
+    if (!activeFlow || activeFlow.flowType !== 2 || !location?.id) {
+      return null;
+    }
+
+    return buildManualMonitorUrl(window.location.href, {
+      locationId: location.id,
+      flowId: activeFlow.id,
+    });
+  }, [activeFlow, location?.id]);
 
   useEffect(() => {
     if (treeData.length === 0) {
@@ -573,6 +587,25 @@ export function FlowsPanel() {
     );
   };
 
+  async function handleCopyManualMonitorUrl() {
+    if (!manualMonitorUrl) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(manualMonitorUrl);
+      notifications.show({
+        color: 'green',
+        message: t('flows.manualMonitorUrlCopied'),
+      });
+    } catch {
+      notifications.show({
+        color: 'red',
+        message: t('flows.manualMonitorUrlCopyError'),
+      });
+    }
+  }
+
   if (!location) {
     return null;
   }
@@ -832,6 +865,46 @@ export function FlowsPanel() {
                 <Badge variant="light">{t(getFlowModeLabelKey(activeFlow.flowType))}</Badge>
               ) : null}
             </Group>
+
+            {manualMonitorUrl ? (
+              <Card withBorder radius="md" p="md">
+                <Stack gap="sm">
+                  <Text fw={700}>{t('flows.manualMonitorUrlTitle')}</Text>
+                  <Text size="sm" c="dimmed">
+                    {t('flows.manualMonitorUrlDescription')}
+                  </Text>
+                  <Group align="end" wrap="nowrap">
+                    <TextInput
+                      label={t('flows.manualMonitorUrlLabel')}
+                      value={manualMonitorUrl}
+                      readOnly
+                      style={{ flex: 1 }}
+                    />
+                    <Tooltip label={t('flows.manualMonitorUrlCopy')}>
+                      <ActionIcon
+                        size="lg"
+                        variant="light"
+                        onClick={() => {
+                          void handleCopyManualMonitorUrl();
+                        }}
+                      >
+                        <IconCopy size={16} />
+                      </ActionIcon>
+                    </Tooltip>
+                    <Button
+                      component="a"
+                      href={manualMonitorUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      variant="light"
+                      leftSection={<IconExternalLink size={14} />}
+                    >
+                      {t('flows.manualMonitorOpen')}
+                    </Button>
+                  </Group>
+                </Stack>
+              </Card>
+            ) : null}
 
             {activeFlow.flowType === 1 ? (
               <Alert color="teal" variant="light" icon={<IconInfoCircle size={18} />} radius="md">

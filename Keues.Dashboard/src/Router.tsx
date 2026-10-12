@@ -16,6 +16,7 @@ import { UserGroupsPanel } from './features/userGroups/UserGroupsPanel';
 import { UserGroupFormPage } from './features/userGroups/UserGroupFormPage';
 import { AppShellLayout } from './layout/AppShellLayout';
 import { HomePage } from './pages/Home.page';
+import { ManualFlowMonitorPage } from './features/monitor/ManualFlowMonitorPage';
 import Login from './components/Login/Login';
 import RegisterAdmin from './components/RegisterAdmin/RegisterAdmin';
 import ResetPassword from './components/ResetPassword/ResetPassword';
@@ -116,6 +117,10 @@ const router = createBrowserRouter([
         ],
       },
     ],
+  },
+  {
+    path: '/monitor/manual',
+    element: <ManualFlowMonitorPage />,
   },
   {
     path: '/login',
