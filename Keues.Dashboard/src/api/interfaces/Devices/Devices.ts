@@ -3,6 +3,7 @@ export interface Device {
   name: string;
   type: number;
   isConnected: boolean;
+  isActive: boolean;
   lastConnection: string | null;
   locationId: string;
 }

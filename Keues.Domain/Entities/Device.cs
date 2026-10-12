@@ -16,5 +16,10 @@ public class Device
   public Location Location { get;  set; } = null!;
   
   public DateTime CreatedAt { get; set; }
-  
+
+  /// <summary>
+  /// Para indicar en el dispositivo si esta activo, si una maquina de tickets no esta activa saldra  en pantalla como no disponible
+  /// </summary>
+  public bool IsActive { get; set; } = true;
+
 }

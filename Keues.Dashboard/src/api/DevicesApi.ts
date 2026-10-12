@@ -15,6 +15,13 @@ export const devicesApi = {
   listMonitors(locationId: LocationId) {
     return request<ApiResponse<Device[]>>(`${endpoint}?deviceType=2&locationId=${locationId}`);
   },
+
+  setActive(id: string, isActive: boolean) {
+    return request<void>(`${endpoint}/${id}/isActive?isActive=${isActive}`, {
+      method: 'PATCH',
+    });
+  },
+
   remove(id: string) {
     return request<void>(`${endpoint}/${id}`, {
       method: 'DELETE',

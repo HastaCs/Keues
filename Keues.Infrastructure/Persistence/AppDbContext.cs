@@ -51,6 +51,10 @@ public class AppDbContext : DbContext, IApplicationDbContext
         .HasConversion(webhooksConverter)
         .IsRequired();
     });
+    
+    modelBuilder.Entity<Device>()
+      .Property(x => x.IsActive)
+      .HasDefaultValue(true);
   }
 
   public DbSet<Ticket> Tickets => Set<Ticket>();

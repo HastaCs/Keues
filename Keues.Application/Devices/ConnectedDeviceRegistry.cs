@@ -1,24 +1,22 @@
-
-
 using Keues.Application.Features.Devices;
 using Keues.Domain.Enums;
 
 namespace Keues.Application.DeviceRegistry;
 
 public record RegistryDevice(Guid Id, DeviceType DeviceType, string ConnectionId);
+
 public class ConnectedDeviceRegistry
 {
-  
   private readonly List<RegistryDevice> _devices = new();
 
   public bool IsConnected(Guid deviceId)
   {
     return _devices.Any(x => x.Id == deviceId);
   }
-  
+
   public void Add(RegistryDevice device)
   {
-    _devices.RemoveAll(x => x.Id == device.Id);    
+    _devices.RemoveAll(x => x.Id == device.Id);
     _devices.Add(device);
   }
 
@@ -28,10 +26,20 @@ public class ConnectedDeviceRegistry
     var device = _devices
       .FirstOrDefault(x => x.ConnectionId == connectionId);
 
-    if (device != null)   
+    if (device != null)
       _devices.Remove(device);
   }
 
+  public RegistryDevice? GetByConnectionId(Guid deviceId)
+  {
+    return _devices.FirstOrDefault(x => x.Id == deviceId);
+  }
+
+  public string GetConnectionId(Guid deviceId)
+  {
+    var device = _devices.FirstOrDefault(x => x.Id == deviceId);
+    return device?.ConnectionId ?? string.Empty;
+  }
 
   public IEnumerable<RegistryDevice> GetAll()
   {

@@ -1,6 +1,3 @@
 namespace Keues.Application.Features.Devices.IsActiveDevice;
 
-public class IsActiveCommand
-{
-  
-}
+public record IsActiveCommand(bool IsActive,Guid DeviceId);

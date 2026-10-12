@@ -28,6 +28,6 @@ public class GetDevicesHandler
 
     var deviceList = await devices.ToListAsync();
 
-    return deviceList.Select(d => new DeviceBaseResponse(d.Id, d.Name, d.Type,d.LastConnection));
+    return deviceList.Select(d => new DeviceBaseResponse(d.Id, d.Name, d.Type,d.LastConnection,d.IsActive));
   }
 }

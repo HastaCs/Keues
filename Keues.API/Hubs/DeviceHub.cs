@@ -29,10 +29,10 @@ public class DeviceHub : Hub
     var flowId = Guid.Parse(http.Request.Query["flowId"]);
     
     var device = new DeviceBaseCommand(id, name, locationId, typeDevice);
-//Añado el device al registro, al grupo de signalr y a la base de datos
 
     _registry.Add(new RegistryDevice(device.Id, device.Type, Context.ConnectionId));
-    
+
+    //Por si hay mas de un device, por ejempo varios monitores en la misma ubicacion
     await Groups.AddToGroupAsync(Context.ConnectionId, $"locationId:{locationId}:typeDevice:{typeDevice}:flowId:{flowId}");
     
     await _deviceUseCases.CreateUpdate.Handle(device);

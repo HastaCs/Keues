@@ -1,6 +1,3 @@
 namespace Keues.Application.Features.Devices.GetDevice;
 
-public class GetDeviceQuery
-{
-  
-}
+public record GetDeviceQuery(Guid DeviceId);

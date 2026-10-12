@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { getErrorMessage } from '@/api/getErrorMessage';
-import { useDevices, useRemoveDevice } from '@/api/hooks/devices';
+import { useDevices, useRemoveDevice, useSetDeviceActive } from '@/api/hooks/devices';
 
 import {
   Alert,
@@ -16,6 +16,7 @@ import {
   Paper,
   SimpleGrid,
   Stack,
+  Switch,
   Text,
   ThemeIcon,
 } from '@mantine/core';
@@ -86,6 +87,7 @@ export function DevicesPanel({ ns, deviceType, icon: DeviceIcon }: DevicesPanelP
 
   const devicesQuery = useDevices(deviceType, location?.id);
   const removeDevice = useRemoveDevice(deviceType, location?.id ?? '');
+  const setActive = useSetDeviceActive(deviceType, location?.id ?? '');
 
   const machines = devicesQuery.data ?? [];
   const loading = devicesQuery.isPending;
@@ -233,18 +235,39 @@ export function DevicesPanel({ ns, deviceType, icon: DeviceIcon }: DevicesPanelP
                     </Stack>
                   </Group>
 
-                  <Text
-                    size="xs"
-                    fw={600}
-                    c={machine.isConnected ? 'green' : 'gray'}
-                    style={{
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {machine.isConnected
-                      ? t(`${ns}.connectedStatus`)
-                      : t(`${ns}.disconnectedStatus`)}
-                  </Text>
+                  <Stack gap={4} align="flex-end">
+                    <Text
+                      size="xs"
+                      fw={600}
+                      c={machine.isConnected ? 'green' : 'gray'}
+                      style={{
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {machine.isConnected
+                        ? t(`${ns}.connectedStatus`)
+                        : t(`${ns}.disconnectedStatus`)}
+                    </Text>
+
+                    {deviceType === 0 ? (
+                      <Switch
+                        size="sm"
+                        color={machine.isActive ? 'green' : 'orange'}
+                        checked={machine.isActive}
+                        labelPosition="left"
+                        disabled={setActive.isPending && setActive.variables?.id === machine.id}
+                        onChange={(event) =>
+                          setActive.mutate({
+                            id: machine.id,
+                            isActive: event.currentTarget.checked,
+                          })
+                        }
+                        label={
+                          machine.isActive ? t(`${ns}.activeStatus`) : t(`${ns}.inactiveStatus`)
+                        }
+                      />
+                    ) : null}
+                  </Stack>
                 </Group>
 
                 <Divider />

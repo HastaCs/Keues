@@ -26,7 +26,7 @@ public class CreateUpdateDeviceHandler
       await _context.Devices.AddAsync(device);
     }
     await _context.SaveChangesAsync();
-    return new DeviceBaseResponse(device.Id, device.Name, device.Type,device.LastConnection);
+    return new DeviceBaseResponse(device.Id, device.Name, device.Type,device.LastConnection,device.IsActive);
   }
 }
   
