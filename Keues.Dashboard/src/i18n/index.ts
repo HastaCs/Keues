@@ -434,6 +434,9 @@ const resources = {
         displayMonitorLocationPlaceholder: 'Selecciona una ubicación',
         displayMonitorFlowPlaceholder: 'Selecciona un flujo',
         displayMonitorSelectPrompt: 'Selecciona una ubicación y un flujo para empezar.',
+        displayMonitorBasicNotice:
+          'Esta es una versión básica del monitor. La versión completa, con más opciones de personalización, la puedes descargar aquí:',
+        displayMonitorDownloadLink: 'keues.dev/downloads',
         manualMonitorStatus: {
           connecting: 'Conectando…',
           connected: 'Conectado',
@@ -1116,6 +1119,9 @@ const resources = {
         displayMonitorLocationPlaceholder: 'Select a location',
         displayMonitorFlowPlaceholder: 'Select a flow',
         displayMonitorSelectPrompt: 'Select a location and a flow to start.',
+        displayMonitorBasicNotice:
+          'This is a basic version of the monitor. The full version, with more customization options, can be downloaded here:',
+        displayMonitorDownloadLink: 'keues.dev/downloads',
         manualMonitorStatus: {
           connecting: 'Connecting…',
           connected: 'Connected',

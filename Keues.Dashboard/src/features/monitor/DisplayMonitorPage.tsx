@@ -1,4 +1,4 @@
-import { Alert, Box, Group, Select, Stack } from '@mantine/core';
+import { Alert, Anchor, Box, Group, Select, Stack, Text } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getErrorMessage } from '@/api/getErrorMessage';
@@ -88,6 +88,19 @@ export function DisplayMonitorPage() {
   return (
     <Box p="md">
       <Stack gap="md">
+        <Alert color="blue">
+          <Text size="sm">
+            {t('flows.displayMonitorBasicNotice')}{' '}
+            <Anchor
+              href="https://www.keues.dev/es/downloads/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('flows.displayMonitorDownloadLink')}
+            </Anchor>
+          </Text>
+        </Alert>
+
         <Group grow>
           <Select
             placeholder={t('flows.displayMonitorLocationPlaceholder')}
