@@ -288,7 +288,6 @@ export function AppShellLayout() {
                           key={item.id}
                           label={t(item.label)}
                           active={isActive(item)}
-                          defaultOpened
                           leftSection={<NavigationIcon size={18} stroke={2.2} />}
                           variant="light"
                           childrenOffset={20}
@@ -325,6 +324,14 @@ export function AppShellLayout() {
                     );
                   })
                 : null}
+
+              <NavLink
+                component={Link}
+                to="/displaymonitor"
+                label={t('sidebar.monitor')}
+                leftSection={<IconDeviceTv size={18} stroke={2.2} />}
+                variant="light"
+              />
             </Stack>
           </ScrollArea>
 
