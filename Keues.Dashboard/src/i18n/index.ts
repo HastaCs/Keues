@@ -84,6 +84,7 @@ const resources = {
         deviceMonitors: 'Monitores',
         deviceTicketMachines: 'Máquinas de turnos',
         map: 'Ver sistema',
+        monitor: 'Monitor',
       },
       dashboard: {
         title: 'Dashboard de la ubicación activa',
@@ -427,6 +428,18 @@ const resources = {
         unsavedMessage: 'Tienes cambios sin guardar. ¿Seguro que quieres salir sin guardar?',
         leaveAnyway: 'Salir sin guardar',
         unsavedIndicator: 'Cambios sin guardar',
+        manualMonitorWaiting: 'Esperando llamadas...',
+        manualMonitorCounter: 'Puesto {{counter}}',
+        monitorFullscreen: 'Pantalla completa',
+        displayMonitorLocationPlaceholder: 'Selecciona una ubicación',
+        displayMonitorFlowPlaceholder: 'Selecciona un flujo',
+        displayMonitorSelectPrompt: 'Selecciona una ubicación y un flujo para empezar.',
+        manualMonitorStatus: {
+          connecting: 'Conectando…',
+          connected: 'Conectado',
+          reconnecting: 'Reconectando…',
+          disconnected: 'Sin conexión',
+        },
         deleteNodeTitle: 'Eliminar nodo',
         deleteNodeDescription:
           'Se eliminara el nodo {{name}} y todo su subarbol. Esta accion no se puede deshacer.',
@@ -757,6 +770,7 @@ const resources = {
         deviceMonitors: 'Monitors',
         deviceTicketMachines: 'Ticket machines',
         map: 'View system',
+        monitor: 'Monitor',
       },
       dashboard: {
         title: 'Dashboard for active location',
@@ -1096,6 +1110,18 @@ const resources = {
         unsavedMessage: 'You have unsaved changes. Are you sure you want to leave without saving?',
         leaveAnyway: 'Leave without saving',
         unsavedIndicator: 'Unsaved changes',
+        manualMonitorWaiting: 'Waiting for calls...',
+        manualMonitorCounter: 'Counter {{counter}}',
+        monitorFullscreen: 'Fullscreen',
+        displayMonitorLocationPlaceholder: 'Select a location',
+        displayMonitorFlowPlaceholder: 'Select a flow',
+        displayMonitorSelectPrompt: 'Select a location and a flow to start.',
+        manualMonitorStatus: {
+          connecting: 'Connecting…',
+          connected: 'Connected',
+          reconnecting: 'Reconnecting…',
+          disconnected: 'No connection',
+        },
         deleteNodeTitle: 'Delete node',
         deleteNodeDescription:
           'This will delete node {{name}} and its entire subtree. This action cannot be undone.',
