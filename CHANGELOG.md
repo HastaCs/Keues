@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.7.0](https://github.com/HastaCs/Keues/compare/v1.6.0...v1.7.0) (2026-10-13)
+
+
+### 🚀 Features
+
+* add manual flow web monitor URL and page ([3e5877d](https://github.com/HastaCs/Keues/commit/3e5877d908f75339f6fd3513ebbbf4c8c8d9ebc8))
+* added monitor via web ([69a82cf](https://github.com/HastaCs/Keues/commit/69a82cf2d1b1b2bbdaa81d40429d4b5dfb0da797))
+* Added TanStack ([a0404d9](https://github.com/HastaCs/Keues/commit/a0404d9a1170b3dd392fadec0bf6c5d39828b7c9))
+* allow setting ticket machines to maintenance mode ([7a29be6](https://github.com/HastaCs/Keues/commit/7a29be6fdbb0ee34165fb5b5189770c2dffad138))
+* display monitor in Url ([3ebc00c](https://github.com/HastaCs/Keues/commit/3ebc00c01b22110b0b5199e4ddd53bee5a9bdfb9))
+
+
+### 🐛 Bug Fixes
+
+* use contains instead of exact match for Code filter ([4cce2f1](https://github.com/HastaCs/Keues/commit/4cce2f1e4acd1c2046772b62a5fea4f9ab2e48ed))
+
 ## [1.6.0](https://github.com/HastaCs/Keues/compare/v1.5.0...v1.6.0) (2026-10-09)
 
 
