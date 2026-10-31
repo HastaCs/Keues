@@ -75,7 +75,7 @@ export function MonitorScreen({ status, turns }: MonitorScreenProps) {
             {latest.counterCode ? (
               <Text
                 c="dimmed"
-                style={{ fontSize: 'clamp(1.5rem, 4vw, 3.5rem)', textAlign: 'center' }}
+                style={{ fontSize: 'clamp(2.5rem, 8vw, 7rem)', textAlign: 'center' }}
               >
                 {t('flows.manualMonitorCounter', { counter: latest.counterCode })}
               </Text>
