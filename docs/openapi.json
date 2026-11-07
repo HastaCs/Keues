@@ -1102,6 +1102,108 @@
         ]
       }
     },
+    "/api/Devices/{id}/isActive": {
+      "patch": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Updates the active status of a device.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "description": "",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": [ ]
+          },
+          {
+            "access_token": [ ]
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "Devices"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Flows": {
       "get": {
         "tags": [
@@ -3518,6 +3620,84 @@
           }
         ]
       }
+    },
+    "/api/WebhooksConfig": {
+      "get": {
+        "tags": [
+          "WebhooksConfig"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearer": [ ]
+          },
+          {
+            "access_token": [ ]
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "WebhooksConfig"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebhooksCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebhooksCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebhooksCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearer": [ ]
+          },
+          {
+            "access_token": [ ]
+          }
+        ]
+      }
+    },
+    "/api/WebhooksConfig/events": {
+      "get": {
+        "tags": [
+          "WebhooksConfig"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearer": [ ]
+          },
+          {
+            "access_token": [ ]
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -3941,7 +4121,8 @@
           "name",
           "email",
           "password",
-          "locationId"
+          "locationId",
+          "externalId"
         ],
         "type": "object",
         "properties": {
@@ -3957,6 +4138,9 @@
           "locationId": {
             "type": "string",
             "format": "uuid"
+          },
+          "externalId": {
+            "type": "string"
           }
         }
       },
@@ -3964,7 +4148,8 @@
         "required": [
           "id",
           "name",
-          "email"
+          "email",
+          "externalId"
         ],
         "type": "object",
         "properties": {
@@ -3976,6 +4161,9 @@
             "type": "string"
           },
           "email": {
+            "type": "string"
+          },
+          "externalId": {
             "type": "string"
           }
         }
@@ -4225,17 +4413,15 @@
       },
       "DeviceResponse": {
         "required": [
-          "isConnected",
           "id",
           "name",
           "type",
-          "lastConnection"
+          "lastConnection",
+          "isConnected",
+          "isActive"
         ],
         "type": "object",
         "properties": {
-          "isConnected": {
-            "type": "boolean"
-          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -4249,6 +4435,12 @@
           "lastConnection": {
             "type": "string",
             "format": "date-time"
+          },
+          "isConnected": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
           }
         }
       },
@@ -4543,7 +4735,8 @@
           "email",
           "locationId",
           "createdAt",
-          "enabled"
+          "enabled",
+          "externalId"
         ],
         "type": "object",
         "properties": {
@@ -4570,6 +4763,9 @@
           },
           "enabled": {
             "type": "boolean"
+          },
+          "externalId": {
+            "type": "string"
           }
         }
       },
@@ -5288,7 +5484,8 @@
           "name",
           "email",
           "password",
-          "locationId"
+          "locationId",
+          "externalId"
         ],
         "type": "object",
         "properties": {
@@ -5304,6 +5501,9 @@
           "locationId": {
             "type": "string",
             "format": "uuid"
+          },
+          "externalId": {
+            "type": "string"
           }
         }
       },
@@ -5311,7 +5511,8 @@
         "required": [
           "id",
           "name",
-          "email"
+          "email",
+          "externalId"
         ],
         "type": "object",
         "properties": {
@@ -5323,6 +5524,35 @@
             "type": "string"
           },
           "email": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateWebhooksCommand": {
+        "required": [
+          "url",
+          "events",
+          "enabled",
+          "key"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "key": {
             "type": "string"
           }
         }
@@ -5469,6 +5699,9 @@
     },
     {
       "name": "Users"
+    },
+    {
+      "name": "WebhooksConfig"
     }
   ]
 }
