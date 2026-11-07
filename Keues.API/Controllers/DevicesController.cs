@@ -8,7 +8,6 @@ using Keues.Application.Features.Devices.GetDevice;
 using Keues.Application.Features.Devices.GetDevices;
 using Keues.Application.Features.Devices.IsActiveDevice;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 
