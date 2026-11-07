@@ -17,10 +17,20 @@ public class SmtpEmailService : IEmailService
 
   public async Task SendAsync(string to, string subject, string htmlBody)
   {
-    var smtp = _options.Value.Smtp;
+    var options = _options.Value;
+    var smtp = options.Smtp;
+
+    // Email:Smtp:From is kept as an optional override for backwards
+    // compatibility; the shared Email:From is the default sender.
+    var from = !string.IsNullOrWhiteSpace(smtp.From) ? smtp.From : options.From;
+    if (string.IsNullOrWhiteSpace(from))
+      throw new InvalidOperationException(
+        "Email From is not configured (KEUES_EMAIL_FROM).");
+
+    var fromName = string.IsNullOrWhiteSpace(options.FromName) ? "Keues" : options.FromName;
 
     var message = new MimeMessage();
-    message.From.Add(MailboxAddress.Parse(smtp.From));
+    message.From.Add(new MailboxAddress(fromName, from));
     message.To.Add(MailboxAddress.Parse(to));
     message.Subject = subject;
     message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();

@@ -130,7 +130,7 @@ Interfaz disponible en **español e inglés**. Toggle de **tema claro/oscuro** e
 ### Seguridad y acceso
 - Primer arranque guiado: el sistema detecta que no hay administrador y lo crea paso a paso.
 - Autenticación con JWT en cookie HttpOnly.
-- Recuperación de contraseña por email (SMTP configurable).
+- Recuperación de contraseña por email (SMTP o Mailjet configurables).
 
 ### Despliegue sencillo
 Un solo contenedor Docker. Los datos persisten en un volumen local. Sin base de datos externa, sin servicios adicionales.

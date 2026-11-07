@@ -130,7 +130,7 @@ Interface available in **English and Spanish**. **Light/dark theme** toggle in t
 ### Security and access
 - Guided first launch: the system detects there is no administrator and creates one step by step.
 - JWT authentication in an HttpOnly cookie.
-- Password recovery by email (configurable SMTP).
+- Password recovery by email (configurable SMTP or Mailjet).
 
 ### Simple deployment
 A single Docker container. Data persists in a local volume. No external database, no additional services.

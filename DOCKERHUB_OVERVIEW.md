@@ -34,12 +34,16 @@ services:
     environment:
       KEUES_DASHBOARD_URL: "http://localhost:8080"
       KEUES_EMAIL_PROVIDER: "smtp"
+      KEUES_EMAIL_FROM: ""
+      KEUES_EMAIL_FROM_NAME: "Keues"
       KEUES_SMTP_HOST: ""
       KEUES_SMTP_PORT: "587"
       KEUES_SMTP_USER: ""
       KEUES_SMTP_PASSWORD: ""
       KEUES_SMTP_FROM: ""
       KEUES_SMTP_USE_TLS: "true"
+      KEUES_MAILJET_API_KEY: ""
+      KEUES_MAILJET_SECRET_KEY: ""
     restart: unless-stopped
 ```
 
@@ -65,13 +69,17 @@ All variables are optional. Empty variables fall back to the value stored in `co
 |----------------------------|-----------------------------------------------|--------------|
 | `KEUES_DASHBOARD_URL`      | Public URL of the dashboard (used in reset-password emails) | from `config.json` |
 | `KEUES_JWT_KEY`            | Secret key for JWT signing                    | generated at first run |
-| `KEUES_EMAIL_PROVIDER`     | Email provider (`smtp`)                       | `smtp`       |
+| `KEUES_EMAIL_PROVIDER`     | Email provider (`smtp` or `mailjet`)          | `smtp`       |
+| `KEUES_EMAIL_FROM`         | Sender address shared by every provider       | from `config.json` |
+| `KEUES_EMAIL_FROM_NAME`    | Sender display name shared by every provider  | `Keues`      |
 | `KEUES_SMTP_HOST`          | SMTP server host                              | from `config.json` |
 | `KEUES_SMTP_PORT`          | SMTP server port                              | from `config.json` |
 | `KEUES_SMTP_USER`          | SMTP username                                 | from `config.json` |
 | `KEUES_SMTP_PASSWORD`      | SMTP password                                 | from `config.json` |
-| `KEUES_SMTP_FROM`          | Sender email address                          | from `config.json` |
+| `KEUES_SMTP_FROM`          | SMTP-only sender override (backwards compatibility) | from `config.json` |
 | `KEUES_SMTP_USE_TLS`       | Use TLS for SMTP (`true`/`false`)             | from `config.json` |
+| `KEUES_MAILJET_API_KEY`    | Mailjet API key (Basic auth user)             | from `config.json` |
+| `KEUES_MAILJET_SECRET_KEY` | Mailjet secret key (Basic auth password)      | from `config.json` |
 
 ## Features
 

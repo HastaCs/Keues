@@ -20,6 +20,7 @@
       </PackageReference>
       <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.9" />
       <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.10" />
       <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.10" />
       <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
       <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.2" />

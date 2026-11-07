@@ -12,12 +12,19 @@ services:
     environment:
       # URL pública del Dashboard. Vacío -> usa la de config.json.
       KEUES_DASHBOARD_URL: "http://localhost:8080"
-      # SMTP. Si una variable está vacía, se usa el valor de config.json.
+      # Remitente común para todos los providers.
       KEUES_EMAIL_PROVIDER: "smtp"
+      KEUES_EMAIL_FROM: ""
+      KEUES_EMAIL_FROM_NAME: "Keues"
+      # SMTP. Si una variable está vacía, se usa el valor de config.json.
       KEUES_SMTP_HOST: ""
       KEUES_SMTP_PORT: ""
       KEUES_SMTP_USER: ""
       KEUES_SMTP_PASSWORD: ""
+      # Override del remitente solo para SMTP (compatibilidad).
       KEUES_SMTP_FROM: ""
       KEUES_SMTP_USE_TLS: ""
+      # Mailjet (API HTTP).
+      KEUES_MAILJET_API_KEY: ""
+      KEUES_MAILJET_SECRET_KEY: ""
     restart: unless-stopped

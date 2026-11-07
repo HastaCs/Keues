@@ -14,15 +14,19 @@ public static class DependencyInjection
       configuration.GetSection("Email"));
 
     services.AddScoped<SmtpEmailService>();
+    services.AddHttpClient<MailjetEmailService>(
+      client => client.Timeout = TimeSpan.FromSeconds(15));
+
     services.AddScoped<IEmailService>(sp =>
     {
       var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmailOptions>>().Value;
 
-      return options.Provider switch
+      return options.Provider.Trim().ToLowerInvariant() switch
       {
         "smtp" => sp.GetRequiredService<SmtpEmailService>(),
+        "mailjet" => sp.GetRequiredService<MailjetEmailService>(),
         _ => throw new InvalidOperationException(
-          $"Email provider '{options.Provider}' is not supported.")
+          $"Email provider '{options.Provider}' is not supported. Supported providers: smtp, mailjet.")
       };
     });
 

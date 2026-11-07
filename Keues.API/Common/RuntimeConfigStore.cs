@@ -27,7 +27,7 @@ public static class RuntimeConfigStore
         {
           // Si es un config antiguo sin las secciones nuevas, se amplía con la
           // plantilla para que el usuario pueda rellenarlas a mano.
-          if (!Contains(raw, "dashboardUrl") || !Contains(raw, "email"))
+          if (!Contains(raw, "dashboardUrl") || !Contains(raw, "email") || !Contains(raw, "mailjet"))
           {
             Save(filePath, existing);
           }
