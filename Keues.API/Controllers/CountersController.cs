@@ -203,7 +203,7 @@ namespace Keues.API.Controllers
           return StatusCode(StatusCodes.Status403Forbidden,
             new ErrorResponse("User does not have access to this counter."));
 
-        var ticket = await _counterUseCases.CallNextTicket.Handle(new CallNextTicketCommand(id,userId));
+        var ticket = await _counterUseCases.CallNextTicket.Handle(new CallNextTicketCommand(id, userId));
         if (ticket == null)
         {
           return new JsonResult(null);
@@ -211,9 +211,8 @@ namespace Keues.API.Controllers
 
         var counter = await _counterUseCases.Get.Handle(new GetCounterCommand(id));
         var ticketCalled = new TicketCalled(ticket?.TicketId, ticket?.Code, counter.Code);
+        var group = DeviceGroups.Monitor(counter.LocationId, request.FlowId);
 
-        //TODO una clase o algo para no escribir esto tan hardcoded.. "ticketcalled" , "locaitonId:type:.".. etc
-        var group = $"locationId:{counter.LocationId}:typeDevice:Monitor:flowId:{request.FlowId}";
         await _hubContext.Clients.Group(group).SendAsync("TicketCalled", ticketCalled);
 
         return Ok(ticket);
@@ -250,12 +249,12 @@ namespace Keues.API.Controllers
           return StatusCode(StatusCodes.Status403Forbidden,
             new ErrorResponse("User does not have access to this counter."));
 
-        
-        var command = request.ToCommand(id,userId);
+
+        var command = request.ToCommand(id, userId);
         await _counterUseCases.AttendTicket.Handle(command);
 
         var counter = await _counterUseCases.Get.Handle(new GetCounterCommand(id));
-        var group = $"locationId:{counter.LocationId}:typeDevice:Monitor:flowId:{request.FlowId}";
+        var group =DeviceGroups.Monitor(counter.LocationId, request.FlowId);
         await _hubContext.Clients.Group(group).SendAsync("TicketAttended", new { ticketId = request.TicketId });
         return Ok();
       }
@@ -280,7 +279,6 @@ namespace Keues.API.Controllers
     {
       try
       {
-        
         Guid? userId = User.GetUserId();
         var hasAccess = await _counterUseCases.CheckAccess.Handle(new CheckAccessQuery(id, userId));
 
@@ -288,13 +286,13 @@ namespace Keues.API.Controllers
           return StatusCode(StatusCodes.Status403Forbidden,
             new ErrorResponse("User does not have access to this counter."));
 
-        
+
         var ticket = await _ticketUseCases.GetTicket.Handle(new GetTicketCommand(request.TicketId));
         if (ticket == null)
           throw new Exception($"No ticket found for {request.TicketId}");
-        await _counterUseCases.CancelTicket.Handle(new CancelTicketCommand(request.TicketId, id,userId));
+        await _counterUseCases.CancelTicket.Handle(new CancelTicketCommand(request.TicketId, id, userId));
 
-        var group = $"locationId:{ticket.LocationId}:typeDevice:Monitor:flowId:{ticket.FlowId}";
+        var group = DeviceGroups.Monitor(ticket.LocationId, ticket.FlowId);
         await _hubContext.Clients.Group(group).SendAsync("TicketCancelled", new { ticketId = ticket.Id });
         return Ok();
       }
@@ -329,11 +327,11 @@ namespace Keues.API.Controllers
 
         var queues = await _counterUseCases.GetQueues.Handle(new GetQueuesQuery(request.CounterId));
         var code = queues.FirstOrDefault()?.Code;
-       
+
         var counter = await _counterUseCases.Get.Handle(new GetCounterCommand(request.CounterId));
         var ticketCalled = new TicketCalled(null, $"{code}{request.Code}", counter.Code);
 
-        var group = $"locationId:{request.LocationId}:typeDevice:Monitor:flowId:{request.FlowId}";
+        var group =DeviceGroups.Monitor(counter.LocationId, request.FlowId);
         await _hubContext.Clients.Group(group).SendAsync("TicketCalled", ticketCalled);
         return Ok();
       }
@@ -370,7 +368,7 @@ namespace Keues.API.Controllers
         if (counter == null)
           throw new Exception($"No counter found for {id}");
 
-        var group = $"locationId:{counter.LocationId}:typeDevice:Monitor:flowId:{request.FlowId}";
+        var group = DeviceGroups.Monitor(counter.LocationId, request.FlowId);
         await _hubContext.Clients.Group(group)
           .SendAsync("CounterFree", new { counterId = id, counterCode = counter.Code });
         return Ok();
@@ -407,9 +405,10 @@ namespace Keues.API.Controllers
         if (ticket == null)
           throw new Exception($"No ticket found for {request.TicketId}");
 
-        await _counterUseCases.TransferTicket.Handle(new TransferTicketCommand(id, request.TicketId, request.QueueId, userId));
+        await _counterUseCases.TransferTicket.Handle(new TransferTicketCommand(id, request.TicketId, request.QueueId,
+          userId));
         //Para que no haga falta actualizar los monitores le mando la señal de cancelado, para uqe desaparezca
-        var group = $"locationId:{ticket.LocationId}:typeDevice:Monitor:flowId:{ticket.FlowId}";
+        var group = DeviceGroups.Monitor(ticket.LocationId, ticket.FlowId);
         await _hubContext.Clients.Group(group).SendAsync("TicketCancelled", new { ticketId = ticket.Id });
         return Ok();
       }
