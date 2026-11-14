@@ -24,11 +24,6 @@ public class CreateFlowHandler
     if(location == null)
       throw new Exception($"Location with id {command.LocationId} not found");
 
-    if (command.FlowType == FlowType.QrVirtual)
-    {
-      await QrFlowQueueValidator.ValidateAsync(_context, command.LocationId, command.FlowJson);
-    }
-
     var flow = new Flow()
     {
       Name = command.Name,

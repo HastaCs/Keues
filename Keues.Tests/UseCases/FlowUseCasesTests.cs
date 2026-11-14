@@ -60,21 +60,21 @@ public class FlowUseCasesTests : IDisposable
   }
 
   [Fact]
-  public async Task Create_QrVirtual_without_queue_throws()
+  public async Task Create_QrVirtual_without_queue_succeeds()
   {
     await using var context = _db.CreateContext();
     var location = await Seed.LocationAsync(context);
     var handler = new CreateFlowHandler(context);
 
-    var exception = await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new CreateFlowCommand(
-        "QR virtual", "Descripción", FlowType.QrVirtual, location.Id, "[]")));
+    var response = await handler.Handle(new CreateFlowCommand(
+      "QR virtual", "Descripción", FlowType.QrVirtual, location.Id, "[]"));
 
-    Assert.Contains("queue", exception.Message);
+    Assert.Equal(FlowType.QrVirtual, response.FlowType);
+    Assert.Equal("[]", response.FlowJson);
   }
 
   [Fact]
-  public async Task Create_QrVirtual_with_queue_from_another_location_throws()
+  public async Task Create_QrVirtual_with_queue_from_another_location_succeeds()
   {
     await using var context = _db.CreateContext();
     var location = await Seed.LocationAsync(context, "Origen");
@@ -82,9 +82,10 @@ public class FlowUseCasesTests : IDisposable
     var otherQueue = await Seed.QueueAsync(context, otherLocation.Id);
     var handler = new CreateFlowHandler(context);
 
-    await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new CreateFlowCommand(
-        "QR virtual", "Descripción", FlowType.QrVirtual, location.Id, FlowJsonWithQueue(otherQueue.Id))));
+    var response = await handler.Handle(new CreateFlowCommand(
+      "QR virtual", "Descripción", FlowType.QrVirtual, location.Id, FlowJsonWithQueue(otherQueue.Id)));
+
+    Assert.Equal(FlowType.QrVirtual, response.FlowType);
   }
 
   [Fact]
@@ -155,7 +156,7 @@ public class FlowUseCasesTests : IDisposable
   }
 
   [Fact]
-  public async Task Update_QrVirtual_without_queue_throws()
+  public async Task Update_QrVirtual_without_queue_succeeds()
   {
     await using var context = _db.CreateContext();
     var location = await Seed.LocationAsync(context);
@@ -165,14 +166,15 @@ public class FlowUseCasesTests : IDisposable
     await context.SaveChangesAsync();
     var handler = new UpdateFlowHandler(context);
 
-    var exception = await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new UpdateFlowCommand(flow.Id, "Nuevo", "Nueva desc", "[]")));
+    var response = await handler.Handle(new UpdateFlowCommand(flow.Id, "Nuevo", "Nueva desc", "[]"));
 
-    Assert.Contains("queue", exception.Message);
+    Assert.Equal("Nuevo", response.Name);
+    var updated = await context.Flows.FindAsync(flow.Id);
+    Assert.Equal("[]", updated!.FlowJson);
   }
 
   [Fact]
-  public async Task Update_QrVirtual_with_queue_from_another_location_throws()
+  public async Task Update_QrVirtual_with_queue_from_another_location_succeeds()
   {
     await using var context = _db.CreateContext();
     var location = await Seed.LocationAsync(context, "Origen");
@@ -184,8 +186,9 @@ public class FlowUseCasesTests : IDisposable
     await context.SaveChangesAsync();
     var handler = new UpdateFlowHandler(context);
 
-    await Assert.ThrowsAsync<Exception>(() =>
-      handler.Handle(new UpdateFlowCommand(flow.Id, "Nuevo", "Nueva desc", FlowJsonWithQueue(otherQueue.Id))));
+    var response = await handler.Handle(new UpdateFlowCommand(flow.Id, "Nuevo", "Nueva desc", FlowJsonWithQueue(otherQueue.Id)));
+
+    Assert.Equal("Nuevo", response.Name);
   }
 
   [Fact]

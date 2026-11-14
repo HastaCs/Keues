@@ -7,6 +7,7 @@ Contrato backend para los flujos de tipo `QrVirtual`.
 - `FlowType.QrVirtual` tiene el valor numerico `3`.
 - El flujo debe tener un unico `queueId` valido dentro de `flowJson`.
 - El backend toma el primer `queueId` valido de un nodo `ticket`.
+- El flujo se puede crear y guardar sin cola; se asigna despues desde el editor. Mientras no tenga una cola valida no se generan tokens QR.
 
 Ejemplo de `flowJson`:
 

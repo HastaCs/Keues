@@ -30,7 +30,7 @@ public class FlowsApiTests : ApiTestBase
   }
 
   [Fact]
-  public async Task Create_QrVirtual_without_queue_returns_400()
+  public async Task Create_QrVirtual_without_queue_returns_200()
   {
     var client = await CreateAuthenticatedClientAsync();
     var location = await client.ReadAsync<LocationBody>(
@@ -45,7 +45,9 @@ public class FlowsApiTests : ApiTestBase
       flowJson = "[]"
     });
 
-    Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
+    Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+    var body = await client.ReadAsync<FlowBody>(response);
+    Assert.Equal((int)FlowType.QrVirtual, body!.FlowType);
   }
 
   [Fact]

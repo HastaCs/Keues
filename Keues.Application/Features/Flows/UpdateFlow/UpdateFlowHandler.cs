@@ -1,6 +1,4 @@
 using Keues.Application.Common;
-using Keues.Application.Features.Flows;
-using Keues.Domain.Enums;
 
 namespace Keues.Application.Features.Flows.UpdateFlow;
 
@@ -18,12 +16,6 @@ public class UpdateFlowHandler
     if (flow == null)
     {
      throw new Exception($"Queue system with ID {command.Id} not found.");
-    }
-
-    // FlowType is immutable: create a new flow to change the type.
-    if (flow.FlowType == FlowType.QrVirtual)
-    {
-      await QrFlowQueueValidator.ValidateAsync(_context, flow.LocationId, command.FlowJson);
     }
 
     flow.Name = command.Name;
