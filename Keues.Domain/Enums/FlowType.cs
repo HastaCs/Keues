@@ -13,5 +13,11 @@ public enum FlowType
   /// LLamada manual como en pescaderia,fruteria,, va subiendo 1 arriba, o 1 abajo,
   /// EL cliente coge su ticket de una maquina de papel o de un terminal
   /// </summary>
-  ManualCall     
+  ManualCall,
+
+  /// <summary>
+  /// El cliente escanea un QR rotativo en pantalla y obtiene un ticket
+  /// de una unica cola.
+  /// </summary>
+  QrVirtual
 }
