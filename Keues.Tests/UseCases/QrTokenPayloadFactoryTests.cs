@@ -39,7 +39,7 @@ public class QrTokenPayloadFactoryTests : IDisposable
     Assert.Equal(BaseTime.AddMinutes(5), payload.RotatesAt);
     Assert.Equal(BaseTime.AddMinutes(10), payload.ExpiresAt);
     Assert.Equal(
-      $"https://keues.test/qr/{flow.Id}?token={Uri.EscapeDataString(payload.Token)}",
+      $"https://keues.test/turno/{flow.Id}/{payload.Token}",
       payload.Url);
   }
 
@@ -57,7 +57,7 @@ public class QrTokenPayloadFactoryTests : IDisposable
     var payload = await factory.BuildAsync(flow.Id, BaseTime);
 
     Assert.NotNull(payload);
-    Assert.StartsWith($"/qr/{flow.Id}?token=", payload.Url);
+    Assert.StartsWith($"/turno/{flow.Id}/", payload.Url);
   }
 
   [Fact]

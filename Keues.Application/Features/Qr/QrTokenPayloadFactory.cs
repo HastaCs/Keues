@@ -73,7 +73,7 @@ public sealed class QrTokenPayloadFactory
   /// <param name="token">Token del periodo actual.</param>
   private string BuildUrl(Guid flowId, string token)
   {
-    var path = $"/qr/{flowId}?token={Uri.EscapeDataString(token)}";
+    var path = $"/turno/{flowId}/{token}";
     var baseUrl = _options.PublicBaseUrl.TrimEnd('/');
 
     return string.IsNullOrWhiteSpace(baseUrl) ? path : $"{baseUrl}{path}";

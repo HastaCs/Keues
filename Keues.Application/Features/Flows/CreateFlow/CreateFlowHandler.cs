@@ -24,6 +24,9 @@ public class CreateFlowHandler
     if(location == null)
       throw new Exception($"Location with id {command.LocationId} not found");
 
+    if (string.IsNullOrWhiteSpace(command.Name))
+      throw new Exception("Flow name is required");
+
     var flow = new Flow()
     {
       Name = command.Name,

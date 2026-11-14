@@ -18,6 +18,11 @@ public class UpdateFlowHandler
      throw new Exception($"Queue system with ID {command.Id} not found.");
     }
 
+    if (string.IsNullOrWhiteSpace(command.Name))
+    {
+      throw new Exception("Flow name is required");
+    }
+
     flow.Name = command.Name;
     flow.Description = command.Description;
     flow.FlowJson = command.FlowJson;
