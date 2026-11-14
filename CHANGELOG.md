@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.8.0](https://github.com/HastaCs/Keues/compare/v1.7.0...v1.8.0) (2026-11-14)
+
+
+### 🚀 Features
+
+* add Mailjet email provider ([8dd0ff7](https://github.com/HastaCs/Keues/commit/8dd0ff7e7d7e46283665575f145aa90b2b2670a1))
+* add QR virtual flow support with ticket management ([35039e2](https://github.com/HastaCs/Keues/commit/35039e2f6ef76c0af215edab54ad0ee6a0d9a09f))
+
+
+### 🧪 Tests
+
+* add QR flow and ticket coverage ([6f06cd0](https://github.com/HastaCs/Keues/commit/6f06cd08a324d911b18c45fcd68cf5eab9ff1423))
+
 ## [1.7.0](https://github.com/HastaCs/Keues/compare/v1.6.0...v1.7.0) (2026-10-31)
 
 
