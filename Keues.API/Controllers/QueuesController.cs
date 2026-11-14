@@ -1,5 +1,6 @@
 using Keues.API.Requests.Queues;
 using Keues.API.Responses;
+using Keues.Application.Common;
 using Keues.Application.Features.Queues;
 using Keues.Application.Features.Queues.CreateNewTicket;
 using Keues.Application.Features.Queues.CreateQueue;
@@ -7,6 +8,7 @@ using Keues.Application.Features.Queues.DeleteQueue;
 using Keues.Application.Features.Queues.GetAllQueues;
 using Keues.Application.Features.Queues.GetQueue;
 using Keues.Application.Features.Queues.UpdateQueue;
+using Keues.Application.Features.Qr;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +20,10 @@ namespace Keues.API.Controllers
   /// </summary>
   [Route("api/[controller]")]
   [ApiController]
-  public class QueuesController(QueuesUseCases useCases) : ControllerBase
+  public class QueuesController(
+    QueuesUseCases useCases,
+    QrFlowResolver qrFlowResolver,
+    IQrTokenService qrTokenService) : ControllerBase
   {
     /// <summary>
     /// Creates a new queue.
@@ -138,6 +143,44 @@ namespace Keues.API.Controllers
       catch (Exception e)
       {
         return BadRequest(new ErrorResponse(e.Message));
+      }
+    }
+
+    /// <summary>
+    /// Issues a new ticket for the queue associated with a QR flow after validating its token.
+    /// </summary>
+    /// <param name="id">Identifier of the queue.</param>
+    /// <param name="request">QR flow identifier and token.</param>
+    /// <returns>The created ticket.</returns>
+    /// <response code="200">Ticket created.</response>
+    /// <response code="400">Invalid token, invalid flow or queue mismatch.</response>
+    [HttpPost("{id:guid}/qr-new-ticket")]
+    [ProducesResponseType(typeof(CreateNewTicketResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetQrNewTicket(Guid id, CreateQrTicketRequest request)
+    {
+      try
+      {
+        var qrFlow = await qrFlowResolver.ResolveAsync(request.FlowId);
+
+        if (qrFlow.Queue.Id != id)
+        {
+          throw new Exception("Queue does not belong to the QR flow");
+        }
+
+        if (!qrTokenService.Validate(request.FlowId, request.Token, DateTimeOffset.UtcNow))
+        {
+          throw new Exception("QR token is invalid or expired");
+        }
+
+        var ticket = await useCases.CreateNewTicket.Handle(
+          new CreateNewTicketCommand(id, request.FlowId));
+
+        return Ok(ticket);
+      }
+      catch (Exception exception)
+      {
+        return BadRequest(new ErrorResponse(exception.Message));
       }
     }
 

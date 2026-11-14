@@ -32,7 +32,7 @@ public class GetDashboardSummaryHandler
       .Include(x => x.Flow)
       .Where(x =>
         x.Queue.LocationId == command.LocationId &&
-        x.Flow.FlowType == FlowType.TicketMachine &&
+        (x.Flow.FlowType == FlowType.TicketMachine || x.Flow.FlowType == FlowType.QrVirtual) &&
         x.CreatedAt >= start &&
         x.CreatedAt < end)
       .ToListAsync();

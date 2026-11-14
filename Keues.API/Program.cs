@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Channels;
+using Keues.API.BackgroundServices;
 using Keues.API.Common;
 using Keues.API.Hubs;
 using Keues.Application.Common;
@@ -15,6 +16,7 @@ using Keues.Application.Features.Locations.DeleteLocation;
 using Keues.Application.Features.Locations.GetAllLocations;
 using Keues.Application.Features.Locations.GetLocation;
 using Keues.Application.Features.Locations.UpdateLocation;
+using Keues.Application.Features.Qr;
 using Keues.Application.Features.Queues;
 using Keues.Application.Features.Tickets;
 using Keues.Application.Features.UserGroups;
@@ -36,6 +38,7 @@ using Keues.Infrastructure.Email;
 using Keues.Infrastructure.Events;
 using Keues.Infrastructure.Http.Webhooks;
 using Keues.Infrastructure.Persistence;
+using Keues.Infrastructure.Qr;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.OpenApi;
@@ -182,6 +185,8 @@ builder.Services.AddSignalR();
 
 builder.Services.AddAuthorizationServices(builder.Configuration);
 builder.Services.AddEmailServices(builder.Configuration);
+builder.Services.AddQrServices(runtimeConfig.DashboardUrl);
+builder.Services.AddQrUseCases();
 
 var jwt = builder.Configuration
   .GetSection("Jwt")
@@ -225,6 +230,7 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddHostedService<QueueResetBackgroundService>();
+builder.Services.AddHostedService<QrTokenBackgroundService>();
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {

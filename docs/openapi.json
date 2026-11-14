@@ -2295,6 +2295,89 @@
         }
       }
     },
+    "/api/Queues/{id}/qr-new-ticket": {
+      "post": {
+        "tags": [
+          "Queues"
+        ],
+        "summary": "Issues a new ticket for the queue associated with a QR flow after validating its token.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identifier of the queue.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "QR flow identifier and token.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQrTicketRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQrTicketRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQrTicketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Ticket created.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNewTicketResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNewTicketResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNewTicketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid token, invalid flow or queue mismatch.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Tickets": {
       "get": {
         "tags": [
@@ -4015,6 +4098,22 @@
           }
         }
       },
+      "CreateQrTicketRequest": {
+        "required": [
+          "flowId",
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "flowId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
       "CreateQueueCommand": {
         "type": "object",
         "properties": {
@@ -4530,14 +4629,16 @@
         "enum": [
           0,
           1,
-          2
+          2,
+          3
         ],
         "type": "integer",
-        "description": "FlowType values: 0 = TicketMachine, 1 = SetFree, 2 = ManualCall.",
+        "description": "FlowType values: 0 = TicketMachine, 1 = SetFree, 2 = ManualCall, 3 = QrVirtual.",
         "x-enum-varnames": [
           "TicketMachine",
           "SetFree",
-          "ManualCall"
+          "ManualCall",
+          "QrVirtual"
         ]
       },
       "ForgotPasswordCommand": {

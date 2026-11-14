@@ -99,6 +99,31 @@ public class DashboardUseCasesTests : IDisposable
   }
 
   [Fact]
+  public async Task Summary_includes_qr_virtual_tickets()
+  {
+    await using var context = _db.CreateContext();
+    var location = await Seed.LocationAsync(context);
+    var qrFlow = await Seed.FlowAsync(context, location.Id, FlowType.QrVirtual);
+    var queue = await Seed.QueueAsync(context, location.Id);
+    var waiting = await Seed.TicketAsync(context, queue.Id, qrFlow.Id);
+    await Seed.TicketAsync(context, queue.Id, qrFlow.Id, status: TicketStatus.Canceled);
+    var handler = new GetDashboardSummaryHandler(context);
+
+    var summary = await handler.Handle(new GetDashboardSummaryCommand
+    {
+      LocationId = location.Id,
+      Date = DateTime.UtcNow.Date
+    });
+
+    Assert.Equal(2, summary.TicketsToday.Total);
+    Assert.Equal(1, summary.TicketsToday.Waiting);
+    Assert.Equal(1, summary.TicketsToday.Canceled);
+
+    var waitingItem = Assert.Single(summary.WaitingTickets);
+    Assert.Equal(waiting.Id, waitingItem.TicketId);
+  }
+
+  [Fact]
   public async Task Summary_ignores_tickets_from_other_days()
   {
     await using var context = _db.CreateContext();

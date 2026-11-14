@@ -1,8 +1,10 @@
 using Keues.Application.Common;
+using Keues.Application.Features.Flows;
 using Keues.Application.Features.Flows.CreateFlow;
 using Keues.Application.Features.Locations;
 using Keues.Application.Features.Locations.GetLocation;
 using Keues.Domain.Entities;
+using Keues.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 
@@ -21,6 +23,12 @@ public class CreateFlowHandler
     var location=await _context.Locations.Include(x=>x.Counters).Include(x=>x.Queues).FirstOrDefaultAsync(l => l.Id == command.LocationId); 
     if(location == null)
       throw new Exception($"Location with id {command.LocationId} not found");
+
+    if (command.FlowType == FlowType.QrVirtual)
+    {
+      await QrFlowQueueValidator.ValidateAsync(_context, command.LocationId, command.FlowJson);
+    }
+
     var flow = new Flow()
     {
       Name = command.Name,

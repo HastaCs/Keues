@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Keues.Application.DeviceRegistry;
 using Keues.Application.Features.Devices;
+using Keues.Application.Features.Qr;
 using Keues.Domain.Enums;
 using Microsoft.AspNetCore.SignalR;
 
@@ -10,11 +11,16 @@ public class DeviceHub : Hub
 {
   private readonly ConnectedDeviceRegistry _registry;
   private readonly DeviceUseCases _deviceUseCases;
+  private readonly QrTokenPayloadFactory _qrTokenPayloadFactory;
 
-  public DeviceHub(ConnectedDeviceRegistry registry, DeviceUseCases deviceUseCases)
+  public DeviceHub(
+    ConnectedDeviceRegistry registry,
+    DeviceUseCases deviceUseCases,
+    QrTokenPayloadFactory qrTokenPayloadFactory)
   {
     _registry = registry;
     _deviceUseCases = deviceUseCases;
+    _qrTokenPayloadFactory = qrTokenPayloadFactory;
   }
 
   public override async Task OnConnectedAsync()
@@ -33,9 +39,19 @@ public class DeviceHub : Hub
     _registry.Add(new RegistryDevice(device.Id, device.Type, Context.ConnectionId));
 
     //Por si hay mas de un device, por ejempo varios monitores en la misma ubicacion
-    await Groups.AddToGroupAsync(Context.ConnectionId, $"locationId:{locationId}:typeDevice:{typeDevice}:flowId:{flowId}");
+    await Groups.AddToGroupAsync(Context.ConnectionId, DeviceGroups.Build(locationId, typeDevice, flowId));
     
     await _deviceUseCases.CreateUpdate.Handle(device);
+
+    if (typeDevice == DeviceType.TicketMachine)
+    {
+      var payload = await _qrTokenPayloadFactory.BuildAsync(flowId, DateTimeOffset.UtcNow);
+      if (payload is not null)
+      {
+        await Clients.Caller.SendAsync("QrToken", payload);
+      }
+    }
+
     await base.OnConnectedAsync();
   }
 
