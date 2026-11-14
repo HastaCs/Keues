@@ -17,6 +17,7 @@ import { UserGroupFormPage } from './features/userGroups/UserGroupFormPage';
 import { AppShellLayout } from './layout/AppShellLayout';
 import { HomePage } from './pages/Home.page';
 import { DisplayMonitorPage } from './features/monitor/DisplayMonitorPage';
+import { QrScanPage } from './features/qr/QrScanPage';
 import Login from './components/Login/Login';
 import RegisterAdmin from './components/RegisterAdmin/RegisterAdmin';
 import ResetPassword from './components/ResetPassword/ResetPassword';
@@ -121,6 +122,14 @@ const router = createBrowserRouter([
   {
     path: '/displaymonitor',
     element: <DisplayMonitorPage />,
+  },
+  {
+    path: '/turno/:flowId/:token',
+    element: <QrScanPage />,
+  },
+  {
+    path: '/qr/:flowId',
+    element: <QrScanPage />,
   },
   {
     path: '/login',

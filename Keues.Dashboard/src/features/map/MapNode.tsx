@@ -80,6 +80,9 @@ function getFlowTypeLabelKey(flowType: number): string {
   if (flowType === 2) {
     return 'flows.ManualCall';
   }
+  if (flowType === 3) {
+    return 'flows.QrVirtual';
+  }
   return 'flows.TicketMachine';
 }
 

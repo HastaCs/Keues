@@ -9,6 +9,7 @@ import {
   Group,
   Modal,
   Paper,
+  Radio,
   Select,
   SimpleGrid,
   Stack,
@@ -38,6 +39,7 @@ import { useTranslation } from 'react-i18next';
 
 import cardHoverClasses from '@/styles/card-hover.module.css';
 import statusDotStyles from '@/styles/status-dot.module.css';
+import { getErrorMessage } from '@/api/getErrorMessage';
 import { FlowIconKey, FlowMenuItem, Flow, MenuNodeType } from '@/api/interfaces/Flow/Flows';
 import { useCreateFlow, useFlows, useRemoveFlow, useUpdateFlow } from '@/api/hooks/flows';
 import { useQueues } from '@/api/hooks/queues';
@@ -88,12 +90,17 @@ function getNodeEmoji(key: FlowIconKey) {
   return iconOptions.find((option) => option.key === key)?.emoji ?? '🏠';
 }
 
+const QR_VIRTUAL_FLOW_TYPE = 3;
+
 function getFlowModeLabelKey(flowType: number): string {
   if (flowType === 1) {
     return 'flows.SetFree';
   }
   if (flowType === 2) {
     return 'flows.ManualCall';
+  }
+  if (flowType === QR_VIRTUAL_FLOW_TYPE) {
+    return 'flows.QrVirtual';
   }
   return 'flows.TicketMachine';
 }
@@ -146,6 +153,7 @@ export function FlowsPanel() {
   const [flowModalOpened, setFlowModalOpened] = useState(false);
   const [editingFlowId, setEditingFlowId] = useState<string | null>(null);
   const [flowName, setFlowName] = useState('');
+  const [flowNameError, setFlowNameError] = useState<string | null>(null);
   const [flowDescription, setFlowDescription] = useState('');
   const [flowMode, setFlowMode] = useState<number>(0);
   const [pendingSelectedNodeId, setPendingSelectedNodeId] = useState<string | null>(null);
@@ -174,6 +182,11 @@ export function FlowsPanel() {
   const activeFlow = useMemo(
     () => flows.find((flow) => flow.id === activeFlowId),
     [flows, activeFlowId]
+  );
+
+  const qrTicket = useMemo(
+    () => activeFlow?.menuItems.find((item) => item.nodeType === 'ticket'),
+    [activeFlow]
   );
 
   const treeData = useMemo(() => {
@@ -287,6 +300,7 @@ export function FlowsPanel() {
   function openCreateFlowModal() {
     setEditingFlowId(null);
     setFlowName('');
+    setFlowNameError(null);
     setFlowDescription('');
     setFlowMode(0);
     setFlowModalOpened(true);
@@ -301,14 +315,31 @@ export function FlowsPanel() {
 
     setEditingFlowId(flow.id);
     setFlowName(flow.name);
+    setFlowNameError(null);
     setFlowDescription(flow.description);
     setFlowMode(flow.flowType);
     setFlowModalOpened(true);
     setMenuItems(flow.menuItems);
   }
 
+  function showErrorNotification(error: unknown) {
+    notifications.show({
+      title: t('errors.requestFailed'),
+      message: getErrorMessage(error, t('errors.unexpected')),
+      color: 'red',
+      autoClose: 5000,
+    });
+  }
+
   function submitFlow() {
     const normalizedName = flowName.trim();
+
+    if (!normalizedName) {
+      setFlowNameError(t('flows.flowNameRequired'));
+      return;
+    }
+
+    setFlowNameError(null);
 
     if (editingFlowId) {
       const flowJson = menuItems.map((item) => ({
@@ -331,7 +362,7 @@ export function FlowsPanel() {
           locationId: location?.id ?? '',
           flowJson: JSON.stringify(flowJson),
         },
-        { onSuccess: () => setFlowModalOpened(false) }
+        { onSuccess: () => setFlowModalOpened(false), onError: showErrorNotification }
       );
 
       return;
@@ -345,7 +376,7 @@ export function FlowsPanel() {
         locationId: location?.id ?? '',
         flowJson: '[]',
       },
-      { onSuccess: () => setFlowModalOpened(false) }
+      { onSuccess: () => setFlowModalOpened(false), onError: showErrorNotification }
     );
   }
 
@@ -399,6 +430,60 @@ export function FlowsPanel() {
 
     updateActiveFlow((flow) => ({ ...flow, menuItems: [...flow.menuItems, newNode] }));
     setPendingSelectedNodeId(newNode.id);
+    setRuleError(null);
+  }
+
+  function addQrTicket() {
+    if (!activeFlow) {
+      return;
+    }
+
+    if (activeFlow.menuItems.some((item) => item.nodeType === 'ticket')) {
+      return;
+    }
+
+    const ticket: FlowMenuItem = {
+      id: createId(),
+      name: activeFlow.name,
+      description: '',
+      nodeType: 'ticket',
+      parentId: null,
+      queueSystemId: activeFlow.id,
+      queueId: null,
+      icon: 'ticket',
+      color: 'grape',
+      removedAt: null,
+    };
+
+    updateActiveFlow((flow) => ({ ...flow, menuItems: [ticket] }));
+    setRuleError(null);
+  }
+
+  function setQrTicketQueue(queueId: string | null) {
+    if (!activeFlow) {
+      return;
+    }
+
+    updateActiveFlow((flow) => {
+      const existing = flow.menuItems.find((item) => item.nodeType === 'ticket');
+      const ticket: FlowMenuItem = existing
+        ? { ...existing, parentId: null, queueId }
+        : {
+            id: createId(),
+            name: flow.name,
+            description: '',
+            nodeType: 'ticket',
+            parentId: null,
+            queueSystemId: flow.id,
+            queueId,
+            icon: 'ticket',
+            color: 'grape',
+            removedAt: null,
+          };
+
+      return { ...flow, menuItems: [ticket] };
+    });
+
     setRuleError(null);
   }
 
@@ -510,6 +595,18 @@ export function FlowsPanel() {
       return;
     }
 
+    if (activeFlow.flowType === QR_VIRTUAL_FLOW_TYPE) {
+      const isSingleTicket =
+        activeFlow.menuItems.length === 1 &&
+        activeFlow.menuItems[0].nodeType === 'ticket' &&
+        !activeFlow.menuItems[0].parentId;
+
+      if (!isSingleTicket) {
+        setRuleError(t('flows.qrVirtualSingleTicketOnly'));
+        return;
+      }
+    }
+
     const missingQueueTickets = activeFlow.menuItems.filter(
       (item) => item.nodeType === 'ticket' && !item.queueId
     );
@@ -569,6 +666,7 @@ export function FlowsPanel() {
             autoClose: 3000,
           });
         },
+        onError: showErrorNotification,
       }
     );
   };
@@ -589,8 +687,12 @@ export function FlowsPanel() {
           <TextInput
             label={t('flows.flowName')}
             value={flowName}
-            onChange={(event) => setFlowName(event.currentTarget.value)}
-            withAsterisk
+            onChange={(event) => {
+              setFlowName(event.currentTarget.value);
+              setFlowNameError(null);
+            }}
+            error={flowNameError}
+            required
           />
           <TextInput
             label={t('flows.flowDescription')}
@@ -602,17 +704,33 @@ export function FlowsPanel() {
               {t('flows.flowMode')}
             </Text>
 
-            <SegmentedControl
-              fullWidth
-              color="blue"
-              value={String(flowMode)}
-              onChange={(value) => setFlowMode(Number(value))}
-              data={[
-                { value: '0', label: t('flows.TicketMachine') },
-                { value: '1', label: t('flows.SetFree') },
-                { value: '2', label: t('flows.ManualCall') },
-              ]}
-            />
+            <Radio.Group value={String(flowMode)} onChange={(value) => setFlowMode(Number(value))}>
+              <SimpleGrid cols={2} spacing="xs">
+                {[
+                  { value: '0', labelKey: 'flows.TicketMachine' },
+                  { value: '1', labelKey: 'flows.SetFree' },
+                  { value: '2', labelKey: 'flows.ManualCall' },
+                  { value: '3', labelKey: 'flows.QrVirtual' },
+                ].map((option) => (
+                  <Radio.Card
+                    key={option.value}
+                    value={option.value}
+                    radius="md"
+                    p="xs"
+                    style={
+                      flowMode === Number(option.value)
+                        ? { borderColor: 'var(--mantine-color-blue-6)' }
+                        : undefined
+                    }
+                  >
+                    <Group wrap="nowrap" gap="xs">
+                      <Radio.Indicator />
+                      <Text size="sm">{t(option.labelKey)}</Text>
+                    </Group>
+                  </Radio.Card>
+                ))}
+              </SimpleGrid>
+            </Radio.Group>
           </Stack>
           <Group justify="flex-end">
             <Button variant="default" onClick={() => setFlowModalOpened(false)}>
@@ -837,6 +955,59 @@ export function FlowsPanel() {
               <Alert color="teal" variant="light" icon={<IconInfoCircle size={18} />} radius="md">
                 {t('flows.noMenusForFreeFlow')}
               </Alert>
+            ) : activeFlow.flowType === QR_VIRTUAL_FLOW_TYPE ? (
+              <Card withBorder radius="md" p="md">
+                <Stack gap="md">
+                  <Text fw={700}>{t('flows.qrQueueTitle')}</Text>
+                  <Text size="sm" c="dimmed">
+                    {t('flows.qrQueueHint')}
+                  </Text>
+
+                  {qrTicket ? (
+                    <Select
+                      label={t('flows.ticketType')}
+                      value={qrTicket.queueId}
+                      onChange={setQrTicketQueue}
+                      data={queueOptions}
+                      searchable
+                      allowDeselect={false}
+                    />
+                  ) : (
+                    <Group>
+                      <Text c="dimmed">{t('flows.qrNoTicket')}</Text>
+                      <Button
+                        variant="light"
+                        leftSection={<IconPlus size={14} />}
+                        onClick={addQrTicket}
+                      >
+                        {t('flows.qrAddTicket')}
+                      </Button>
+                    </Group>
+                  )}
+
+                  <Group justify="space-between" align="center">
+                    {hasUnsavedChanges ? (
+                      <Group gap={6} wrap="nowrap">
+                        <span className={statusDotStyles.dot} />
+                        <Text size="xs" c="dimmed">
+                          {t('flows.unsavedIndicator')}
+                        </Text>
+                      </Group>
+                    ) : (
+                      <span />
+                    )}
+
+                    <Button
+                      variant="filled"
+                      color="blue"
+                      leftSection={<IconDeviceFloppy size={14} />}
+                      onClick={handleSave}
+                    >
+                      {t('flows.save')}
+                    </Button>
+                  </Group>
+                </Stack>
+              </Card>
             ) : (
               <SimpleGrid cols={2} spacing="md">
                 <Card withBorder radius="md" p="md" style={{ minHeight: 560 }}>

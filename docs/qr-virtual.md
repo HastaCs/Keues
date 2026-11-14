@@ -47,7 +47,7 @@ Al conectar, y despues cada 5 minutos, el servidor envia:
   "token": "token-opaco-hmac",
   "rotatesAt": "2026-11-14T12:05:00+00:00",
   "expiresAt": "2026-11-14T12:10:00+00:00",
-  "url": "https://keues.example/qr/11111111-1111-1111-1111-111111111111?token=token-opaco-hmac"
+  "url": "https://keues.example/turno/11111111-1111-1111-1111-111111111111/token-opaco-hmac"
 }
 ```
 
@@ -62,7 +62,7 @@ Campos:
 
 La pantalla solo tiene que renderizar un QR con `url`.
 
-La `url` se construye con `KEUES_DASHBOARD_URL`. Si esa configuracion esta vacia, el payload lleva una ruta relativa `/qr/{flowId}?token=...`.
+La `url` se construye con `KEUES_DASHBOARD_URL`. Si esa configuracion esta vacia, el payload lleva una ruta relativa `/turno/{flowId}/{token}`.
 
 ## Validez del token
 
@@ -119,4 +119,4 @@ Posibles errores:
 - Varios clientes pueden escanear el mismo QR mientras siga vigente. Cada escaneo crea un ticket.
 - El endpoint no comprueba identidad ni ubicacion fisica del cliente.
 - Si la API esta expuesta a Internet, el hub `/devices` deberia protegerse con una clave de dispositivo o autenticacion equivalente.
-- La pagina `/qr/{flowId}?token=...` y la pantalla de la TicketMachine son partes de frontend pendientes.
+- La pagina `/turno/{flowId}/{token}` esta implementada en el dashboard; la pantalla de la TicketMachine sigue pendiente.
