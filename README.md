@@ -41,15 +41,30 @@ Todo corre en un único contenedor Docker en tu propia infraestructura. Sin cuot
 
 ## Tabla de contenidos
 
+- [Tipos de flujo](#tipos-de-flujo)
 - [El ciclo de atención](#el-ciclo-de-atención)
 - [Ecosistema de aplicaciones](#ecosistema-de-aplicaciones)
-- [Tipos de flujo](#tipos-de-flujo)
 - [Características](#características)
 - [Instalación](#instalación)
 - [Documentación de la API](#documentación-de-la-api)
 - [Pruebas](#pruebas)
 - [Arquitectura](#arquitectura)
 - [Licencia](#licencia)
+
+---
+
+## Tipos de flujo
+
+Cada establecimiento puede tener varios flujos simultáneos según el tipo de atención que ofrezca:
+
+| Tipo | Cuándo usarlo | Cómo funciona |
+|---|---|---|
+| `TicketMachine` | Carnicería, clínica, banco, farmacia… | El cliente saca un ticket en el terminal y el operador lo llama desde el mostrador |
+| `SetFree` | Cajas de supermercado, taquillas, puntos de información | Sin tickets: el operador avisa en pantalla cuando su puesto queda libre |
+| `ManualCall` | Mercados con dispensador de papel, pescaderías | El operador sube o baja el número manualmente y el monitor lo muestra en tiempo real |
+| `QrVirtual` | Cola virtual con QR rotativo: comercios, clínicas, administración… | El flujo tiene una única cola. La pantalla muestra un QR que rota cada 5 minutos; el cliente lo escanea y obtiene su turno |
+
+> `QrVirtual` está disponible a partir de la versión **1.8.0**.
 
 ---
 
@@ -79,21 +94,6 @@ Keues se compone de cuatro aplicaciones que trabajan juntas:
 | [**Keues-Counter**](https://github.com/HastaCs/Keues-Counter) | Operador del mostrador | Llama el siguiente turno, marca tickets como atendidos o libera el puesto |
 | [**Keues-Monitors**](https://github.com/HastaCs/Keues-Monitors) | Pantallas visibles al cliente | Muestra el turno actual y el mostrador al que debe ir el cliente |
 | [**Keues-TicketMachine**](https://github.com/HastaCs/Keues-TicketMachine) | Cliente (kiosco táctil) | Muestra el menú de servicios y entrega el número de turno |
-
----
-
-## Tipos de flujo
-
-Cada establecimiento puede tener varios flujos simultáneos según el tipo de atención que ofrezca:
-
-| Tipo | Cuándo usarlo | Cómo funciona |
-|---|---|---|
-| `TicketMachine` | Carnicería, clínica, banco, farmacia… | El cliente saca un ticket en el terminal y el operador lo llama desde el mostrador |
-| `SetFree` | Cajas de supermercado, taquillas, puntos de información | Sin tickets: el operador avisa en pantalla cuando su puesto queda libre |
-| `ManualCall` | Mercados con dispensador de papel, pescaderías | El operador sube o baja el número manualmente y el monitor lo muestra en tiempo real |
-| `QrVirtual` | Cola virtual con QR rotativo: comercios, clínicas, administración… | El flujo tiene una única cola. La pantalla muestra un QR que rota cada 5 minutos; el cliente lo escanea y obtiene su turno |
-
-> `QrVirtual` está disponible a partir de la versión **1.8.0**.
 
 ---
 

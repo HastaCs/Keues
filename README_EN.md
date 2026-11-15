@@ -41,15 +41,30 @@ Everything runs in a single Docker container on your own infrastructure. No subs
 
 ## Table of contents
 
+- [Flow types](#flow-types)
 - [The service cycle](#the-service-cycle)
 - [Application ecosystem](#application-ecosystem)
-- [Flow types](#flow-types)
 - [Features](#features)
 - [Installation](#installation)
 - [API documentation](#api-documentation)
 - [Testing](#testing)
 - [Architecture](#architecture)
 - [License](#license)
+
+---
+
+## Flow types
+
+Each location can have several simultaneous flows depending on the type of service it offers:
+
+| Type | When to use it | How it works |
+|---|---|---|
+| `TicketMachine` | Butcher, clinic, bank, pharmacy… | The customer takes a ticket at the terminal and the operator calls them from the desk |
+| `SetFree` | Supermarket checkouts, ticket offices, information points | No tickets: the operator notifies the screen when their desk is free |
+| `ManualCall` | Markets with paper dispensers, fishmongers | The operator moves the number up or down manually and the monitor shows it in real time |
+| `QrVirtual` | Virtual queue with a rotating QR: shops, clinics, public administration… | The flow has a single queue. The screen shows a QR that rotates every 5 minutes; the customer scans it and gets a ticket |
+
+> `QrVirtual` is available from version **1.8.0**.
 
 ---
 
@@ -79,21 +94,6 @@ Keues is made up of four applications that work together:
 | [**Keues-Counter**](https://github.com/HastaCs/Keues-Counter) | Desk operator | Calls the next turn, marks tickets as attended or frees the desk |
 | [**Keues-Monitors**](https://github.com/HastaCs/Keues-Monitors) | Customer-facing screens | Shows the current turn and the desk the customer should go to |
 | [**Keues-TicketMachine**](https://github.com/HastaCs/Keues-TicketMachine) | Customer (touch kiosk) | Shows the service menu and delivers the turn number |
-
----
-
-## Flow types
-
-Each location can have several simultaneous flows depending on the type of service it offers:
-
-| Type | When to use it | How it works |
-|---|---|---|
-| `TicketMachine` | Butcher, clinic, bank, pharmacy… | The customer takes a ticket at the terminal and the operator calls them from the desk |
-| `SetFree` | Supermarket checkouts, ticket offices, information points | No tickets: the operator notifies the screen when their desk is free |
-| `ManualCall` | Markets with paper dispensers, fishmongers | The operator moves the number up or down manually and the monitor shows it in real time |
-| `QrVirtual` | Virtual queue with a rotating QR: shops, clinics, public administration… | The flow has a single queue. The screen shows a QR that rotates every 5 minutes; the customer scans it and gets a ticket |
-
-> `QrVirtual` is available from version **1.8.0**.
 
 ---
 
