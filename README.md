@@ -91,6 +91,9 @@ Cada establecimiento puede tener varios flujos simultáneos según el tipo de at
 | `TicketMachine` | Carnicería, clínica, banco, farmacia… | El cliente saca un ticket en el terminal y el operador lo llama desde el mostrador |
 | `SetFree` | Cajas de supermercado, taquillas, puntos de información | Sin tickets: el operador avisa en pantalla cuando su puesto queda libre |
 | `ManualCall` | Mercados con dispensador de papel, pescaderías | El operador sube o baja el número manualmente y el monitor lo muestra en tiempo real |
+| `QrVirtual` | Cola virtual con QR rotativo: comercios, clínicas, administración… | El flujo tiene una única cola. La pantalla muestra un QR que rota cada 5 minutos; el cliente lo escanea y obtiene su turno |
+
+> `QrVirtual` está disponible a partir de la versión **1.8.0**.
 
 ---
 

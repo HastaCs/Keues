@@ -91,6 +91,9 @@ Each location can have several simultaneous flows depending on the type of servi
 | `TicketMachine` | Butcher, clinic, bank, pharmacy… | The customer takes a ticket at the terminal and the operator calls them from the desk |
 | `SetFree` | Supermarket checkouts, ticket offices, information points | No tickets: the operator notifies the screen when their desk is free |
 | `ManualCall` | Markets with paper dispensers, fishmongers | The operator moves the number up or down manually and the monitor shows it in real time |
+| `QrVirtual` | Virtual queue with a rotating QR: shops, clinics, public administration… | The flow has a single queue. The screen shows a QR that rotates every 5 minutes; the customer scans it and gets a ticket |
+
+> `QrVirtual` is available from version **1.8.0**.
 
 ---
 
