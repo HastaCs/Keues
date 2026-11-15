@@ -121,6 +121,9 @@ Web panel with monitoring for each location:
 - **Specialised desks** — each counter can be authorised to serve only certain queues.
 - **Colours** for queues and counters, visible in the dashboard and on monitors.
 
+### QR virtual queue
+A QR flow has exactly one associated queue. The customer-facing screen shows a QR code that rotates every 5 minutes; the customer scans it and gets a ticket. The public QR page is served on port `8081`, separately from the admin dashboard and internal API on `8080`.
+
 ### Real time with no effort
 Monitors and counters receive changes instantly. No reloading. No polling.
 
@@ -131,6 +134,7 @@ Interface available in **English and Spanish**. **Light/dark theme** toggle in t
 - Guided first launch: the system detects there is no administrator and creates one step by step.
 - JWT authentication in an HttpOnly cookie.
 - Password recovery by email (configurable SMTP or Mailjet).
+- Port separation: `8080` for administration and the full API; `8081` only for the public QR page and its endpoints.
 
 ### Simple deployment
 A single Docker container. Data persists in a local volume. No external database, no additional services.
@@ -145,11 +149,17 @@ A single Docker container. Data persists in a local volume. No external database
 docker run -d \
   --name keues \
   -p 8080:8080 \
+  -p 8081:8081 \
+  -e KEUES_QR_URL="http://YOUR_HOST_IP:8081" \
   -v "$(pwd)/data:/app/data" \
   gorerecord/keues:latest
 ```
 
 Open **http://localhost:8080**: on first launch the dashboard will guide you through creating the first administrator.
+
+- `8080` is the dashboard and full API. **Do not expose it to the Internet.**
+- `8081` is the public QR page. It is the only port customers need.
+- `KEUES_QR_URL` must be reachable from the customer's phone. `localhost` will not work for a phone.
 
 Or with Docker Compose:
 
@@ -159,13 +169,48 @@ services:
     image: gorerecord/keues:latest
     container_name: keues
     ports:
+      # Admin/internal API. Keep private or firewall it.
       - "8080:8080"
+      # Public QR page. This is the only port customers need.
+      - "8081:8081"
     volumes:
       - ./data:/app/data
     environment:
-      KEUES_DASHBOARD_URL: "http://localhost:8080"
+      KEUES_DASHBOARD_URL: "http://YOUR_HOST_IP:8080"
+      KEUES_QR_URL: "http://YOUR_HOST_IP:8081"
+      KEUES_PUBLIC_PORT: "8081"
     restart: unless-stopped
 ```
+
+### QR virtual queue
+
+Both ports are only needed if you use the QR virtual queue. If you do not use QR, publish only `8080`; `8081` can stay unpublished. The container still listens on `8081` internally, but it is not reachable from outside unless you publish that port.
+
+Port `8081` is a security boundary: it publishes only the QR page and its endpoints, keeping the dashboard, administration and full API on the private `8080`.
+
+On a LAN the QR points to:
+
+```text
+http://192.168.1.50:8081/turno/{flowId}/{token}
+```
+
+The dashboard and full API remain on:
+
+```text
+http://192.168.1.50:8080
+```
+
+If there is a customer WiFi, `8080` must not be reachable from it. The TicketMachine must be on the trusted network.
+
+To expose it to the Internet, publish **only port 8081** behind HTTPS:
+
+- Nginx, Traefik or Caddy pointing to `http://keues:8081`.
+- Cloudflare Tunnel pointing to `http://keues:8081`.
+- ngrok for testing only.
+
+Do not expose `8080` to the Internet. Port `8081` only allows the QR page, its assets and the required endpoints (`/api/flows/{id}`, `/api/queues/{id}/qr-new-ticket`, `/api/tickets/{id}`); everything else returns `404`.
+
+Rate limiting `/api/queues/*/qr-new-ticket` at the proxy is recommended.
 
 ### Local development
 
@@ -182,7 +227,7 @@ pnpm install
 pnpm dev
 ```
 
-> The Vite proxy points to `http://localhost:8080`. If you run the API on a different port, adjust `Keues.Dashboard/vite.config.mjs`.
+> The Vite proxy points to `http://localhost:5125`. If you run the API on a different port, adjust `Keues.Dashboard/vite.config.mjs`.
 
 ---
 

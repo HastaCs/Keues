@@ -8,11 +8,14 @@ public class RuntimeConfig
 
   public string DashboardUrl { get; set; } = string.Empty;
 
+  public string KeuesQrUrl { get; set; } = string.Empty;
+
   public EmailConfig Email { get; set; } = new();
 
   public void ApplyEnvironmentOverrides()
   {
     DashboardUrl = EnvOr("KEUES_DASHBOARD_URL", DashboardUrl);
+    KeuesQrUrl = EnvOr("KEUES_QR_URL", KeuesQrUrl);
     JwtKey = EnvOr("KEUES_JWT_KEY", JwtKey);
     Email.Provider = EnvOr("KEUES_EMAIL_PROVIDER", Email.Provider);
     Email.From = EnvOr("KEUES_EMAIL_FROM", Email.From);
@@ -27,6 +30,22 @@ public class RuntimeConfig
     Email.Mailjet.ApiKey = EnvOr("KEUES_MAILJET_API_KEY", Email.Mailjet.ApiKey);
     Email.Mailjet.SecretKey = EnvOr("KEUES_MAILJET_SECRET_KEY", Email.Mailjet.SecretKey);
   }
+
+  public string ResolveQrPublicUrl()
+  {
+    // Una URL QR explicita se respeta siempre, incluso localhost para desarrollo.
+    if (!string.IsNullOrWhiteSpace(KeuesQrUrl))
+    {
+      return KeuesQrUrl;
+    }
+
+    return IsUsablePublicUrl(DashboardUrl) ? DashboardUrl : string.Empty;
+  }
+
+  private static bool IsUsablePublicUrl(string url) =>
+    !string.IsNullOrWhiteSpace(url) &&
+    Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+    !uri.IsLoopback;
 
   public void BindToConfiguration(ConfigurationManager configuration)
   {

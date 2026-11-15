@@ -6,12 +6,19 @@ services:
     image: gorerecord/keues:latest
     container_name: keues
     ports:
+      # Panel de administracion y API interna. No exponer a Internet.
       - "8080:8080"
+      # QR publico. Es el unico puerto que debe publicarse.
+      - "8081:8081"
     volumes:
       - ./data:/app/data
     environment:
       # URL pública del Dashboard. Vacío -> usa la de config.json.
       KEUES_DASHBOARD_URL: "http://localhost:8080"
+      # URL pública del QR. Vacío -> usa keuesQrUrl de config.json.
+      KEUES_QR_URL: ""
+      # Puerto público del QR dentro del contenedor.
+      KEUES_PUBLIC_PORT: "8081"
       # Remitente común para todos los providers.
       KEUES_EMAIL_PROVIDER: "smtp"
       KEUES_EMAIL_FROM: ""

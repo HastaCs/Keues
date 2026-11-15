@@ -185,7 +185,13 @@ builder.Services.AddSignalR();
 
 builder.Services.AddAuthorizationServices(builder.Configuration);
 builder.Services.AddEmailServices(builder.Configuration);
-builder.Services.AddQrServices(runtimeConfig.DashboardUrl);
+var qrPublicUrl = runtimeConfig.ResolveQrPublicUrl();
+if (string.IsNullOrWhiteSpace(qrPublicUrl))
+{
+  qrPublicUrl = QrServerAddress.TryDetect() ?? string.Empty;
+}
+
+builder.Services.AddQrServices(qrPublicUrl);
 builder.Services.AddQrUseCases();
 
 var jwt = builder.Configuration
@@ -237,6 +243,25 @@ using (var scope = app.Services.CreateScope())
   var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
   db.Database.Migrate();
 }
+
+var publicPort = int.TryParse(
+  Environment.GetEnvironmentVariable("KEUES_PUBLIC_PORT"),
+  out var configuredPublicPort)
+  ? configuredPublicPort
+  : 8081;
+
+app.UseWhen(
+  context => context.Connection.LocalPort == publicPort,
+  branch => branch.Use(async (context, next) =>
+  {
+    if (!PublicQrGate.IsAllowed(context.Request))
+    {
+      context.Response.StatusCode = StatusCodes.Status404NotFound;
+      return;
+    }
+
+    await next();
+  }));
 
 app.UseAuthentication();
 app.UseAuthorization();

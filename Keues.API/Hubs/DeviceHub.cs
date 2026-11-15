@@ -1,9 +1,11 @@
 using System.Diagnostics;
+using Keues.Application.Common;
 using Keues.Application.DeviceRegistry;
 using Keues.Application.Features.Devices;
 using Keues.Application.Features.Qr;
 using Keues.Domain.Enums;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
 
 namespace Keues.API.Hubs;
 
@@ -12,15 +14,18 @@ public class DeviceHub : Hub
   private readonly ConnectedDeviceRegistry _registry;
   private readonly DeviceUseCases _deviceUseCases;
   private readonly QrTokenPayloadFactory _qrTokenPayloadFactory;
+  private readonly IOptions<QrOptions> _qrOptions;
 
   public DeviceHub(
     ConnectedDeviceRegistry registry,
     DeviceUseCases deviceUseCases,
-    QrTokenPayloadFactory qrTokenPayloadFactory)
+    QrTokenPayloadFactory qrTokenPayloadFactory,
+    IOptions<QrOptions> qrOptions)
   {
     _registry = registry;
     _deviceUseCases = deviceUseCases;
     _qrTokenPayloadFactory = qrTokenPayloadFactory;
+    _qrOptions = qrOptions;
   }
 
   public override async Task OnConnectedAsync()
@@ -45,6 +50,12 @@ public class DeviceHub : Hub
 
     if (typeDevice == DeviceType.TicketMachine)
     {
+      var request = Context.GetHttpContext()?.Request;
+      if (request is not null)
+      {
+        QrPublicUrlFallback.ApplyFromRequest(_qrOptions.Value, request);
+      }
+
       var payload = await _qrTokenPayloadFactory.BuildAsync(flowId, DateTimeOffset.UtcNow);
       if (payload is not null)
       {

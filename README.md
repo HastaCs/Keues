@@ -121,6 +121,9 @@ Panel web con seguimiento de cada establecimiento:
 - **Mostradores especializados** — cada mostrador puede estar autorizado a atender solo determinadas colas.
 - **Colores** para colas y mostradores, visibles en el dashboard y en los monitores.
 
+### Cola virtual por QR
+Un flujo QR tiene una única cola asociada. La pantalla del cliente muestra un QR que rota cada 5 minutos; el cliente lo escanea y obtiene su turno. La página pública del QR se sirve en el puerto `8081`, separada del dashboard y la API interna del `8080`.
+
 ### Tiempo real sin esfuerzo
 Los monitores y mostradores reciben los cambios al instante. Sin recargar. Sin polling.
 
@@ -131,6 +134,7 @@ Interfaz disponible en **español e inglés**. Toggle de **tema claro/oscuro** e
 - Primer arranque guiado: el sistema detecta que no hay administrador y lo crea paso a paso.
 - Autenticación con JWT en cookie HttpOnly.
 - Recuperación de contraseña por email (SMTP o Mailjet configurables).
+- Separación de puertos: `8080` para administración y API completa; `8081` solo para la página pública del QR y sus endpoints.
 
 ### Despliegue sencillo
 Un solo contenedor Docker. Los datos persisten en un volumen local. Sin base de datos externa, sin servicios adicionales.
@@ -145,11 +149,17 @@ Un solo contenedor Docker. Los datos persisten en un volumen local. Sin base de 
 docker run -d \
   --name keues \
   -p 8080:8080 \
+  -p 8081:8081 \
+  -e KEUES_QR_URL="http://TU_IP:8081" \
   -v "$(pwd)/data:/app/data" \
   gorerecord/keues:latest
 ```
 
 Abre **http://localhost:8080**: en el primer arranque el dashboard te guiará para crear el primer administrador.
+
+- `8080` es el dashboard y la API completa. **No lo expongas a Internet.**
+- `8081` es la página pública del QR. Es el único puerto que necesitan los clientes.
+- `KEUES_QR_URL` debe ser una URL alcanzable desde el móvil del cliente. `localhost` no sirve para un teléfono.
 
 O con Docker Compose:
 
@@ -159,13 +169,48 @@ services:
     image: gorerecord/keues:latest
     container_name: keues
     ports:
+      # Dashboard/API interna. Mantener privada o protegida por firewall.
       - "8080:8080"
+      # Página pública del QR. Es el único puerto que deben alcanzar los clientes.
+      - "8081:8081"
     volumes:
       - ./data:/app/data
     environment:
-      KEUES_DASHBOARD_URL: "http://localhost:8080"
+      KEUES_DASHBOARD_URL: "http://TU_IP:8080"
+      KEUES_QR_URL: "http://TU_IP:8081"
+      KEUES_PUBLIC_PORT: "8081"
     restart: unless-stopped
 ```
+
+### Cola virtual por QR
+
+Los dos puertos solo son necesarios si usas cola virtual QR. Si no la usas, publica solo el `8080`; el `8081` puede quedar sin publicar. El contenedor sigue escuchando en `8081` internamente, pero no es accesible desde fuera si no publicas ese puerto.
+
+El `8081` es una medida de seguridad: permite publicar solo la página del QR y sus endpoints, manteniendo el dashboard, la administración y la API completa en el `8080` privado.
+
+En una LAN, el QR apunta a:
+
+```text
+http://192.168.1.50:8081/turno/{flowId}/{token}
+```
+
+El dashboard y la API completa siguen en:
+
+```text
+http://192.168.1.50:8080
+```
+
+Si hay una WiFi de clientes, el `8080` no debe ser accesible desde ella. La TicketMachine debe estar en la red de confianza.
+
+Para exponerlo a Internet, publica **solo el 8081** detrás de HTTPS:
+
+- Nginx, Traefik o Caddy apuntando a `http://keues:8081`.
+- Cloudflare Tunnel apuntando a `http://keues:8081`.
+- ngrok solo para pruebas.
+
+No expongas el `8080` a Internet. El `8081` solo permite la página del QR, sus assets y los endpoints necesarios (`/api/flows/{id}`, `/api/queues/{id}/qr-new-ticket`, `/api/tickets/{id}`); todo lo demás devuelve `404`.
+
+Se recomienda limitar peticiones en el proxy para `/api/queues/*/qr-new-ticket`.
 
 ### Desarrollo local
 
@@ -182,7 +227,7 @@ pnpm install
 pnpm dev
 ```
 
-> El proxy de Vite apunta a `http://localhost:8080`. Si lanzas la API en otro puerto, ajusta `Keues.Dashboard/vite.config.mjs`.
+> El proxy de Vite apunta a `http://localhost:5125`. Si lanzas la API en otro puerto, ajusta `Keues.Dashboard/vite.config.mjs`.
 
 ---
 

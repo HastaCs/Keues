@@ -100,7 +100,11 @@ public sealed class QrTokenBackgroundService : BackgroundService
           payload.FlowId,
           payload.RotatesAt,
           payload.ExpiresAt);
-        _logger.LogDebug("QR token for flow {FlowId}: {Token}", payload.FlowId, payload.Token);
+        _logger.LogDebug(
+          "QR token for flow {FlowId}: token={Token}, url={Url}",
+          payload.FlowId,
+          payload.Token,
+          payload.Url);
 
         // Solo las TicketMachine conectadas a este flujo reciben el token.
         var group = DeviceGroups.TicketMachine(payload.LocationId, payload.FlowId);

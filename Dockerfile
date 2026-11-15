@@ -21,7 +21,8 @@ RUN dotnet publish Keues.API/Keues.API.csproj -c Release -o /app/publish --nolog
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_URLS="http://+:8080;http://+:8081"
+ENV KEUES_PUBLIC_PORT=8081
 ENV ASPNETCORE_ENVIRONMENT=Production
 LABEL org.opencontainers.image.title="Keues"
 LABEL org.opencontainers.image.description="Queue & ticket management system: Dashboard (React) + REST API (.NET) in a single container"
@@ -29,6 +30,6 @@ LABEL org.opencontainers.image.url="https://www.keues.dev"
 LABEL org.opencontainers.image.documentation="https://www.keues.dev"
 LABEL org.opencontainers.image.vendor="gorerecord"
 LABEL org.opencontainers.image.licenses="Proprietary"
-EXPOSE 8080
+EXPOSE 8080 8081
 VOLUME ["/app/data"]
 ENTRYPOINT ["dotnet", "Keues.API.dll"]

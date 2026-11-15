@@ -18,6 +18,19 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "two-ports": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://0.0.0.0:8080;http://0.0.0.0:8081",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Production",
+        "KEUES_PUBLIC_PORT": "8081",
+        "KEUES_QR_URL": "http://192.168.1.133:8081",
+        "ASPNETCORE_WEBROOT": "../Keues.Dashboard/dist",
+        "Logging__LogLevel__Keues.API.BackgroundServices.QrTokenBackgroundService": "Debug"
+      }
     }
   }
 }
