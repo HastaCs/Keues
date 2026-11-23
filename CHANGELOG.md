@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.1](https://github.com/HastaCs/Keues/compare/v1.8.0...v1.8.1) (2026-11-23)
+
+
+### 🐛 Bug Fixes
+
+* add Counter code property to ticket response and handlers ([b2f2e9d](https://github.com/HastaCs/Keues/commit/b2f2e9d56f704adf2ab58be0d85f4d9507d1fe7e))
+* Cuando el ticket qr finalizaba autollamaba a otro ([c794535](https://github.com/HastaCs/Keues/commit/c79453555e8f1dbdf3baf5c04fc6749ac22c39c6))
+
 ## [1.8.0](https://github.com/HastaCs/Keues/compare/v1.7.0...v1.8.0) (2026-11-23)
 
 
