@@ -35,14 +35,14 @@ export interface QrTicketStatus {
   id: string;
   code: string;
   status: number;
-  counterName: string | null;
+  counterCode: string | null;
 }
 
 interface TicketResponse {
   id: string;
   code: string;
   status: number;
-  counter: { name: string } | null;
+  counter: { name: string; code: string } | null;
 }
 
 interface FlowResponse {
@@ -125,6 +125,6 @@ export async function getQrTicketStatus(ticketId: string): Promise<QrTicketStatu
     id: ticket.id,
     code: ticket.code,
     status: ticket.status,
-    counterName: ticket.counter?.name ?? null,
+    counterCode: ticket.counter?.code ?? null,
   };
 }

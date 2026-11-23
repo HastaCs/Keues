@@ -1,5 +1,6 @@
 import {
   Alert,
+  Badge,
   Button,
   Container,
   Group,
@@ -11,11 +12,11 @@ import {
   ThemeIcon,
   Title,
 } from '@mantine/core';
-import { IconAlertTriangle, IconTicket } from '@tabler/icons-react';
+import { IconAlertTriangle, IconBellRinging, IconTicket } from '@tabler/icons-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { getErrorMessage } from '@/api/getErrorMessage';
 import { ApiError } from '@/api/httpClient';
 import {
@@ -27,13 +28,22 @@ import {
   type QrIssueResult,
 } from '@/api/qrApi';
 import {
+  clearFinishedQrTicket,
   clearQrTicket,
+  getFinishedQrTicket,
   getStoredQrTicket,
+  saveFinishedQrTicket,
   saveQrTicket,
   type StoredQrTicket,
 } from './qrTicketStorage';
+import styles from './QrScanPage.module.css';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isReloadNavigation() {
+  const [entry] = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+  return entry?.type === 'reload' || entry?.type === 'back_forward';
+}
 
 export function QrScanPage() {
   const { t, i18n } = useTranslation();
@@ -42,22 +52,32 @@ export function QrScanPage() {
   const [searchParams] = useSearchParams();
   const token = tokenParam ?? searchParams.get('token') ?? '';
   const hasValidFlowId = UUID_PATTERN.test(flowId);
+  const [isReload] = useState(isReloadNavigation);
+  const navigate = useNavigate();
 
   const [storedTicket, setStoredTicket] = useState<StoredQrTicket | null>(() =>
     hasValidFlowId ? getStoredQrTicket(flowId) : null
   );
+  const [finishedTicket, setFinishedTicket] = useState<StoredQrTicket | null>(() =>
+    hasValidFlowId && (!token || isReload) ? getFinishedQrTicket(flowId) : null
+  );
   const [checking, setChecking] = useState(false);
+  const firstRender = useRef(true);
 
   useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+
     setStoredTicket(hasValidFlowId ? getStoredQrTicket(flowId) : null);
+    setFinishedTicket(null);
+    autoIssueStarted.current = false;
   }, [flowId, hasValidFlowId]);
 
   useEffect(() => {
     const storedLanguage = window.localStorage.getItem('keues-qr-language');
-    if (
-      (storedLanguage === 'es' || storedLanguage === 'en') &&
-      storedLanguage !== language
-    ) {
+    if ((storedLanguage === 'es' || storedLanguage === 'en') && storedLanguage !== language) {
       void i18n.changeLanguage(storedLanguage);
     }
   }, [i18n, language]);
@@ -83,6 +103,8 @@ export function QrScanPage() {
       };
 
       saveQrTicket(stored);
+      clearFinishedQrTicket(flowId);
+      setFinishedTicket(null);
       setStoredTicket(stored);
     },
   });
@@ -91,25 +113,15 @@ export function QrScanPage() {
   issueRef.current = issue.mutate;
 
   const autoIssueStarted = useRef(false);
-  const newTicketAttempted = useRef(false);
-
-  const isReload = useMemo(() => {
-    const [entry] = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
-    return entry?.type === 'reload' || entry?.type === 'back_forward';
-  }, []);
 
   useEffect(() => {
-    newTicketAttempted.current = false;
-  }, [token]);
-
-  useEffect(() => {
-    if (!hasValidFlowId || !token || storedTicket || autoIssueStarted.current) {
+    if (!hasValidFlowId || !token || storedTicket || isReload || autoIssueStarted.current) {
       return;
     }
 
     autoIssueStarted.current = true;
     issueRef.current();
-  }, [hasValidFlowId, token, storedTicket]);
+  }, [hasValidFlowId, isReload, token, storedTicket]);
 
   const statusQuery = useQuery({
     queryKey: ['qr-ticket-status', storedTicket?.id],
@@ -152,31 +164,24 @@ export function QrScanPage() {
     setStoredTicket(null);
     autoIssueStarted.current = true;
 
-    if (token) {
+    if (token && !isReload) {
       issueRef.current();
     }
-  }, [flowId, statusQuery.error, storedTicket, token]);
+  }, [flowId, isReload, statusQuery.error, storedTicket, token]);
 
   useEffect(() => {
     const status = statusQuery.data?.status;
 
-    if (
-      !storedTicket ||
-      !token ||
-      status === undefined ||
-      !isFinishedTicketStatus(status) ||
-      newTicketAttempted.current
-    ) {
+    if (!storedTicket || status === undefined || !isFinishedTicketStatus(status)) {
       return;
     }
 
-    if (isReload) {
-      return;
-    }
-
-    newTicketAttempted.current = true;
-    issueRef.current();
-  }, [isReload, storedTicket, token, statusQuery.data]);
+    clearQrTicket(flowId);
+    saveFinishedQrTicket(storedTicket);
+    setFinishedTicket(storedTicket);
+    setStoredTicket(null);
+    navigate(`/turno/${flowId}`, { replace: true });
+  }, [flowId, navigate, statusQuery.data, storedTicket]);
 
   function resolveIssueError(error: unknown) {
     if (error instanceof QrFlowError) {
@@ -191,9 +196,8 @@ export function QrScanPage() {
   }
 
   const ticketStatus = statusQuery.data?.status;
-  const isFinished = ticketStatus !== undefined && isFinishedTicketStatus(ticketStatus);
   const isInProgress = ticketStatus === QR_TICKET_STATUS.inProgress;
-  const counterName = statusQuery.data?.counterName;
+  const counterCode = statusQuery.data?.counterCode;
   const statusPending = Boolean(
     storedTicket && (checking || (!statusQuery.isFetchedAfterMount && !statusQuery.isError))
   );
@@ -223,7 +227,21 @@ export function QrScanPage() {
         />
       </Group>
 
-      <Paper withBorder radius="lg" p="xl" mt="xl">
+      <Paper
+        withBorder
+        radius="lg"
+        p="xl"
+        mt="xl"
+        style={
+          isInProgress
+            ? {
+                borderColor: 'var(--mantine-color-teal-5)',
+                borderWidth: 2,
+                boxShadow: 'var(--mantine-shadow-md)',
+              }
+            : undefined
+        }
+      >
         <Stack align="center" gap="md">
           {!hasValidFlowId ? (
             <Alert color="red" icon={<IconAlertTriangle size={18} />}>
@@ -232,41 +250,16 @@ export function QrScanPage() {
           ) : storedTicket ? (
             statusPending ? (
               loadingView
-            ) : isFinished ? (
-              issue.isPending ? (
-                loadingView
-              ) : (
-                <>
-                  <ThemeIcon size={64} radius="xl" variant="light" color="gray">
-                    <IconTicket size={36} />
-                  </ThemeIcon>
-
-                  <Text c="dimmed">
-                    {storedTicket.flowName
-                      ? t('qr.ticketFor', { name: storedTicket.flowName })
-                      : t('qr.yourTurn')}
-                  </Text>
-
-                  <Title
-                    order={1}
-                    c="dimmed"
-                    style={{ fontSize: 'clamp(3rem, 16vw, 6rem)', lineHeight: 1 }}
-                  >
-                    {storedTicket.code}
-                  </Title>
-
-                  <Title order={3} ta="center">
-                    {t('qr.finishedTitle')}
-                  </Title>
-                  <Text ta="center" c="dimmed">
-                    {t('qr.finishedMessage')}
-                  </Text>
-                </>
-              )
             ) : (
               <>
-                <ThemeIcon size={64} radius="xl" variant="light" color="teal">
-                  <IconTicket size={36} />
+                <ThemeIcon
+                  size={isInProgress ? 80 : 64}
+                  radius="xl"
+                  variant={isInProgress ? 'filled' : 'light'}
+                  color="teal"
+                  className={isInProgress ? styles.pulse : undefined}
+                >
+                  {isInProgress ? <IconBellRinging size={44} /> : <IconTicket size={36} />}
                 </ThemeIcon>
 
                 <Text c="dimmed">
@@ -275,21 +268,49 @@ export function QrScanPage() {
                     : t('qr.yourTurn')}
                 </Text>
 
-                <Title order={1} style={{ fontSize: 'clamp(4rem, 22vw, 9rem)', lineHeight: 1 }}>
+                <Title
+                  order={1}
+                  c={isInProgress ? 'teal.7' : undefined}
+                  style={{
+                    fontSize: isInProgress
+                      ? 'clamp(2.5rem, 12vw, 4.5rem)'
+                      : 'clamp(4rem, 22vw, 9rem)',
+                    lineHeight: 1,
+                  }}
+                >
                   {storedTicket.code}
                 </Title>
 
                 {isInProgress ? (
-                  <>
-                    <Title order={4} ta="center">
-                      {t('qr.inProgressTitle')}
-                    </Title>
-                    <Text ta="center" c="dimmed">
-                      {counterName
-                        ? t('qr.inProgressAt', { counter: counterName })
-                        : t('qr.inProgressNoCounter')}
-                    </Text>
-                  </>
+                  <Alert
+                    color="teal"
+                    variant="light"
+                    radius="lg"
+                    w="100%"
+                    icon={<IconBellRinging size={28} />}
+                    title={
+                      <Badge color="teal" variant="filled" size="lg" radius="xl" tt="uppercase">
+                        {t('qr.inProgressTitle')}
+                      </Badge>
+                    }
+                  >
+                    <Stack align="center" gap={2} mt="xs">
+                      {counterCode ? (
+                        <>
+                          <Text size="sm" tt="uppercase" fw={800} c="teal.7">
+                            {t('qr.counterLabel')}
+                          </Text>
+                          <Title order={1} className={styles.counterName} c="teal.9">
+                            {counterCode}
+                          </Title>
+                        </>
+                      ) : (
+                        <Text ta="center" fw={600}>
+                          {t('qr.inProgressNoCounter')}
+                        </Text>
+                      )}
+                    </Stack>
+                  </Alert>
                 ) : (
                   <Text ta="center" c="dimmed">
                     {t('qr.ticketMessage')}
@@ -309,6 +330,33 @@ export function QrScanPage() {
                 ) : null}
               </>
             )
+          ) : finishedTicket ? (
+            <>
+              <ThemeIcon size={64} radius="xl" variant="light" color="gray">
+                <IconTicket size={36} />
+              </ThemeIcon>
+
+              <Text c="dimmed">
+                {finishedTicket.flowName
+                  ? t('qr.ticketFor', { name: finishedTicket.flowName })
+                  : t('qr.yourTurn')}
+              </Text>
+
+              <Title
+                order={1}
+                c="dimmed"
+                style={{ fontSize: 'clamp(3rem, 16vw, 6rem)', lineHeight: 1 }}
+              >
+                {finishedTicket.code}
+              </Title>
+
+              <Title order={3} ta="center">
+                {t('qr.finishedTitle')}
+              </Title>
+              <Text ta="center" c="dimmed">
+                {t('qr.finishedMessage')}
+              </Text>
+            </>
           ) : issue.isError ? (
             <>
               <Alert color="red" title={t('qr.errorTitle')} icon={<IconAlertTriangle size={18} />}>
@@ -319,6 +367,10 @@ export function QrScanPage() {
           ) : !token ? (
             <Alert color="red" icon={<IconAlertTriangle size={18} />}>
               {t('qr.missingToken')}
+            </Alert>
+          ) : isReload ? (
+            <Alert color="blue" icon={<IconAlertTriangle size={18} />}>
+              {t('qr.rescanRequired')}
             </Alert>
           ) : (
             loadingView

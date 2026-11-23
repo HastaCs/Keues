@@ -17,6 +17,7 @@ export interface TicketQueue {
 export interface TicketCounter {
   id: string;
   name: string;
+  code: string;
 }
 
 export interface TicketUser {

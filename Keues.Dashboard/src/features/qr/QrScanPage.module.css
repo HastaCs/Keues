@@ -1,0 +1,29 @@
+.pulse {
+  animation: qr-pulse 1.8s ease-in-out infinite;
+}
+
+.counterName {
+  font-size: clamp(1.75rem, 10vw, 3rem);
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+@keyframes qr-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
+}

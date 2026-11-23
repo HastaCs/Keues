@@ -128,6 +128,10 @@ const router = createBrowserRouter([
     element: <QrScanPage />,
   },
   {
+    path: '/turno/:flowId',
+    element: <QrScanPage />,
+  },
+  {
     path: '/qr/:flowId',
     element: <QrScanPage />,
   },
