@@ -67,7 +67,7 @@ public class GetAllTicketsHandler
         AttendedAt = ticket.AttendedAt,
         CanceledAt = ticket.CanceledAt,
         Queue = new QueueMin { Id = ticket.Queue.Id, Name = ticket.Queue.Name },
-        Counter = ticket.Counter != null ? new CounterMin { Id = ticket.Counter.Id, Name = ticket.Counter.Name } : null,
+        Counter = ticket.Counter != null ? new CounterMin { Id = ticket.Counter.Id, Name = ticket.Counter.Name, Code = ticket.Counter.Code } : null,
         Flow = new FlowMin { Id = ticket.FlowId, Name = ticket.Flow.Name },
         Code = ticket.Code,
         FlowId = ticket.FlowId,

@@ -16,6 +16,7 @@ public record CounterMin
 {
   public Guid Id { get; set; }
   public string Name { get; set; }
+  public string Code { get; set; }
 }
 
 public record FlowMin
