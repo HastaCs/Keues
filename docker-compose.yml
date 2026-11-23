@@ -13,12 +13,12 @@ services:
     volumes:
       - ./data:/app/data
     environment:
-      # URL pública del Dashboard. Vacío -> usa la de config.json.
+      # Opcional. Se usa para enlaces de recuperación de contraseña.
+      # Vacío -> usa la de config.json.
       KEUES_DASHBOARD_URL: "http://localhost:8080"
-      # URL pública del QR. Vacío -> usa keuesQrUrl de config.json.
+      # Opcional. Solo si usas cola virtual QR.
+      # Vacío -> usa keuesQrUrl de config.json.
       KEUES_QR_URL: ""
-      # Puerto público del QR dentro del contenedor.
-      KEUES_PUBLIC_PORT: "8081"
       # Remitente común para todos los providers.
       KEUES_EMAIL_PROVIDER: "smtp"
       KEUES_EMAIL_FROM: ""

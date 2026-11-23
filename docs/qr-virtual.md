@@ -64,7 +64,9 @@ La pantalla solo tiene que renderizar un QR con `url`.
 
 ## Configuracion de la URL publica
 
-La `url` se construye con `keuesQrUrl`:
+La `url` se construye con `keuesQrUrl`. `KEUES_QR_URL` es opcional y solo se necesita si se usa QR virtual; si no se usa QR, no hace falta configurarla.
+
+`dashboardUrl` se usa principalmente para los enlaces de recuperación de contraseña. Aquí actúa como fallback cuando no hay `keuesQrUrl` ni `KEUES_QR_URL`.
 
 - en `data/config.json`:
   ```json
@@ -84,8 +86,8 @@ Prioridad:
 KEUES_QR_URL
   > keuesQrUrl
   > dashboardUrl (si no es loopback)
-  > IP LAN detectada + KEUES_PUBLIC_PORT
-  > host de la primera TicketMachine + KEUES_PUBLIC_PORT
+  > IP LAN detectada (puerto publico 8081)
+  > host de la primera TicketMachine (puerto publico 8081)
   > ruta relativa
 ```
 
@@ -101,7 +103,7 @@ http://192.168.1.50:8081/turno/{flowId}/{token}
 
 En Docker, la deteccion automatica de IP no es fiable. Configura `KEUES_QR_URL` con la URL publica real. Si no se ha configurado y aun no se ha conectado ninguna TicketMachine, el payload lleva una ruta relativa `/turno/{flowId}/{token}`.
 
-`KEUES_PUBLIC_PORT` (por defecto `8081`) es el puerto local del listener publico. No es la URL publica; sirve para que el middleware sepa que peticiones llegan por el puerto publico.
+El puerto publico local es fijo: `8081`. El middleware lo usa para saber que peticiones llegan por el listener publico.
 
 ## Validez del token
 
@@ -178,7 +180,7 @@ GET/HEAD  /api/tickets/{ticketId}
 POST      /api/queues/{queueId}/qr-new-ticket
 ```
 
-Todo lo demas devuelve `404`. El middleware usa `Connection.LocalPort` y el valor de `KEUES_PUBLIC_PORT`.
+Todo lo demas devuelve `404`. El middleware usa `Connection.LocalPort` y el puerto publico fijo `8081`.
 
 ### Docker
 
@@ -188,10 +190,11 @@ ports:
   - "8081:8081"   # publico
 environment:
   KEUES_QR_URL: "https://qr.example.com"
-  KEUES_PUBLIC_PORT: "8081"
 ```
 
 No expongas `8080` a Internet. La TicketMachine y el dashboard deben ir por la red privada.
+
+Si publicas el contenedor como `8090:8081`, el proxy debe apuntar a `http://127.0.0.1:8090` (o `http://keues:8081` desde otro contenedor) y `KEUES_QR_URL` debe ser la URL publica final, por ejemplo `https://www.miweb.com`. El puerto interno del contenedor sigue siendo `8081`.
 
 ### LAN
 

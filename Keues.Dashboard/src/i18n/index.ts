@@ -712,6 +712,8 @@ const resources = {
         expiredToken: 'El QR ha caducado o no es válido. Vuelve a escanear el código.',
         invalidFlow: 'Este código QR no corresponde a un flujo de turnos válido.',
         missingQueue: 'Este flujo QR no tiene una cola configurada.',
+        languageEs: 'ES',
+        languageEn: 'EN',
       },
       user: {
         name: '',
@@ -1428,6 +1430,8 @@ const resources = {
         expiredToken: 'The QR has expired or is not valid. Please scan the code again.',
         invalidFlow: 'This QR code does not belong to a valid ticket flow.',
         missingQueue: 'This QR flow has no queue configured.',
+        languageEs: 'ES',
+        languageEn: 'EN',
       },
       user: {
         name: '',

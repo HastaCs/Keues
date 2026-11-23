@@ -6,7 +6,7 @@ namespace Keues.Tests.Api;
 public class RuntimeConfigTests
 {
   [Fact]
-  public void ApplyEnvironmentOverrides_uses_qr_url_environment_variable()
+  public void ApplyEnvironmentOverrides_uses_qr_url_environment_over_config()
   {
     var previous = Environment.GetEnvironmentVariable("KEUES_QR_URL");
 
@@ -14,6 +14,26 @@ public class RuntimeConfigTests
     {
       Environment.SetEnvironmentVariable("KEUES_QR_URL", "https://qr.example.com");
       var config = new RuntimeConfig { KeuesQrUrl = "http://config.local" };
+
+      config.ApplyEnvironmentOverrides();
+
+      Assert.Equal("https://qr.example.com", config.KeuesQrUrl);
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("KEUES_QR_URL", previous);
+    }
+  }
+
+  [Fact]
+  public void ApplyEnvironmentOverrides_uses_qr_url_environment_when_config_is_empty()
+  {
+    var previous = Environment.GetEnvironmentVariable("KEUES_QR_URL");
+
+    try
+    {
+      Environment.SetEnvironmentVariable("KEUES_QR_URL", "https://qr.example.com");
+      var config = new RuntimeConfig { KeuesQrUrl = "" };
 
       config.ApplyEnvironmentOverrides();
 

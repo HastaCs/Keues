@@ -22,7 +22,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENV ASPNETCORE_URLS="http://+:8080;http://+:8081"
-ENV KEUES_PUBLIC_PORT=8081
 ENV ASPNETCORE_ENVIRONMENT=Production
 LABEL org.opencontainers.image.title="Keues"
 LABEL org.opencontainers.image.description="Queue & ticket management system: Dashboard (React) + REST API (.NET) in a single container"

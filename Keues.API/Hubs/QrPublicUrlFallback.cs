@@ -1,3 +1,4 @@
+using Keues.API.Common;
 using Keues.Application.Common;
 using Microsoft.AspNetCore.Http;
 
@@ -12,11 +13,7 @@ public static class QrPublicUrlFallback
       return;
     }
 
-    var publicPort = int.TryParse(
-      Environment.GetEnvironmentVariable("KEUES_PUBLIC_PORT"),
-      out var configuredPort)
-      ? configuredPort
-      : 8081;
+    var publicPort = QrServerAddress.PublicPort;
 
     var host = request.Host.Host;
     var port = request.Host.Port;

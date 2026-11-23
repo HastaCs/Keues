@@ -75,13 +75,7 @@ https://qr.example.com/turno/{flowId}/{token}
 
 The token rotates every 5 minutes. The server accepts the current token and the previous one, so a QR remains valid for up to 10 minutes. The token is an opaque HMAC token, not a JWT.
 
-Set the public QR URL explicitly:
-
-```yaml
-KEUES_QR_URL: "https://qr.example.com"
-```
-
-or in `data/config.json`:
+Set the public QR URL in `data/config.json`:
 
 ```json
 {
@@ -89,7 +83,13 @@ or in `data/config.json`:
 }
 ```
 
-If `KEUES_QR_URL` is empty, the application tries to auto-detect the LAN address on a host deployment. In Docker, set it explicitly.
+You can also use the environment variable, which overrides `keuesQrUrl`:
+
+```yaml
+KEUES_QR_URL: "https://qr.example.com"
+```
+
+If both are empty, the application tries to auto-detect the LAN address on a host deployment. In Docker, set one of them explicitly.
 
 ### LAN
 
@@ -133,6 +133,8 @@ server {
 
 Point the proxy to `8081`, not `8080`. The app applies its own public-path restrictions on `8081`.
 
+If you publish the container as `8090:8081`, point the proxy to `http://127.0.0.1:8090` (or `http://keues:8081` from another container) and set `KEUES_QR_URL` to the final public URL, for example `https://www.example.com`. The container port must remain `8081`; the host/public port can be different.
+
 #### Cloudflare Tunnel example
 
 ```yaml
@@ -168,7 +170,6 @@ services:
     environment:
       KEUES_DASHBOARD_URL: "http://YOUR_HOST_IP:8080"
       KEUES_QR_URL: "http://YOUR_HOST_IP:8081"
-      KEUES_PUBLIC_PORT: "8081"
       KEUES_EMAIL_PROVIDER: "smtp"
       KEUES_EMAIL_FROM: ""
       KEUES_EMAIL_FROM_NAME: "Keues"
@@ -197,9 +198,8 @@ All variables are optional. Empty variables fall back to the value stored in `co
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `KEUES_DASHBOARD_URL` | Public URL of the admin dashboard (used in password-reset emails) | from `config.json` |
-| `KEUES_QR_URL` | Public URL encoded in the QR page | auto-detected on host; set explicitly in Docker |
-| `KEUES_PUBLIC_PORT` | Local port used for the public QR listener/gate | `8081` |
+| `KEUES_DASHBOARD_URL` | Optional. Used mainly for password-reset links; also the QR URL fallback when no QR-specific URL is set | from `config.json` |
+| `KEUES_QR_URL` | Optional. Only needed for the QR virtual queue; overrides `keuesQrUrl` | from `config.json` or auto-detected on host |
 | `KEUES_JWT_KEY` | Secret key for JWT signing | generated at first run |
 | `KEUES_EMAIL_PROVIDER` | Email provider (`smtp` or `mailjet`) | `smtp` |
 | `KEUES_EMAIL_FROM` | Sender address shared by every provider | from `config.json` |
@@ -213,7 +213,11 @@ All variables are optional. Empty variables fall back to the value stored in `co
 | `KEUES_MAILJET_API_KEY` | Mailjet API key (Basic auth user) | from `config.json` |
 | `KEUES_MAILJET_SECRET_KEY` | Mailjet secret key (Basic auth password) | from `config.json` |
 
-`KEUES_PUBLIC_PORT` is not the public URL. It is the local port the app uses to identify public traffic. Change it only if you also change the Kestrel/Docker port mapping.
+The public QR listener is fixed at local port `8081`. The admin/full API listener is fixed at `8080`.
+
+`KEUES_QR_URL` is optional and only needed if you use the QR virtual queue. If you do not use QR, leave it empty and do not publish port `8081`.
+
+`KEUES_DASHBOARD_URL` is optional. It is mainly used to build password-reset links; if you do not use password recovery, you can leave it empty. It is also used as a fallback for the QR URL when no QR-specific URL exists.
 
 ## Features
 

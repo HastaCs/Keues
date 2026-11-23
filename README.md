@@ -162,7 +162,8 @@ Abre **http://localhost:8080**: en el primer arranque el dashboard te guiará pa
 
 - `8080` es el dashboard y la API completa. **No lo expongas a Internet.**
 - `8081` es la página pública del QR. Es el único puerto que necesitan los clientes.
-- `KEUES_QR_URL` debe ser una URL alcanzable desde el móvil del cliente. `localhost` no sirve para un teléfono.
+- `KEUES_QR_URL` es opcional: solo se necesita si usas cola virtual QR, y debe ser una URL alcanzable desde el móvil del cliente. `localhost` no sirve para un teléfono.
+- `KEUES_DASHBOARD_URL` es opcional: se usa principalmente para los enlaces de recuperación de contraseña y como fallback del QR si no hay URL específica.
 
 O con Docker Compose:
 
@@ -181,15 +182,16 @@ services:
     environment:
       KEUES_DASHBOARD_URL: "http://TU_IP:8080"
       KEUES_QR_URL: "http://TU_IP:8081"
-      KEUES_PUBLIC_PORT: "8081"
     restart: unless-stopped
 ```
 
 ### Cola virtual por QR
 
-Los dos puertos solo son necesarios si usas cola virtual QR. Si no la usas, publica solo el `8080`; el `8081` puede quedar sin publicar. El contenedor sigue escuchando en `8081` internamente, pero no es accesible desde fuera si no publicas ese puerto.
+Los dos puertos solo son necesarios si usas cola virtual QR. Si no la usas, publica solo el `8080`; el `8081` puede quedar sin publicar y `KEUES_QR_URL` puede quedar vacío. El contenedor sigue escuchando en `8081` internamente, pero no es accesible desde fuera si no publicas ese puerto.
 
 El `8081` es una medida de seguridad: permite publicar solo la página del QR y sus endpoints, manteniendo el dashboard, la administración y la API completa en el `8080` privado.
+
+Para la URL del QR, `KEUES_QR_URL` tiene prioridad sobre `keuesQrUrl`. Si la variable está vacía, se usa `keuesQrUrl` del `config.json`.
 
 En una LAN, el QR apunta a:
 
@@ -214,6 +216,8 @@ Para exponerlo a Internet, publica **solo el 8081** detrás de HTTPS:
 No expongas el `8080` a Internet. El `8081` solo permite la página del QR, sus assets y los endpoints necesarios (`/api/flows/{id}`, `/api/queues/{id}/qr-new-ticket`, `/api/tickets/{id}`); todo lo demás devuelve `404`.
 
 Se recomienda limitar peticiones en el proxy para `/api/queues/*/qr-new-ticket`.
+
+Si publicas el contenedor como `8090:8081`, el proxy debe apuntar a `http://127.0.0.1:8090` y `KEUES_QR_URL` debe ser la URL pública final, por ejemplo `https://www.miweb.com`. El puerto interno del contenedor sigue siendo `8081`; el puerto externo puede ser distinto.
 
 ### Desarrollo local
 

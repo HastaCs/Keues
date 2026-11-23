@@ -2,8 +2,10 @@ import {
   Alert,
   Button,
   Container,
+  Group,
   Loader,
   Paper,
+  SegmentedControl,
   Stack,
   Text,
   ThemeIcon,
@@ -34,7 +36,8 @@ import {
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function QrScanPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.resolvedLanguage === 'en' ? 'en' : 'es';
   const { flowId = '', token: tokenParam } = useParams();
   const [searchParams] = useSearchParams();
   const token = tokenParam ?? searchParams.get('token') ?? '';
@@ -48,6 +51,25 @@ export function QrScanPage() {
   useEffect(() => {
     setStoredTicket(hasValidFlowId ? getStoredQrTicket(flowId) : null);
   }, [flowId, hasValidFlowId]);
+
+  useEffect(() => {
+    const storedLanguage = window.localStorage.getItem('keues-qr-language');
+    if (
+      (storedLanguage === 'es' || storedLanguage === 'en') &&
+      storedLanguage !== language
+    ) {
+      void i18n.changeLanguage(storedLanguage);
+    }
+  }, [i18n, language]);
+
+  function handleLanguageChange(value: string) {
+    if (value !== 'es' && value !== 'en') {
+      return;
+    }
+
+    window.localStorage.setItem('keues-qr-language', value);
+    void i18n.changeLanguage(value);
+  }
 
   const issue = useMutation<QrIssueResult, unknown, void>({
     mutationFn: () => issueQrTicket(flowId, token),
@@ -188,6 +210,19 @@ export function QrScanPage() {
 
   return (
     <Container size="xs" py="xl">
+      <Group justify="flex-end" mb="sm">
+        <SegmentedControl
+          size="xs"
+          radius="xl"
+          value={language}
+          onChange={handleLanguageChange}
+          data={[
+            { value: 'es', label: t('qr.languageEs') },
+            { value: 'en', label: t('qr.languageEn') },
+          ]}
+        />
+      </Group>
+
       <Paper withBorder radius="lg" p="xl" mt="xl">
         <Stack align="center" gap="md">
           {!hasValidFlowId ? (

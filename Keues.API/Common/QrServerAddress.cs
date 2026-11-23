@@ -6,6 +6,8 @@ namespace Keues.API.Common;
 
 public static class QrServerAddress
 {
+  public const int PublicPort = 8081;
+
   public static string? TryDetect()
   {
     if (IsRunningInContainer())
@@ -13,16 +15,10 @@ public static class QrServerAddress
       return null;
     }
 
-    var publicPort = int.TryParse(
-      Environment.GetEnvironmentVariable("KEUES_PUBLIC_PORT"),
-      out var configuredPort)
-      ? configuredPort
-      : 8081;
-
-    return Build(FindLanIPv4(), publicPort);
+    return Build(FindLanIPv4());
   }
 
-  public static string? Build(string? lanIp, int publicPort = 8081)
+  public static string? Build(string? lanIp, int publicPort = PublicPort)
   {
     if (string.IsNullOrWhiteSpace(lanIp))
     {

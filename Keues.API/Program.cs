@@ -244,11 +244,7 @@ using (var scope = app.Services.CreateScope())
   db.Database.Migrate();
 }
 
-var publicPort = int.TryParse(
-  Environment.GetEnvironmentVariable("KEUES_PUBLIC_PORT"),
-  out var configuredPublicPort)
-  ? configuredPublicPort
-  : 8081;
+var publicPort = QrServerAddress.PublicPort;
 
 app.UseWhen(
   context => context.Connection.LocalPort == publicPort,
